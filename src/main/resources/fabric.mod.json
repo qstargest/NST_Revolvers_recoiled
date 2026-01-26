@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 1,
+  "id": "nst_revolvers_recoiled",
+  "version": "${version}",
+  "name": "[NST] Revolvers recoiled",
+  "description": "",
+  "authors": [],
+  "contact": {},
+  "license": "GPL-3.0",
+  "icon": "assets/nst_revolvers_recoiled/icon.png",
+  "environment": "*",
+  "entrypoints": {
+    "fabric-datagen": [
+      "org.stargest.nst_revrecoiled.client.Nst_revolvers_recoiledDataGenerator"
+    ],
+    "client": [
+      "org.stargest.nst_revrecoiled.client.Nst_revolvers_recoiledClient"
+    ],
+    "main": [
+      "org.stargest.nst_revrecoiled.Main"
+    ]
+  },
+  "mixins": [
+    "nst_revolvers_recoiled.mixins.json",
+    {
+      "config": "nst_revolvers_recoiled.client.mixins.json",
+      "environment": "client"
+    }
+  ],
+  "depends": {
+    "fabricloader": ">=${loader_version}",
+    "fabric-api": "*",
+    "minecraft": "${minecraft_version}"
+  }
+}

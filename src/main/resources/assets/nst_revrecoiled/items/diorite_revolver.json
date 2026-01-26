@@ -1,0 +1,9 @@
+{
+  "model": {
+    "type": "minecraft:special",
+    "base": "nst_revrecoiled:item/diorite_revolver",
+    "model": {
+      "type": "geckolib:geckolib"
+    }
+  }
+}
