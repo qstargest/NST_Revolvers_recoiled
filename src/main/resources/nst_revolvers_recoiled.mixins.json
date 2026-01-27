@@ -1,7 +1,7 @@
 {
   "required": true,
   "minVersion": "0.8",
-  "package": "org.stargest.nst_revolvers_recoiled.mixin",
+  "package": "org.stargest.nst_revrecoiled.Mixins",
   "compatibilityLevel": "JAVA_21",
   "mixins": [
   ],

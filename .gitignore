@@ -121,3 +121,4 @@ runs/
 # Textures and models
 *.png
 *.geo.json
+*animation.json

@@ -20,7 +20,7 @@ public class DioriteRevolverItemModel extends GeoModel<DioriteRevolverItem> {
 
     @Override
     public Identifier getTextureResource(DioriteRevolverItem animatable, GeoRenderer<DioriteRevolverItem> renderer) {
-        return Identifier.of(Main.MOD_ID, "textures/item/adiorite_revolver.png");
+        return Identifier.of(Main.MOD_ID, "textures/item/diorite_revolver.png");
     }
 
     @Override

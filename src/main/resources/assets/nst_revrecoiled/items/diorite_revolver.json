@@ -1,9 +1,25 @@
 {
   "model": {
-    "type": "minecraft:special",
-    "base": "nst_revrecoiled:item/diorite_revolver",
-    "model": {
-      "type": "geckolib:geckolib"
-    }
+    "type": "minecraft:select",
+    "cases": [
+      {
+        "model": {
+          "type": "minecraft:model",
+          "model": "nst_revrecoiled:item/diorite_revolver_item"
+        },
+        "when": [
+          "gui",
+          "fixed"
+        ]
+      }
+    ],
+    "fallback": {
+      "type": "minecraft:special",
+      "base": "nst_revrecoiled:item/diorite_revolver",
+      "model": {
+        "type": "geckolib:geckolib"
+      }
+    },
+    "property": "minecraft:display_context"
   }
 }

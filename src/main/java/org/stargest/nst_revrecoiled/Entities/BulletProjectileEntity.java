@@ -20,7 +20,7 @@ import org.stargest.nst_revrecoiled.util.ModItems;
  */
 public class BulletProjectileEntity extends PersistentProjectileEntity implements FlyingItemEntity {
 
-    private static final int MAX_AGE_TICKS = 200; // 10 seconds
+    private static final int MAX_AGE_TICKS = 20; // 1 second
 
     private ItemStack bulletStack = ItemStack.EMPTY;
     private float fixedDamage;

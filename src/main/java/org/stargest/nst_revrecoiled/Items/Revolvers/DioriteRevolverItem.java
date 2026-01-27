@@ -9,6 +9,7 @@ import org.stargest.nst_revrecoiled.Items.BaseRevolverItem;
 import software.bernie.geckolib.animatable.GeoItem;
 import software.bernie.geckolib.animatable.client.GeoRenderProvider;
 import software.bernie.geckolib.animatable.instance.AnimatableInstanceCache;
+import software.bernie.geckolib.animation.*;
 import software.bernie.geckolib.util.GeckoLibUtil;
 
 import java.util.function.Consumer;
@@ -52,6 +53,11 @@ public class DioriteRevolverItem extends BaseRevolverItem implements GeoItem {
         if (provider != null) {
             consumer.accept(provider);
         }
+    }
+
+    @Override
+    public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
+        super.registerControllers(controllers);
     }
 
     @Override
