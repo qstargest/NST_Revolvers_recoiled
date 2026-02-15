@@ -1,12 +1,15 @@
 {
   "required": true,
   "minVersion": "0.8",
-  "package": "org.stargest.nst_revrecoiled.Mixins",
+  "package": "org.stargest.nst_revrecoiled.client.Mixins",
   "compatibilityLevel": "JAVA_21",
   "injectors": {
     "defaultRequire": 1
   },
   "overwrites": {
     "requireAnnotations": true
-  }
+  },
+  "client": [
+    "PlayerEntityModelMixin"
+  ]
 }

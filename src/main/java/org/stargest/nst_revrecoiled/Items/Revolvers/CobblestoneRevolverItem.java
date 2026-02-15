@@ -16,20 +16,20 @@ import java.util.function.Consumer;
 import java.util.function.Predicate;
 
 /**
- * Diorite-tier revolver implementation.
+ * Cobblestone-tier revolver implementation.
  * Deals 4.0 base damage plus bullet damage.
  */
-public class DioriteRevolverItem extends BaseRevolverItem implements GeoItem {
+public class CobblestoneRevolverItem extends BaseRevolverItem implements GeoItem {
 
-    private static final float DIORITE_REVOLVER_DAMAGE = 4.0f;
+    private static final float COBBLESTONE_REVOLVER_DAMAGE = 4.0f;
 
     private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
 
     // Client-only renderer container (populated in client initializer)
     public final MutableObject<GeoRenderProvider> renderProvider = new MutableObject<>();
 
-    public DioriteRevolverItem(Settings settings) {
-        super(settings, DIORITE_REVOLVER_DAMAGE);
+    public CobblestoneRevolverItem(Settings settings) {
+        super(settings, COBBLESTONE_REVOLVER_DAMAGE);
     }
 
     @Override

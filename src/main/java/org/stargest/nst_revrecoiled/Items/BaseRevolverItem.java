@@ -1,6 +1,5 @@
 package org.stargest.nst_revrecoiled.Items;
 
-import net.minecraft.block.BlockState;
 import net.minecraft.component.DataComponentTypes;
 import net.minecraft.component.type.ChargedProjectilesComponent;
 import net.minecraft.component.type.NbtComponent;
@@ -8,39 +7,41 @@ import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
+import net.minecraft.item.ModelTransformationMode;
 import net.minecraft.item.RangedWeaponItem;
 import net.minecraft.item.consume.UseAction;
 import net.minecraft.nbt.NbtCompound;
-import net.minecraft.screen.slot.Slot;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.sound.SoundCategory;
 import net.minecraft.sound.SoundEvents;
 import net.minecraft.util.ActionResult;
-import net.minecraft.util.ClickType;
 import net.minecraft.util.Hand;
-import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import org.stargest.nst_revrecoiled.Entities.BulletProjectileEntity;
 import org.stargest.nst_revrecoiled.util.ModItems;
 import software.bernie.geckolib.animatable.GeoItem;
 import software.bernie.geckolib.animatable.SingletonGeoAnimatable;
 import software.bernie.geckolib.animatable.instance.AnimatableInstanceCache;
-import software.bernie.geckolib.animation.*;
+import software.bernie.geckolib.animation.AnimatableManager;
+import software.bernie.geckolib.animation.AnimationController;
+import software.bernie.geckolib.animation.PlayState;
+import software.bernie.geckolib.animation.RawAnimation;
+import software.bernie.geckolib.constant.DataTickets;
 import software.bernie.geckolib.util.GeckoLibUtil;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 import java.util.function.Predicate;
 
 /**
  * Base class for all revolver weapons.
- * Uses crossbow mechanics: charge before shooting.
+ * Uses crossbow-style mechanics: charge before shooting.
  * Integrates with GeckoLib for custom animations (fire, reload, draw).
+ * Includes perspective-aware animation handling to suppress certain animations in third-person view.
  */
 public abstract class BaseRevolverItem extends RangedWeaponItem implements GeoItem {
 
     private static final int MAX_DURABILITY = 500;
-    private static final int CHARGE_TIME_TICKS = 25; // 1.25 seconds
+    private static final int CHARGE_TIME_TICKS = 50; // 2.5 seconds at 20 TPS
     private static final float PROJECTILE_VELOCITY = 6.0f;
     private static final float PROJECTILE_DIVERGENCE = 1.0f;
 
@@ -64,26 +65,26 @@ public abstract class BaseRevolverItem extends RangedWeaponItem implements GeoIt
 
     @Override
     public UseAction getUseAction(ItemStack stack) {
-        // NONE prevents eating/drinking animation during charging
+        // NONE prevents vanilla eating/drinking animation during charging
         return UseAction.NONE;
     }
 
     @Override
     public boolean allowComponentsUpdateAnimation(PlayerEntity player, Hand hand, ItemStack oldStack, ItemStack newStack) {
-        // Prevent item switch animation when charge state changes
+        // Prevents item switch animation when only charge state changes
         return false;
     }
 
     @Override
-    public boolean onStackClicked(ItemStack stack, Slot slot, ClickType clickType, PlayerEntity player) {
-        // Prevent vanilla hand swing animation
-        return false;
+    public boolean allowContinuingBlockBreaking(PlayerEntity player, ItemStack oldStack, ItemStack newStack) {
+        // Prevents interruption when item data changes
+        return true;
     }
 
     @Override
-    public boolean postMine(ItemStack stack, World world, BlockState state, BlockPos pos, LivingEntity miner) {
-        // Prevent vanilla swing animation when breaking blocks
-        return false;
+    public boolean isPerspectiveAware() {
+        // Enables perspective-aware rendering for GeckoLib
+        return true;
     }
 
     @Override
@@ -115,15 +116,13 @@ public abstract class BaseRevolverItem extends RangedWeaponItem implements GeoIt
         ItemStack stack = user.getStackInHand(hand);
 
         if (isCharged(stack)) {
-            // Prevent hand swing on client side
-            if (world.isClient) {
-                user.stopUsingItem();
-                return ActionResult.SUCCESS;
+            // Shoot only on server
+            if (!world.isClient) {
+                shoot(world, user, hand, stack, PROJECTILE_VELOCITY, PROJECTILE_DIVERGENCE);
             }
 
-            // Shoot only on server
-            shoot(world, user, hand, stack, PROJECTILE_VELOCITY, PROJECTILE_DIVERGENCE);
-            return ActionResult.CONSUME;
+            // PASS prevents vanilla hand swing animation
+            return ActionResult.PASS;
         }
 
         ItemStack ammo = user.getProjectileType(stack);
@@ -132,9 +131,9 @@ public abstract class BaseRevolverItem extends RangedWeaponItem implements GeoIt
         }
 
         // Trigger reload animation when starting to charge
-        if (!world.isClient && user instanceof PlayerEntity player) {
+        if (!world.isClient) {
             long instanceId = GeoItem.getOrAssignId(stack, (ServerWorld) world);
-            triggerAnim(player, instanceId, "controller", "animation.model.reloademptyright");
+            triggerAnim(user, instanceId, "controller", "animation.model.reloademptyright");
         }
 
         user.setCurrentHand(hand);
@@ -144,7 +143,6 @@ public abstract class BaseRevolverItem extends RangedWeaponItem implements GeoIt
     @Override
     public void usageTick(World world, LivingEntity user, ItemStack stack, int remainingUseTicks) {
         // Called every tick while item is being used
-        // Override to prevent vanilla behavior
         super.usageTick(world, user, stack, remainingUseTicks);
     }
 
@@ -175,10 +173,10 @@ public abstract class BaseRevolverItem extends RangedWeaponItem implements GeoIt
                 );
             }
         } else {
-            // Stop reload animation immediately when player releases before full charge
+            // Stop reload animation when player releases before full charge
             if (!world.isClient && user instanceof PlayerEntity player) {
                 long instanceId = GeoItem.getOrAssignId(stack, (ServerWorld) world);
-                triggerAnim(player, instanceId, "controller", "stop");
+                triggerAnim(player, instanceId, "controller", "idle");
             }
         }
 
@@ -272,7 +270,7 @@ public abstract class BaseRevolverItem extends RangedWeaponItem implements GeoIt
     /**
      * Fires the loaded bullet as a projectile entity.
      * Combines revolver base damage with bullet damage.
-     * Triggers fire animation and plays shoot sound.
+     * Triggers fire animation and plays explosion sound.
      */
     private void shoot(World world, LivingEntity shooter, Hand hand, ItemStack stack,
                        float velocity, float divergence) {
@@ -343,15 +341,42 @@ public abstract class BaseRevolverItem extends RangedWeaponItem implements GeoIt
 
     @Override
     public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
-        // Controller for triggered animations (fire, reload, draw)
-        controllers.add(new AnimationController<>(this, "controller", 0, state -> PlayState.STOP)
+        controllers.add(new AnimationController<>(this, "controller", 5, state -> {
+            // Get render perspective (may be null in some contexts)
+            ModelTransformationMode perspective = state.getData(DataTickets.ITEM_RENDER_PERSPECTIVE);
+            if (perspective == null) {
+                return PlayState.CONTINUE;
+            }
+
+            // Check if rendering in first-person view
+            boolean isFirstPerson = perspective == ModelTransformationMode.FIRST_PERSON_LEFT_HAND
+                    || perspective == ModelTransformationMode.FIRST_PERSON_RIGHT_HAND;
+
+            AnimationController<?> controller = state.getController();
+
+            // In third-person: suppress fire and draw animations by replacing with idle
+            if (!isFirstPerson) {
+                RawAnimation triggered = controller.getTriggeredAnimation();
+
+                if (triggered != null && FIRE_ANIM.equals(triggered)) {
+                    // Replace fire animation with idle in third-person
+                    controller.setAnimation(IDLE_ANIM);
+                    return PlayState.CONTINUE;
+                }
+
+                if (triggered != null && DRAW_ANIM.equals(triggered)) {
+                    // Replace draw animation with idle in third-person
+                    controller.setAnimation(IDLE_ANIM);
+                    return PlayState.CONTINUE;
+                }
+            }
+
+            return PlayState.CONTINUE;
+        })
+                .receiveTriggeredAnimations() // Required for predicate to be called during triggers
                 .triggerableAnim("animation.model.fireright", FIRE_ANIM)
                 .triggerableAnim("animation.model.reloademptyright", RELOAD_ANIM)
                 .triggerableAnim("animation.model.drawright", DRAW_ANIM)
-                .triggerableAnim("stop", RawAnimation.begin().thenPlay("animation.model.idle")));
-
-        // Separate controller for idle animation
-        controllers.add(new AnimationController<>(this, "idle_controller", 0, state -> PlayState.STOP)
                 .triggerableAnim("idle", IDLE_ANIM));
     }
 

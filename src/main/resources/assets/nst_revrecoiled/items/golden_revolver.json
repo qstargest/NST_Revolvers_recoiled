@@ -5,7 +5,7 @@
       {
         "model": {
           "type": "minecraft:model",
-          "model": "nst_revrecoiled:item/diorite_revolver_item"
+          "model": "nst_revrecoiled:item/golden_revolver_item"
         },
         "when": [
           "gui",
@@ -15,7 +15,7 @@
     ],
     "fallback": {
       "type": "minecraft:special",
-      "base": "nst_revrecoiled:item/diorite_revolver",
+      "base": "nst_revrecoiled:item/cobblestone_revolver",
       "model": {
         "type": "geckolib:geckolib"
       }
