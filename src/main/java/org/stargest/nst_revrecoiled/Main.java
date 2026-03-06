@@ -5,6 +5,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stargest.nst_revrecoiled.util.ModEntities;
 import org.stargest.nst_revrecoiled.util.ModItems;
+import org.stargest.nst_revrecoiled.util.ModParticles;
 
 /**
  * Main mod initializer for the Revolver mod.
@@ -20,5 +21,6 @@ public class Main implements ModInitializer {
 
         ModItems.init();
         ModEntities.init();
+        ModParticles.init();
     }
 }

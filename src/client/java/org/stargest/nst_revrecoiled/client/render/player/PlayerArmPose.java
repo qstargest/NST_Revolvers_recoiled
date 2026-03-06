@@ -103,7 +103,6 @@ public class PlayerArmPose {
         // Store reload-specific base values
         float reloadBasePitch = MathHelper.lerp(drawProgress, 0.5f, basePitch);
         float reloadBaseYaw = baseYaw;
-        float reloadBaseRoll = MathHelper.lerp(drawProgress, 0.4f, 0.0f);
 
         // Apply aim tracking only when not reloading
         if (ENABLE_AIM_TRACKING && drawProgress > 0.5f) {
@@ -122,8 +121,8 @@ public class PlayerArmPose {
         float targetLR = model.leftArm.roll;
 
         // Recoil effect
-        if (drawProgress > 0.2f && timeSinceShot >= 0 && timeSinceShot < 6.0) {
-            float recoil = (float) ((6.0 - timeSinceShot) / 6.0);
+        if (drawProgress > 0.2f && timeSinceShot >= 2.0 && timeSinceShot < 8.0) {
+            float recoil = (float) ((8.0 - timeSinceShot) / 6.0);
             targetRP -= recoil * 0.6f;
             targetRR -= recoil * 0.2f;
         }
@@ -178,6 +177,7 @@ public class PlayerArmPose {
             targetRY += shake * 0.28f;
         }
 
+
         applyToModel(model, renderState, targetRP, targetRY, targetRR, targetLP, targetLY, targetLR, drawProgress, (float) timeSinceShot);
     }
 
@@ -193,7 +193,7 @@ public class PlayerArmPose {
         ArmState lastL = leftArmCache.getOrDefault(id, new ArmState(lp, ly, lr));
 
         // Use slower lerp speed during recoil for more dramatic effect
-        float rightLerp = (timeSinceShot >= 0 && timeSinceShot < 6.0f) ? LERP_SPEED_RECOIL : LERP_SPEED;
+        float rightLerp = (timeSinceShot >= 2.0f && timeSinceShot < 8.0f) ? LERP_SPEED_RECOIL : LERP_SPEED;
 
         // Interpolate right arm
         float fRp = MathHelper.lerp(rightLerp, lastR.p, rp);

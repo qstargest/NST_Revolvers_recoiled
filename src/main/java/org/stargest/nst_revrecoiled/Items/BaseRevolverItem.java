@@ -17,6 +17,7 @@ import net.minecraft.sound.SoundEvents;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Hand;
 import net.minecraft.world.World;
+import org.jetbrains.annotations.Nullable;
 import org.stargest.nst_revrecoiled.Entities.BulletProjectileEntity;
 import org.stargest.nst_revrecoiled.util.ModItems;
 import software.bernie.geckolib.animatable.GeoItem;
@@ -26,17 +27,30 @@ import software.bernie.geckolib.animation.AnimatableManager;
 import software.bernie.geckolib.animation.AnimationController;
 import software.bernie.geckolib.animation.PlayState;
 import software.bernie.geckolib.animation.RawAnimation;
+import software.bernie.geckolib.animation.keyframe.event.ParticleKeyframeEvent;
 import software.bernie.geckolib.constant.DataTickets;
 import software.bernie.geckolib.util.GeckoLibUtil;
 
 import java.util.*;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Base class for all revolver weapons.
  * Uses crossbow-style mechanics: charge before shooting.
  * Integrates with GeckoLib for custom animations (fire, reload, draw).
  * Includes perspective-aware animation handling to suppress certain animations in third-person view.
+ *
+ * Key features:
+ * - Charge-based shooting system (hold to reload, release to fire)
+ * - GeckoLib animations with particle effects
+ * - Perspective-aware rendering (different animations for 1st/3rd person)
+ * - Draw animation when equipping
+ * - Prevents vanilla animations (hand swing, item switch)
+ * - Immediate fire particles (bypasses GeckoLib animation delay)
  */
 public abstract class BaseRevolverItem extends RangedWeaponItem implements GeoItem {
 
@@ -56,6 +70,21 @@ public abstract class BaseRevolverItem extends RangedWeaponItem implements GeoIt
 
     private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
     private final float baseDamage;
+
+    /**
+     * Particle handler for animation keyframes.
+     * Set during client initialization to handle reload particle spawning.
+     * Fire particles use immediate callback instead to avoid animation delay.
+     */
+    private static Consumer<ParticleKeyframeEvent<BaseRevolverItem>> particleKeyframeHandler = event -> {};
+
+    /**
+     * Client-side fire callback for immediate particle spawning.
+     * Called directly from use() method to bypass GeckoLib animation delay.
+     * This ensures fire particles appear exactly when the shot is fired.
+     */
+    @Nullable
+    public static Consumer<LivingEntity> clientFireCallback = null;
 
     public BaseRevolverItem(Settings settings, float baseDamage) {
         super(settings.maxDamage(MAX_DURABILITY));
@@ -109,7 +138,7 @@ public abstract class BaseRevolverItem extends RangedWeaponItem implements GeoIt
 
     /**
      * Called when player right-clicks with the revolver.
-     * If charged: shoots. Otherwise: starts charging and plays reload animation.
+     * If charged: shoots and triggers immediate fire particles. Otherwise: starts charging and plays reload animation.
      */
     @Override
     public ActionResult use(World world, PlayerEntity user, Hand hand) {
@@ -119,6 +148,11 @@ public abstract class BaseRevolverItem extends RangedWeaponItem implements GeoIt
             // Shoot only on server
             if (!world.isClient) {
                 shoot(world, user, hand, stack, PROJECTILE_VELOCITY, PROJECTILE_DIVERGENCE);
+            }
+
+            // Immediate fire particles on client (bypasses GeckoLib animation delay)
+            if (world.isClient && clientFireCallback != null) {
+                clientFireCallback.accept(user);
             }
 
             // PASS prevents vanilla hand swing animation
@@ -337,11 +371,21 @@ public abstract class BaseRevolverItem extends RangedWeaponItem implements GeoIt
         return component != null && !component.isEmpty();
     }
 
+    /**
+     * Sets the particle keyframe handler for GeckoLib animations.
+     * Called during client initialization.
+     *
+     * @param handler Consumer that handles particle keyframe events
+     */
+    public static void setParticleKeyframeHandler(Consumer<ParticleKeyframeEvent<BaseRevolverItem>> handler) {
+        particleKeyframeHandler = handler;
+    }
+
     // GeckoLib animation setup
 
     @Override
     public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
-        controllers.add(new AnimationController<>(this, "controller", 5, state -> {
+        AnimationController<BaseRevolverItem> controller = new AnimationController<>(this, "controller", 5, state -> {
             // Get render perspective (may be null in some contexts)
             ModelTransformationMode perspective = state.getData(DataTickets.ITEM_RENDER_PERSPECTIVE);
             if (perspective == null) {
@@ -352,32 +396,39 @@ public abstract class BaseRevolverItem extends RangedWeaponItem implements GeoIt
             boolean isFirstPerson = perspective == ModelTransformationMode.FIRST_PERSON_LEFT_HAND
                     || perspective == ModelTransformationMode.FIRST_PERSON_RIGHT_HAND;
 
-            AnimationController<?> controller = state.getController();
+            AnimationController<?> ctrl = state.getController();
 
-            // In third-person: suppress fire and draw animations by replacing with idle
+            // In third-person: suppress certain animations by replacing with idle
             if (!isFirstPerson) {
-                RawAnimation triggered = controller.getTriggeredAnimation();
+                RawAnimation triggered = ctrl.getTriggeredAnimation();
 
-                if (triggered != null && FIRE_ANIM.equals(triggered)) {
-                    // Replace fire animation with idle in third-person
-                    controller.setAnimation(IDLE_ANIM);
+                // Fire animation is visible in third-person (commented out suppression)
+                /*if (triggered != null && FIRE_ANIM.equals(triggered)) {
+                    ctrl.setAnimation(IDLE_ANIM);
                     return PlayState.CONTINUE;
-                }
+                }*/
 
+                // Draw animation is suppressed in third-person
                 if (triggered != null && DRAW_ANIM.equals(triggered)) {
-                    // Replace draw animation with idle in third-person
-                    controller.setAnimation(IDLE_ANIM);
+                    ctrl.setAnimation(IDLE_ANIM);
                     return PlayState.CONTINUE;
                 }
             }
 
             return PlayState.CONTINUE;
-        })
+        });
+
+        // Set particle handler for animation keyframe events
+        controller.setParticleKeyframeHandler(event -> particleKeyframeHandler.accept(event));
+
+        controller
                 .receiveTriggeredAnimations() // Required for predicate to be called during triggers
                 .triggerableAnim("animation.model.fireright", FIRE_ANIM)
                 .triggerableAnim("animation.model.reloademptyright", RELOAD_ANIM)
                 .triggerableAnim("animation.model.drawright", DRAW_ANIM)
-                .triggerableAnim("idle", IDLE_ANIM));
+                .triggerableAnim("idle", IDLE_ANIM);
+
+        controllers.add(controller);
     }
 
     @Override
