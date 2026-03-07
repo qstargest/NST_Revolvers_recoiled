@@ -177,7 +177,6 @@ public class PlayerArmPose {
             targetRY += shake * 0.28f;
         }
 
-
         applyToModel(model, renderState, targetRP, targetRY, targetRR, targetLP, targetLY, targetLR, drawProgress, (float) timeSinceShot);
     }
 

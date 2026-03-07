@@ -16,6 +16,7 @@ import net.minecraft.sound.SoundCategory;
 import net.minecraft.sound.SoundEvents;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Hand;
+import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 import org.jetbrains.annotations.Nullable;
 import org.stargest.nst_revrecoiled.Entities.BulletProjectileEntity;
@@ -51,13 +52,14 @@ import java.util.List;
  * - Draw animation when equipping
  * - Prevents vanilla animations (hand swing, item switch)
  * - Immediate fire particles (bypasses GeckoLib animation delay)
+ * - Ballistic projectiles with gravity (spawns from calculated barrel position)
  */
 public abstract class BaseRevolverItem extends RangedWeaponItem implements GeoItem {
 
     private static final int MAX_DURABILITY = 500;
     private static final int CHARGE_TIME_TICKS = 50; // 2.5 seconds at 20 TPS
     private static final float PROJECTILE_VELOCITY = 6.0f;
-    private static final float PROJECTILE_DIVERGENCE = 1.0f;
+    private static final float PROJECTILE_DIVERGENCE = 0.2f; // Reduced for better accuracy
 
     // Animation definitions
     private static final RawAnimation FIRE_ANIM = RawAnimation.begin().thenPlay("animation.model.fireright");
@@ -302,8 +304,44 @@ public abstract class BaseRevolverItem extends RangedWeaponItem implements GeoIt
     }
 
     /**
+     * Calculates the barrel tip position server-side,
+     * mirroring the third-person fire particle offset in RevolverParticleHandler.
+     * This ensures bullets spawn from the visually correct position.
+     *
+     * Offsets match TP_FIRE_* constants:
+     *   shoulder = 0.35, forward = 1.0, right = -0.20, up = 0.05
+     */
+    private static Vec3d calcBarrelPosition(LivingEntity shooter) {
+        float pitch   = shooter.getPitch();
+        float yaw     = shooter.getYaw();
+        float bodyYaw = shooter.getBodyYaw();
+
+        double baseX = shooter.getX();
+        double baseY = shooter.getY() + 1.45; // Approximate shoulder height
+        double baseZ = shooter.getZ();
+
+        // Body-right vector for shoulder offset (same as RevolverParticleHandler)
+        Vec3d bodyRight  = Vec3d.fromPolar(0, bodyYaw + 90).normalize();
+        Vec3d lookFwd    = Vec3d.fromPolar(pitch, yaw);
+        Vec3d lookUp     = Vec3d.fromPolar(pitch - 90, yaw).normalize();
+        Vec3d lookRight  = lookFwd.crossProduct(lookUp).normalize();
+
+        Vec3d shoulder = new Vec3d(
+                baseX + bodyRight.x * 0.35,
+                baseY,
+                baseZ + bodyRight.z * 0.35
+        );
+
+        return shoulder
+                .add(lookFwd.multiply(1.0))
+                .add(lookRight.multiply(-0.20))
+                .add(lookUp.multiply(0.05));
+    }
+
+    /**
      * Fires the loaded bullet as a projectile entity.
      * Combines revolver base damage with bullet damage.
+     * Spawns projectile from calculated barrel position for visual accuracy.
      * Triggers fire animation and plays explosion sound.
      */
     private void shoot(World world, LivingEntity shooter, Hand hand, ItemStack stack,
@@ -331,6 +369,10 @@ public abstract class BaseRevolverItem extends RangedWeaponItem implements GeoIt
                 bulletStack,
                 totalDamage
         );
+
+        // Set spawn position to barrel tip for visual accuracy
+        Vec3d barrelPos = calcBarrelPosition(shooter);
+        projectile.setPosition(barrelPos.x, barrelPos.y, barrelPos.z);
 
         projectile.setVelocity(
                 shooter,

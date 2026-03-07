@@ -12,6 +12,7 @@ import org.stargest.nst_revrecoiled.Main;
 
 /**
  * Registry for all custom entities in the mod.
+ * Configures entity tracking and synchronization settings.
  */
 public class ModEntities {
 
@@ -19,6 +20,11 @@ public class ModEntities {
 
     /**
      * Initializes and registers all custom entities.
+     *
+     * Bullet projectile tracking settings:
+     * - maxTrackingRange: 8 blocks (short range for fast-moving projectiles)
+     * - trackingTickInterval: 1 (update every tick for smooth client-side rendering)
+     * - dimensions: 0.25x0.25 (small hitbox for bullet)
      */
     public static void init() {
         Identifier bulletId = Identifier.of(Main.MOD_ID, "bullet_projectile");
@@ -32,8 +38,8 @@ public class ModEntities {
                                 SpawnGroup.MISC
                         )
                         .dimensions(0.25f, 0.25f)
-                        .maxTrackingRange(4)
-                        .trackingTickInterval(20)
+                        .maxTrackingRange(8)          // Track up to 8 blocks away
+                        .trackingTickInterval(1)      // Update every tick for smooth movement
                         .build(bulletKey)
         );
     }
