@@ -64,6 +64,7 @@ public class RevolverParticleHandler implements Consumer<ParticleKeyframeEvent<B
 
         String effect = event.getKeyframeData().getEffect();
 
+        boolean isLocal = (holder == client.player);
         // Fire particles use immediate spawning, ignore keyframe event
         if ("fire".equals(effect)) return;
 
@@ -72,7 +73,6 @@ public class RevolverParticleHandler implements Consumer<ParticleKeyframeEvent<B
 
         // Logic: if this is the local player, check their camera settings.
         // If this is another player, they are ALWAYS in third-person for us.
-        boolean isLocal = (holder == client.player);
         boolean firstPerson = isLocal && client.options.getPerspective().isFirstPerson();
 
         Vec3d spawnPos = firstPerson

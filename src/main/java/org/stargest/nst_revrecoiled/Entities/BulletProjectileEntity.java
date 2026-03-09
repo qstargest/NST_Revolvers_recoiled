@@ -76,10 +76,8 @@ public class BulletProjectileEntity extends PersistentProjectileEntity implement
         this.setDamage(0.0);
 
         // Set tracked data so spawn packet contains it
-        if (this.dataTracker != null) {
-            this.dataTracker.set(DATA_BULLET_STACK, this.bulletStack.copy());
-            this.dataTracker.set(DATA_FIXED_DAMAGE, this.fixedDamage);
-        }
+        this.dataTracker.set(DATA_BULLET_STACK, this.bulletStack.copy());
+        this.dataTracker.set(DATA_FIXED_DAMAGE, this.fixedDamage);
     }
 
     /**
@@ -224,17 +222,13 @@ public class BulletProjectileEntity extends PersistentProjectileEntity implement
             this.bulletStack = maybe.orElse(ItemStack.EMPTY);
 
             // Sync tracked data
-            if (this.dataTracker != null) {
-                this.dataTracker.set(DATA_BULLET_STACK,
-                        this.bulletStack.isEmpty() ? ItemStack.EMPTY : this.bulletStack.copy());
-            }
+            this.dataTracker.set(DATA_BULLET_STACK,
+                    this.bulletStack.isEmpty() ? ItemStack.EMPTY : this.bulletStack.copy());
         }
 
         if (nbt.contains("FixedDamage")) {
             this.fixedDamage = nbt.getFloat("FixedDamage");
-            if (this.dataTracker != null) {
-                this.dataTracker.set(DATA_FIXED_DAMAGE, this.fixedDamage);
-            }
+            this.dataTracker.set(DATA_FIXED_DAMAGE, this.fixedDamage);
         }
     }
 

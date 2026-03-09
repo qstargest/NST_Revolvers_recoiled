@@ -1,11 +1,14 @@
 package org.stargest.nst_revrecoiled.Items;
 
+import net.fabricmc.fabric.api.networking.v1.PlayerLookup;
+import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.component.DataComponentTypes;
 import net.minecraft.component.type.ChargedProjectilesComponent;
 import net.minecraft.component.type.NbtComponent;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.entity.projectile.ProjectileEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.ModelTransformationMode;
 import net.minecraft.item.RangedWeaponItem;
@@ -18,11 +21,14 @@ import net.minecraft.util.ActionResult;
 import net.minecraft.util.Hand;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
+import org.apache.commons.lang3.mutable.MutableObject;
 import org.jetbrains.annotations.Nullable;
 import org.stargest.nst_revrecoiled.Entities.BulletProjectileEntity;
+import org.stargest.nst_revrecoiled.network.RevolverFireParticlePacket;
 import org.stargest.nst_revrecoiled.util.ModItems;
 import software.bernie.geckolib.animatable.GeoItem;
 import software.bernie.geckolib.animatable.SingletonGeoAnimatable;
+import software.bernie.geckolib.animatable.client.GeoRenderProvider;
 import software.bernie.geckolib.animatable.instance.AnimatableInstanceCache;
 import software.bernie.geckolib.animation.AnimatableManager;
 import software.bernie.geckolib.animation.AnimationController;
@@ -32,12 +38,10 @@ import software.bernie.geckolib.animation.keyframe.event.ParticleKeyframeEvent;
 import software.bernie.geckolib.constant.DataTickets;
 import software.bernie.geckolib.util.GeckoLibUtil;
 
-import java.util.*;
-import java.util.function.Consumer;
-import java.util.function.Predicate;
-
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
+import java.util.function.Predicate;
 
 /**
  * Base class for all revolver weapons.
@@ -53,6 +57,7 @@ import java.util.List;
  * - Prevents vanilla animations (hand swing, item switch)
  * - Immediate fire particles (bypasses GeckoLib animation delay)
  * - Ballistic projectiles with gravity (spawns from calculated barrel position)
+ * - Networked particle synchronization (all nearby players see fire particles)
  */
 public abstract class BaseRevolverItem extends RangedWeaponItem implements GeoItem {
 
@@ -61,16 +66,30 @@ public abstract class BaseRevolverItem extends RangedWeaponItem implements GeoIt
     private static final float PROJECTILE_VELOCITY = 6.0f;
     private static final float PROJECTILE_DIVERGENCE = 0.2f; // Reduced for better accuracy
 
+    // Barrel position offsets — mirror TP_FIRE_* constants in RevolverParticleHandler
+    private static final double BARREL_SHOULDER = 0.35; // Body-right offset to shoulder
+    private static final double BARREL_FWD      = 1.0;  // Forward from shoulder
+    private static final double BARREL_RIGHT    = -0.20;
+    private static final double BARREL_UP       = 0.05;
+
     // Animation definitions
-    private static final RawAnimation FIRE_ANIM = RawAnimation.begin().thenPlay("animation.model.fireright");
+    private static final RawAnimation FIRE_ANIM   = RawAnimation.begin().thenPlay("animation.model.fireright");
     private static final RawAnimation RELOAD_ANIM = RawAnimation.begin().thenPlay("animation.model.reloademptyright");
-    private static final RawAnimation DRAW_ANIM = RawAnimation.begin().thenPlay("animation.model.drawright");
-    private static final RawAnimation IDLE_ANIM = RawAnimation.begin().thenLoop("idle");
+    private static final RawAnimation DRAW_ANIM   = RawAnimation.begin().thenPlay("animation.model.drawright");
+    private static final RawAnimation IDLE_ANIM   = RawAnimation.begin().thenLoop("idle");
 
     // NBT key for tracking draw animation state
     private static final String DRAW_PLAYED_KEY = "DrawAnimPlayed";
 
+    // GeckoLib — one cache per concrete item type
     private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
+
+    /**
+     * Client-only renderer container. Populated during client initialization.
+     * Accessed by ModItemRenderers to bind the GeckoLib renderer for this item.
+     */
+    public final MutableObject<GeoRenderProvider> renderProvider = new MutableObject<>();
+
     private final float baseDamage;
 
     /**
@@ -84,15 +103,59 @@ public abstract class BaseRevolverItem extends RangedWeaponItem implements GeoIt
      * Client-side fire callback for immediate particle spawning.
      * Called directly from use() method to bypass GeckoLib animation delay.
      * This ensures fire particles appear exactly when the shot is fired.
+     * Protected by IllegalStateException to prevent accidental double-initialization.
      */
-    @Nullable
-    public static Consumer<LivingEntity> clientFireCallback = null;
+    private static Consumer<LivingEntity> clientFireCallback = null;
+
+    /**
+     * Sets the immediate fire callback.
+     * Called during client initialization.
+     *
+     * @param callback Consumer invoked on the client when the revolver is fired
+     * @throws IllegalStateException if callback is already set
+     */
+    public static void setClientFireCallback(Consumer<LivingEntity> callback) {
+        if (clientFireCallback != null) {
+            throw new IllegalStateException("clientFireCallback is already defined!");
+        }
+        clientFireCallback = callback;
+    }
 
     public BaseRevolverItem(Settings settings, float baseDamage) {
         super(settings.maxDamage(MAX_DURABILITY));
         this.baseDamage = baseDamage;
         SingletonGeoAnimatable.registerSyncedAnimatable(this);
     }
+
+    // -------------------------------------------------------------------------
+    // GeoItem — renderer binding
+    // -------------------------------------------------------------------------
+
+    /**
+     * GeckoLib calls this on both client and server.
+     * Only the client-side renderer is set, so server-side this is a no-op.
+     */
+    @Override
+    public void createGeoRenderer(Consumer<GeoRenderProvider> consumer) {
+        GeoRenderProvider provider = renderProvider.getValue();
+        if (provider != null) {
+            consumer.accept(provider);
+        }
+    }
+
+    // -------------------------------------------------------------------------
+    // RangedWeaponItem — required abstract method (unused; logic is in shoot())
+    // -------------------------------------------------------------------------
+
+    @Override
+    protected void shoot(LivingEntity shooter, ProjectileEntity projectile, int index,
+                         float speed, float divergence, float yaw, @Nullable LivingEntity target) {
+        // Not used — custom shooting logic is in the private shoot() method below
+    }
+
+    // -------------------------------------------------------------------------
+    // Item overrides
+    // -------------------------------------------------------------------------
 
     @Override
     public UseAction getUseAction(ItemStack stack) {
@@ -140,7 +203,8 @@ public abstract class BaseRevolverItem extends RangedWeaponItem implements GeoIt
 
     /**
      * Called when player right-clicks with the revolver.
-     * If charged: shoots and triggers immediate fire particles. Otherwise: starts charging and plays reload animation.
+     * If charged: shoots, triggers immediate fire particles, and broadcasts to nearby players.
+     * Otherwise: starts charging and plays reload animation.
      */
     @Override
     public ActionResult use(World world, PlayerEntity user, Hand hand) {
@@ -155,6 +219,12 @@ public abstract class BaseRevolverItem extends RangedWeaponItem implements GeoIt
             // Immediate fire particles on client (bypasses GeckoLib animation delay)
             if (world.isClient && clientFireCallback != null) {
                 clientFireCallback.accept(user);
+            }
+
+            // Server-side: broadcast fire particles to all tracking players
+            if (!world.isClient()) {
+                RevolverFireParticlePacket packet = new RevolverFireParticlePacket(user.getId());
+                PlayerLookup.tracking(user).forEach(p -> ServerPlayNetworking.send(p, packet));
             }
 
             // PASS prevents vanilla hand swing animation
@@ -174,18 +244,6 @@ public abstract class BaseRevolverItem extends RangedWeaponItem implements GeoIt
 
         user.setCurrentHand(hand);
         return ActionResult.CONSUME;
-    }
-
-    @Override
-    public void usageTick(World world, LivingEntity user, ItemStack stack, int remainingUseTicks) {
-        // Called every tick while item is being used
-        super.usageTick(world, user, stack, remainingUseTicks);
-    }
-
-    @Override
-    public ItemStack finishUsing(ItemStack stack, World world, LivingEntity user) {
-        // Called when use duration completes
-        return stack;
     }
 
     /**
@@ -242,6 +300,10 @@ public abstract class BaseRevolverItem extends RangedWeaponItem implements GeoIt
         }
     }
 
+    // -------------------------------------------------------------------------
+    // Draw animation flag helpers
+    // -------------------------------------------------------------------------
+
     /**
      * Checks if draw animation has already been played for this item stack.
      */
@@ -272,6 +334,10 @@ public abstract class BaseRevolverItem extends RangedWeaponItem implements GeoIt
             return NbtComponent.of(compound);
         });
     }
+
+    // -------------------------------------------------------------------------
+    // Bullet loading and shooting
+    // -------------------------------------------------------------------------
 
     /**
      * Loads a bullet from the user's inventory into the revolver.
@@ -307,9 +373,7 @@ public abstract class BaseRevolverItem extends RangedWeaponItem implements GeoIt
      * Calculates the barrel tip position server-side,
      * mirroring the third-person fire particle offset in RevolverParticleHandler.
      * This ensures bullets spawn from the visually correct position.
-     *
-     * Offsets match TP_FIRE_* constants:
-     *   shoulder = 0.35, forward = 1.0, right = -0.20, up = 0.05
+     * Uses constants that match RevolverParticleHandler's TP_FIRE_* offsets.
      */
     private static Vec3d calcBarrelPosition(LivingEntity shooter) {
         float pitch   = shooter.getPitch();
@@ -320,22 +384,21 @@ public abstract class BaseRevolverItem extends RangedWeaponItem implements GeoIt
         double baseY = shooter.getY() + 1.45; // Approximate shoulder height
         double baseZ = shooter.getZ();
 
-        // Body-right vector for shoulder offset (same as RevolverParticleHandler)
-        Vec3d bodyRight  = Vec3d.fromPolar(0, bodyYaw + 90).normalize();
-        Vec3d lookFwd    = Vec3d.fromPolar(pitch, yaw);
-        Vec3d lookUp     = Vec3d.fromPolar(pitch - 90, yaw).normalize();
-        Vec3d lookRight  = lookFwd.crossProduct(lookUp).normalize();
+        Vec3d bodyRight = Vec3d.fromPolar(0, bodyYaw + 90).normalize();
+        Vec3d lookFwd   = Vec3d.fromPolar(pitch, yaw);
+        Vec3d lookUp    = Vec3d.fromPolar(pitch - 90, yaw).normalize();
+        Vec3d lookRight = lookFwd.crossProduct(lookUp).normalize();
 
         Vec3d shoulder = new Vec3d(
-                baseX + bodyRight.x * 0.35,
+                baseX + bodyRight.x * BARREL_SHOULDER,
                 baseY,
-                baseZ + bodyRight.z * 0.35
+                baseZ + bodyRight.z * BARREL_SHOULDER
         );
 
         return shoulder
-                .add(lookFwd.multiply(1.0))
-                .add(lookRight.multiply(-0.20))
-                .add(lookUp.multiply(0.05));
+                .add(lookFwd.multiply(BARREL_FWD))
+                .add(lookRight.multiply(BARREL_RIGHT))
+                .add(lookUp.multiply(BARREL_UP));
     }
 
     /**
@@ -405,6 +468,10 @@ public abstract class BaseRevolverItem extends RangedWeaponItem implements GeoIt
         stack.set(DataComponentTypes.CHARGED_PROJECTILES, ChargedProjectilesComponent.DEFAULT);
     }
 
+    // -------------------------------------------------------------------------
+    // Public API
+    // -------------------------------------------------------------------------
+
     /**
      * Checks if the revolver currently has a loaded bullet.
      */
@@ -423,7 +490,9 @@ public abstract class BaseRevolverItem extends RangedWeaponItem implements GeoIt
         particleKeyframeHandler = handler;
     }
 
+    // -------------------------------------------------------------------------
     // GeckoLib animation setup
+    // -------------------------------------------------------------------------
 
     @Override
     public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
@@ -440,17 +509,10 @@ public abstract class BaseRevolverItem extends RangedWeaponItem implements GeoIt
 
             AnimationController<?> ctrl = state.getController();
 
-            // In third-person: suppress certain animations by replacing with idle
+            // In third-person: suppress draw animation by replacing with idle
             if (!isFirstPerson) {
                 RawAnimation triggered = ctrl.getTriggeredAnimation();
 
-                // Fire animation is visible in third-person (commented out suppression)
-                /*if (triggered != null && FIRE_ANIM.equals(triggered)) {
-                    ctrl.setAnimation(IDLE_ANIM);
-                    return PlayState.CONTINUE;
-                }*/
-
-                // Draw animation is suppressed in third-person
                 if (triggered != null && DRAW_ANIM.equals(triggered)) {
                     ctrl.setAnimation(IDLE_ANIM);
                     return PlayState.CONTINUE;

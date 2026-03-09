@@ -1,4 +1,4 @@
-package org.stargest.nst_revrecoiled.client.Mixins;
+package org.stargest.nst_revrecoiled.client.mixins;
 
 import net.minecraft.client.Mouse;
 import net.minecraft.client.MinecraftClient;

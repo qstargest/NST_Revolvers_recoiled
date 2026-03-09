@@ -61,19 +61,19 @@ public class ModItems {
     public static final Item IRON_REVOLVER = register(
             "iron_revolver",
             IronRevolverItem::new,
-            new Item.Settings()
+            new Item.Settings().maxCount(1)
     );
 
     public static final Item GOLDEN_REVOLVER = register(
             "golden_revolver",
             GoldenRevolverItem::new,
-            new Item.Settings()
+            new Item.Settings().maxCount(1)
     );
 
     public static final Item DIAMOND_REVOLVER = register(
             "diamond_revolver",
             DiamondRevolverItem::new,
-            new Item.Settings()
+            new Item.Settings().maxCount(1)
     );
 
     /**

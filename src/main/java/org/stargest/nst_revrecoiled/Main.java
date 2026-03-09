@@ -1,8 +1,10 @@
 package org.stargest.nst_revrecoiled;
 
 import net.fabricmc.api.ModInitializer;
+import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.stargest.nst_revrecoiled.network.RevolverFireParticlePacket;
 import org.stargest.nst_revrecoiled.util.ModEntities;
 import org.stargest.nst_revrecoiled.util.ModItems;
 import org.stargest.nst_revrecoiled.util.ModParticles;
@@ -22,5 +24,10 @@ public class Main implements ModInitializer {
         ModItems.init();
         ModEntities.init();
         ModParticles.init();
+
+        PayloadTypeRegistry.playS2C().register(
+                RevolverFireParticlePacket.ID,
+                RevolverFireParticlePacket.CODEC
+        );
     }
 }

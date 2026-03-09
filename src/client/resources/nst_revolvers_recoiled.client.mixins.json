@@ -1,7 +1,7 @@
 {
   "required": true,
   "minVersion": "0.8",
-  "package": "org.stargest.nst_revrecoiled.client.Mixins",
+  "package": "org.stargest.nst_revrecoiled.client.mixins",
   "compatibilityLevel": "JAVA_21",
   "injectors": {
     "defaultRequire": 1
@@ -10,7 +10,7 @@
     "requireAnnotations": true
   },
   "client": [
-    "PlayerEntityModelMixin",
-    "MouseRecoilMixin"
+    "MouseRecoilMixin",
+    "PlayerEntityModelMixin"
   ]
 }

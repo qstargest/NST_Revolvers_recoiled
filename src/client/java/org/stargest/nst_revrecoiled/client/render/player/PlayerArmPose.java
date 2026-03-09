@@ -22,41 +22,136 @@ import java.util.Map;
  * - Recoil effects
  * - Movement shake
  * - Smooth interpolation between states
+ *
+ * Uses a consolidated state management approach with a single Map<Integer, PlayerRevolverState>
+ * instead of multiple parallel HashMaps, improving code organization and cache locality.
  */
 public class PlayerArmPose {
 
+    // -------------------------------------------------------------------------
+    // Animation constants
+    // -------------------------------------------------------------------------
+
+    /** Lerp factor for normal arm movement (0–1, higher = faster). */
     private static final float LERP_SPEED = 0.7f;
+
+    /** Lerp factor during recoil for a dramatic slow snap-back. */
     private static final float LERP_SPEED_RECOIL = 0.12f;
+
+    /** Whether the arm follows the player's look direction. */
     private static final boolean ENABLE_AIM_TRACKING = true;
 
-    // Cache maps for smooth interpolation across frames
-    private static final Map<Integer, ArmState> rightArmCache = new HashMap<>();
-    private static final Map<Integer, ArmState> leftArmCache = new HashMap<>();
-    private static final Map<Integer, Boolean> wasChargedCache = new HashMap<>();
-    private static final Map<Integer, Double> lastShotTime = new HashMap<>();
-    private static final Map<Integer, Double> drawStartTime = new HashMap<>();
-    private static final Map<Integer, Integer> lastItemIdCache = new HashMap<>();
+    /** Base arm pitch when aiming forward (≈ -π/2 radians = straight forward). */
+    private static final float BASE_AIM_PITCH = -1.57f;
+
+    /** Horizontal arm offset based on dominant hand side. */
+    private static final float BASE_AIM_YAW_OFFSET = 0.2f;
+
+    /** Roll (tilt) of arm at the start of the draw animation. */
+    private static final float DRAW_START_ROLL = 0.4f;
+
+    /** Pitch offset of the arm at the start of the draw animation. */
+    private static final float DRAW_START_PITCH = 0.5f;
+
+    /** Duration in ticks over which the draw animation plays. */
+    private static final float DRAW_DURATION_TICKS = 8.0f;
+
+    /** Easing exponent applied to raw draw progress for a slight ease-out. */
+    private static final float DRAW_EASE_EXPONENT = 0.9f;
+
+    /** Reload: max cylinder rotation in radians. */
+    private static final float RELOAD_CYLINDER_ROLL = 0.9f;
+
+    /** Reload: max cylinder yaw offset. */
+    private static final float RELOAD_CYLINDER_YAW = 0.25f;
+
+    /** Reload: fraction of charge progress at which snap-blend edges occur. */
+    private static final float RELOAD_SNAP_EDGE = 0.15f;
+
+    /** Reload: left-hand pitch offset relative to right-hand. */
+    private static final float RELOAD_LEFT_PITCH_OFFSET = 0.45f;
+
+    /** Reload: left-hand yaw offset relative to right-hand. */
+    private static final float RELOAD_LEFT_YAW_OFFSET = 0.55f;
+
+    /** Reload: sine frequency of bullet-insertion shake effect (radians/tick). */
+    private static final float RELOAD_SHAKE_FREQ = 2.5f;
+
+    /** Reload: amplitude of bullet-insertion shake (radians). */
+    private static final float RELOAD_SHAKE_AMP = 0.025f;
+
+    /** Ticks after a shot during which recoil lerp speed applies. */
+    private static final float RECOIL_TICKS_MIN = 2.0f;
+    private static final float RECOIL_TICKS_MAX = 8.0f;
+
+    /** Pitch and roll reduction during recoil phase. */
+    private static final float RECOIL_PITCH_FACTOR = 0.6f;
+    private static final float RECOIL_ROLL_FACTOR = 0.2f;
+
+    /** Movement shake amplitude for sprinting and walking. */
+    private static final float SHAKE_SPRINT_AMP = 0.06f;
+    private static final float SHAKE_WALK_AMP = 0.03f;
+    private static final float SHAKE_WALK_MIN_SPEED = 0.02f;
+
+    /** Frequencies for the two sine waves composing the walk shake. */
+    private static final float SHAKE_FREQ_SPRINT = 1.6f;
+    private static final float SHAKE_FREQ_WALK = 0.9f;
+
+    /** Blend weights of each body axis for walk shake. */
+    private static final float SHAKE_PITCH_FACTOR = 0.6f;
+    private static final float SHAKE_ROLL_FACTOR = 1.25f;
+    private static final float SHAKE_YAW_FACTOR = 0.28f;
+
+    /** Secondary sine multiplier for irregular, natural-looking shake. */
+    private static final float SHAKE_SECONDARY_FREQ_MULT = 1.7f;
+    private static final float SHAKE_SECONDARY_AMP_MULT = 0.35f;
+
+    // -------------------------------------------------------------------------
+    // Per-player state — consolidated into single map for better organization
+    // -------------------------------------------------------------------------
+
+    private static final Map<Integer, PlayerRevolverState> playerStates = new HashMap<>();
 
     /**
-     * Stores arm rotation state (pitch, yaw, roll).
+     * Holds all per-player revolver rendering state.
+     * Consolidates what were previously six separate HashMaps into one state object
+     * for better code organization and cache locality.
      */
-    private static class ArmState {
-        float p, y, r;
-        ArmState(float p, float y, float r) {
-            this.p = p;
-            this.y = y;
-            this.r = r;
-        }
+    private static class PlayerRevolverState {
+        ArmState rightArm;
+        ArmState leftArm;
+        boolean  wasCharged   = false;
+        double   lastShotTime = -100.0;
+        double   drawStartTime = 0.0;
+        int      lastItemId   = -1;
     }
 
     /**
+     * Arm rotation state (pitch, yaw, roll in radians).
+     */
+    private static class ArmState {
+        float pitch, yaw, roll;
+
+        ArmState(float pitch, float yaw, float roll) {
+            this.pitch = pitch;
+            this.yaw   = yaw;
+            this.roll  = roll;
+        }
+    }
+
+    // -------------------------------------------------------------------------
+    // Public entry point
+    // -------------------------------------------------------------------------
+
+    /**
      * Main method to apply revolver-specific arm poses to the player model.
-     * Called from a mixin injecting into PlayerEntityRenderer.
+     * Called from PlayerEntityModelMixin injecting into setAngles().
      *
-     * @param model The biped entity model to modify
+     * @param model       The biped entity model to modify
      * @param renderState The player's current render state
      */
-    public static void applyRevolverPose(BipedEntityModel<PlayerEntityRenderState> model, PlayerEntityRenderState renderState) {
+    public static void applyRevolverPose(BipedEntityModel<PlayerEntityRenderState> model,
+                                         PlayerEntityRenderState renderState) {
         MinecraftClient client = MinecraftClient.getInstance();
         if (client.world == null) return;
 
@@ -66,174 +161,189 @@ public class PlayerArmPose {
 
         ItemStack stack = player.getStackInHand(player.getActiveHand());
         if (!(stack.getItem() instanceof BaseRevolverItem)) {
-            clearAllCaches(renderState.id);
+            // Not holding revolver - remove cached state
+            playerStates.remove(renderState.id);
             return;
         }
 
-        // Track item identity hash to detect item switches
+        // Get or create player state
+        PlayerRevolverState state = playerStates.computeIfAbsent(renderState.id,
+                id -> new PlayerRevolverState());
+
+        // Track item identity to detect item switches
         int currentItemHash = System.identityHashCode(stack.getItem());
-        if (!lastItemIdCache.getOrDefault(renderState.id, -1).equals(currentItemHash)) {
-            drawStartTime.put(renderState.id, renderTime);
-            lastItemIdCache.put(renderState.id, currentItemHash);
+        if (state.lastItemId != currentItemHash) {
+            state.drawStartTime = renderTime;
+            state.lastItemId = currentItemHash;
         }
 
-        // Detect shot events (charged -> not charged transition)
+        // Detect shot event (charged → not charged transition)
         boolean isCharged = BaseRevolverItem.isCharged(stack);
-        boolean wasCharged = wasChargedCache.getOrDefault(renderState.id, false);
-        if (wasCharged && !isCharged) {
-            lastShotTime.put(renderState.id, renderTime);
+        if (state.wasCharged && !isCharged) {
+            state.lastShotTime = renderTime;
         }
-        wasChargedCache.put(renderState.id, isCharged);
+        state.wasCharged = isCharged;
 
-        // Calculate draw animation progress (0 to 1 over 8 ticks)
-        double rawDrawProgress = (renderTime - drawStartTime.getOrDefault(renderState.id, 0.0)) / 8.0;
-        float drawProgress = MathHelper.clamp((float) Math.pow(MathHelper.clamp((float)rawDrawProgress, 0f, 1f), 0.9f), 0f, 1f);
+        // Draw animation progress (0 → 1 over DRAW_DURATION_TICKS ticks)
+        double rawDrawProgress = (renderTime - state.drawStartTime) / DRAW_DURATION_TICKS;
+        float drawProgress = MathHelper.clamp(
+                (float) Math.pow(MathHelper.clamp((float) rawDrawProgress, 0f, 1f), DRAW_EASE_EXPONENT),
+                0f, 1f);
 
         boolean isCharging = player.isUsingItem();
-        double timeSinceShot = renderTime - lastShotTime.getOrDefault(renderState.id, -100.0);
+        double timeSinceShot = renderTime - state.lastShotTime;
 
-        // --- RIGHT ARM (PRIMARY/SHOOTING HAND) ---
+        // ------------------------------------------------------------------
+        // RIGHT ARM (primary / shooting hand)
+        // ------------------------------------------------------------------
         float headPitch = model.head.pitch;
-        float headYaw = model.head.yaw;
+        float headYaw   = model.head.yaw;
 
-        // Base position without aim tracking
-        float basePitch = -1.57f; // ~90 degrees down (aiming forward)
-        float baseYaw = (renderState.mainArm == Arm.RIGHT ? -0.2f : 0.2f);
+        float sideSign = (renderState.mainArm == Arm.RIGHT) ? -1.0f : 1.0f;
+        float basePitch = BASE_AIM_PITCH;
+        float baseYaw   = sideSign * BASE_AIM_YAW_OFFSET;
 
-        // Store reload-specific base values
-        float reloadBasePitch = MathHelper.lerp(drawProgress, 0.5f, basePitch);
-        float reloadBaseYaw = baseYaw;
+        // Store base reload position (without aim tracking)
+        float reloadBasePitch = MathHelper.lerp(drawProgress, DRAW_START_PITCH, basePitch);
+        float reloadBaseYaw   = baseYaw;
 
-        // Apply aim tracking only when not reloading
+        // Apply aim tracking after draw animation is mostly complete
         if (ENABLE_AIM_TRACKING && drawProgress > 0.5f) {
             float trackingStrength = MathHelper.clamp((drawProgress - 0.5f) / 0.5f, 0f, 1f);
-            basePitch += (headPitch * trackingStrength);
-            baseYaw += (headYaw * trackingStrength);
+            basePitch += headPitch * trackingStrength;
+            baseYaw   += headYaw  * trackingStrength;
         }
 
-        float targetRP = MathHelper.lerp(drawProgress, 0.5f, basePitch);
+        float targetRP = MathHelper.lerp(drawProgress, DRAW_START_PITCH, basePitch);
         float targetRY = baseYaw;
-        float targetRR = MathHelper.lerp(drawProgress, 0.4f, 0.0f);
+        float targetRR = MathHelper.lerp(drawProgress, DRAW_START_ROLL, 0.0f);
 
-        // --- LEFT ARM (SUPPORTING HAND) ---
+        // ------------------------------------------------------------------
+        // LEFT ARM (supporting hand) — initially unchanged from vanilla
+        // ------------------------------------------------------------------
         float targetLP = model.leftArm.pitch;
         float targetLY = model.leftArm.yaw;
         float targetLR = model.leftArm.roll;
 
-        // Recoil effect
-        if (drawProgress > 0.2f && timeSinceShot >= 2.0 && timeSinceShot < 8.0) {
-            float recoil = (float) ((8.0 - timeSinceShot) / 6.0);
-            targetRP -= recoil * 0.6f;
-            targetRR -= recoil * 0.2f;
+        // Recoil effect - applies after draw and within recoil time window
+        if (drawProgress > 0.2f && timeSinceShot >= RECOIL_TICKS_MIN && timeSinceShot < RECOIL_TICKS_MAX) {
+            float recoil = (float) ((RECOIL_TICKS_MAX - timeSinceShot) / (RECOIL_TICKS_MAX - RECOIL_TICKS_MIN));
+            targetRP -= recoil * RECOIL_PITCH_FACTOR;
+            targetRR -= recoil * RECOIL_ROLL_FACTOR;
         }
 
-        // --- ADAPTIVE RELOAD ANIMATION ---
+        // ------------------------------------------------------------------
+        // ADAPTIVE RELOAD ANIMATION
+        // ------------------------------------------------------------------
         if (isCharging) {
             float chargeProgress = getProgress(player, stack);
 
-            // Snap factor creates smooth easing in/out at animation boundaries
-            float snap = (chargeProgress < 0.15f)
-                    ? chargeProgress / 0.15f
-                    : (chargeProgress > 0.85f ? (1f - chargeProgress) / 0.15f : 1.0f);
+            // Snap factor creates smooth ease in/out at animation boundaries
+            float snap = (chargeProgress < RELOAD_SNAP_EDGE)
+                    ? chargeProgress / RELOAD_SNAP_EDGE
+                    : (chargeProgress > (1f - RELOAD_SNAP_EDGE)
+                    ? (1f - chargeProgress) / RELOAD_SNAP_EDGE
+                    : 1.0f);
 
-            // 1. Rotate revolver cylinder
-            targetRR = snap * 0.9f;
-            targetRY -= snap * 0.25f;
-
-            // 2. Return to base reload position (no aim tracking during reload)
+            // Rotate cylinder and adjust aim
+            targetRR = snap * RELOAD_CYLINDER_ROLL;
+            targetRY -= snap * RELOAD_CYLINDER_YAW;
             targetRP = MathHelper.lerp(snap, targetRP, reloadBasePitch);
-            targetRY = MathHelper.lerp(snap, targetRY, reloadBaseYaw - snap * 0.25f);
+            targetRY = MathHelper.lerp(snap, targetRY, reloadBaseYaw - snap * RELOAD_CYLINDER_YAW);
 
-            // 3. Left hand follows right hand position
-            float sideSign = (renderState.mainArm == Arm.RIGHT ? 1.0f : -1.0f);
-
-            float adaptiveLeftPitch = targetRP + 0.45f;
-            float adaptiveLeftYaw = targetRY + (0.55f * sideSign);
-            float adaptiveLeftRoll = 0.0f;
+            // Left hand follows right hand position
+            float adaptiveLeftPitch = targetRP + RELOAD_LEFT_PITCH_OFFSET;
+            float adaptiveLeftYaw   = targetRY + (RELOAD_LEFT_YAW_OFFSET * -sideSign);
+            float adaptiveLeftRoll  = 0.0f;
 
             targetLP = MathHelper.lerp(snap, targetLP, adaptiveLeftPitch);
             targetLY = MathHelper.lerp(snap, targetLY, adaptiveLeftYaw);
             targetLR = MathHelper.lerp(snap, targetLR, adaptiveLeftRoll);
 
-            // Bullet insertion shake effect near end of reload
+            // Bullet-insertion shake near end of reload
             if (snap > 0.9f) {
-                float shake = (float) (Math.sin(renderTime * 2.5f) * 0.025f);
+                float shake = (float) (Math.sin(renderTime * RELOAD_SHAKE_FREQ) * RELOAD_SHAKE_AMP);
                 targetLP += shake;
                 targetLR += shake * 2;
             }
         }
 
-        // --- MOVEMENT SHAKE ---
+        // ------------------------------------------------------------------
+        // MOVEMENT SHAKE
+        // ------------------------------------------------------------------
         Vec3d velocity = player.getVelocity();
         float horizontalSpeed = (float) Math.sqrt(velocity.x * velocity.x + velocity.z * velocity.z);
-        float shakeAmp = player.isSprinting() ? 0.06f : (horizontalSpeed > 0.02f ? 0.03f : 0f);
-        float shakeFreq = player.isSprinting() ? 1.6f : 0.9f;
+        float shakeAmp  = player.isSprinting() ? SHAKE_SPRINT_AMP
+                : (horizontalSpeed > SHAKE_WALK_MIN_SPEED ? SHAKE_WALK_AMP : 0f);
+        float shakeFreq = player.isSprinting() ? SHAKE_FREQ_SPRINT : SHAKE_FREQ_WALK;
 
         if (shakeAmp > 0f) {
             float timeSeed = (float) ((renderTime + renderState.id * 7) * shakeFreq * 0.5);
-            float shake = (float) (Math.sin(timeSeed) * shakeAmp + Math.sin(timeSeed * 1.7) * (shakeAmp * 0.35));
-            targetRP += shake * 0.6f;
-            targetRR += shake * 1.25f;
-            targetRY += shake * 0.28f;
+            float shake = (float) (Math.sin(timeSeed) * shakeAmp
+                    + Math.sin(timeSeed * SHAKE_SECONDARY_FREQ_MULT) * (shakeAmp * SHAKE_SECONDARY_AMP_MULT));
+            targetRP += shake * SHAKE_PITCH_FACTOR;
+            targetRR += shake * SHAKE_ROLL_FACTOR;
+            targetRY += shake * SHAKE_YAW_FACTOR;
         }
 
-        applyToModel(model, renderState, targetRP, targetRY, targetRR, targetLP, targetLY, targetLR, drawProgress, (float) timeSinceShot);
+        applyToModel(model, renderState, state, targetRP, targetRY, targetRR, targetLP, targetLY, targetLR,
+                drawProgress, (float) timeSinceShot);
     }
+
+    // -------------------------------------------------------------------------
+    // Private helpers
+    // -------------------------------------------------------------------------
 
     /**
      * Applies interpolated arm rotations to the model with smooth transitions.
      * Uses different lerp speeds for recoil vs normal movement.
      */
-    private static void applyToModel(BipedEntityModel<PlayerEntityRenderState> model, PlayerEntityRenderState renderState,
-                                     float rp, float ry, float rr, float lp, float ly, float lr,
+    private static void applyToModel(BipedEntityModel<PlayerEntityRenderState> model,
+                                     PlayerEntityRenderState renderState,
+                                     PlayerRevolverState state,
+                                     float rp, float ry, float rr,
+                                     float lp, float ly, float lr,
                                      float drawProgress, float timeSinceShot) {
-        int id = renderState.id;
-        ArmState lastR = rightArmCache.getOrDefault(id, new ArmState(rp, ry, rr));
-        ArmState lastL = leftArmCache.getOrDefault(id, new ArmState(lp, ly, lr));
 
-        // Use slower lerp speed during recoil for more dramatic effect
-        float rightLerp = (timeSinceShot >= 2.0f && timeSinceShot < 8.0f) ? LERP_SPEED_RECOIL : LERP_SPEED;
+        // Initialize with current targets if no previous state
+        ArmState lastR = state.rightArm != null ? state.rightArm : new ArmState(rp, ry, rr);
+        ArmState lastL = state.leftArm  != null ? state.leftArm  : new ArmState(lp, ly, lr);
+
+        // Use slower lerp speed during recoil for a more dramatic effect
+        float rightLerp = (timeSinceShot >= RECOIL_TICKS_MIN && timeSinceShot < RECOIL_TICKS_MAX)
+                ? LERP_SPEED_RECOIL : LERP_SPEED;
 
         // Interpolate right arm
-        float fRp = MathHelper.lerp(rightLerp, lastR.p, rp);
-        float fRy = MathHelper.lerp(LERP_SPEED, lastR.y, ry);
-        float fRr = MathHelper.lerp(rightLerp, lastR.r, rr);
-        rightArmCache.put(id, new ArmState(fRp, fRy, fRr));
+        float fRp = MathHelper.lerp(rightLerp, lastR.pitch, rp);
+        float fRy = MathHelper.lerp(LERP_SPEED,  lastR.yaw,   ry);
+        float fRr = MathHelper.lerp(rightLerp, lastR.roll,  rr);
+        state.rightArm = new ArmState(fRp, fRy, fRr);
 
         model.rightArm.pitch = fRp;
-        model.rightArm.yaw = fRy;
-        model.rightArm.roll = fRr;
+        model.rightArm.yaw   = fRy;
+        model.rightArm.roll  = fRr;
 
         // Interpolate left arm
-        model.leftArm.pitch = MathHelper.lerp(LERP_SPEED, lastL.p, lp);
-        model.leftArm.yaw = MathHelper.lerp(LERP_SPEED, lastL.y, ly);
-        model.leftArm.roll = MathHelper.lerp(LERP_SPEED, lastL.r, lr);
-        leftArmCache.put(id, new ArmState(model.leftArm.pitch, model.leftArm.yaw, model.leftArm.roll));
+        float fLp = MathHelper.lerp(LERP_SPEED, lastL.pitch, lp);
+        float fLy = MathHelper.lerp(LERP_SPEED, lastL.yaw,   ly);
+        float fLr = MathHelper.lerp(LERP_SPEED, lastL.roll,  lr);
+        state.leftArm = new ArmState(fLp, fLy, fLr);
 
-        // Adjust arm pivot points for better positioning
+        model.leftArm.pitch = fLp;
+        model.leftArm.yaw   = fLy;
+        model.leftArm.roll  = fLr;
+
+        // Adjust arm pivot points for better visual positioning
         model.rightArm.pivotX = -5.0f;
         model.rightArm.pivotY = MathHelper.lerp(drawProgress, 4.0f, 2.0f) + (renderState.sneaking ? 2.0f : 0.0f);
         model.rightArm.pivotZ = MathHelper.lerp(drawProgress, 2.0f, 0.0f);
     }
 
     /**
-     * Calculates the progress of item use (0 to 1).
+     * Calculates the progress of item use as a 0→1 value.
      */
     private static float getProgress(PlayerEntity player, ItemStack stack) {
         int max = stack.getMaxUseTime(player);
-        return max <= 0 ? 0 : MathHelper.clamp((float)(max - player.getItemUseTimeLeft()) / max, 0, 1);
-    }
-
-    /**
-     * Clears all cached data for a specific player entity.
-     * Called when player is no longer holding a revolver.
-     */
-    private static void clearAllCaches(int id) {
-        rightArmCache.remove(id);
-        leftArmCache.remove(id);
-        wasChargedCache.remove(id);
-        drawStartTime.remove(id);
-        lastItemIdCache.remove(id);
-        lastShotTime.remove(id);
+        return max <= 0 ? 0 : MathHelper.clamp((float) (max - player.getItemUseTimeLeft()) / max, 0, 1);
     }
 }

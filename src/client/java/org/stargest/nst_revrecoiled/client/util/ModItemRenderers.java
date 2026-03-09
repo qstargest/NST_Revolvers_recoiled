@@ -3,10 +3,6 @@ package org.stargest.nst_revrecoiled.client.util;
 import org.apache.commons.lang3.mutable.MutableObject;
 import org.jetbrains.annotations.NotNull;
 import org.stargest.nst_revrecoiled.Items.BaseRevolverItem;
-import org.stargest.nst_revrecoiled.Items.Revolvers.CobblestoneRevolverItem;
-import org.stargest.nst_revrecoiled.Items.Revolvers.DiamondRevolverItem;
-import org.stargest.nst_revrecoiled.Items.Revolvers.GoldenRevolverItem;
-import org.stargest.nst_revrecoiled.Items.Revolvers.IronRevolverItem;
 import org.stargest.nst_revrecoiled.client.render.revolvers.CobblestoneRevolverItemRenderer;
 import org.stargest.nst_revrecoiled.client.render.revolvers.DiamondRevolverItemRenderer;
 import org.stargest.nst_revrecoiled.client.render.revolvers.GoldenRevolverItemRenderer;
@@ -31,19 +27,19 @@ public final class ModItemRenderers {
      * Binds each revolver item to its corresponding GeckoLib renderer.
      */
     public static void init() {
-        bind(((CobblestoneRevolverItem) ModItems.COBBLESTONE_REVOLVER).renderProvider,
+        bind(((BaseRevolverItem) ModItems.COBBLESTONE_REVOLVER).renderProvider,
                 CobblestoneRevolverItemRenderer::new);
-        bind(((IronRevolverItem) ModItems.IRON_REVOLVER).renderProvider,
+        bind(((BaseRevolverItem) ModItems.IRON_REVOLVER).renderProvider,
                 IronRevolverItemRenderer::new);
-        bind(((GoldenRevolverItem) ModItems.GOLDEN_REVOLVER).renderProvider,
+        bind(((BaseRevolverItem) ModItems.GOLDEN_REVOLVER).renderProvider,
                 GoldenRevolverItemRenderer::new);
-        bind(((DiamondRevolverItem) ModItems.DIAMOND_REVOLVER).renderProvider,
+        bind(((BaseRevolverItem) ModItems.DIAMOND_REVOLVER).renderProvider,
                 DiamondRevolverItemRenderer::new);
     }
 
     /**
      * Binds a renderer factory to an item's render provider.
-     * Uses lazy initialization - renderer is only created when first needed.
+     * Uses lazy initialization — renderer is only created when first needed.
      *
      * @param renderProvider The item's render provider container
      * @param factory Supplier that creates the renderer instance

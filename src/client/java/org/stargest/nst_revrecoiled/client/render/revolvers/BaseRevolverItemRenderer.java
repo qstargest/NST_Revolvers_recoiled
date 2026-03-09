@@ -14,6 +14,10 @@ import software.bernie.geckolib.model.GeoModel;
 import software.bernie.geckolib.renderer.GeckolibSpecialRenderer;
 import software.bernie.geckolib.renderer.GeoItemRenderer;
 
+import java.util.ArrayDeque;
+import java.util.Deque;
+import java.util.Optional;
+
 /**
  * Base GeckoLib renderer for all revolver items.
  * Tracks the current holder entity before each render so that
@@ -22,26 +26,32 @@ import software.bernie.geckolib.renderer.GeoItemRenderer;
  *
  * Key features:
  * - Holder tracking for particle spawn positioning
- * - Thread-safe single-threaded rendering
+ * - Thread-safe single-threaded rendering with stack-based state
  * - Efficient holder lookup (checks local player first)
  * - Type-safe comparison using item identity
+ * - Exception-safe cleanup using try-finally pattern
+ * - NPE-safe handling when item is rendered without holder (e.g., in inventory)
  */
 public abstract class BaseRevolverItemRenderer<T extends BaseRevolverItem> extends GeoItemRenderer<T> {
 
     /**
-     * Currently rendering holder entity.
-     * Static is safe because rendering happens on a single thread.
+     * Stack-based holder tracking for nested render calls.
+     * Uses Deque, Optional & LivingEntity to support null holders safely.
+     * Wrapped in Optional to prevent NullPointerException when items are rendered
+     * without a holder (e.g., in inventory UI, item frames, ground).
+     * Rendering is single-threaded, so static storage is safe.
      */
-    private static LivingEntity currentHolder = null;
+    private static final Deque<Optional<LivingEntity>> holderStack = new ArrayDeque<>();
 
     /**
      * Gets the current holder entity being rendered.
      * Used by RevolverParticleHandler to determine particle spawn position.
      *
-     * @return The living entity holding the revolver, or null if not found
+     * @return The living entity holding the revolver, or null if stack is empty or holder not found
      */
     public static @Nullable LivingEntity getCurrentHolder() {
-        return currentHolder;
+        Optional<LivingEntity> top = holderStack.peek();
+        return top != null ? top.orElse(null) : null;
     }
 
     public BaseRevolverItemRenderer(GeoModel<T> model) {
@@ -51,6 +61,8 @@ public abstract class BaseRevolverItemRenderer<T extends BaseRevolverItem> exten
     /**
      * Renders the revolver and tracks its holder for particle effects.
      * Searches for the holder entity before rendering to support particle keyframe events.
+     * Uses try-finally to ensure stack cleanup even if rendering throws an exception.
+     * Wraps holder in Optional to safely handle cases where no holder exists.
      */
     @Override
     public void render(GeckolibSpecialRenderer.RenderData renderData, ModelTransformationMode transformType,
@@ -60,27 +72,30 @@ public abstract class BaseRevolverItemRenderer<T extends BaseRevolverItem> exten
         MinecraftClient client = MinecraftClient.getInstance();
         ItemStack stack = renderData.itemstack();
 
-        // Find the item holder
-        currentHolder = null;
+        LivingEntity holder = null;
         if (client.world != null) {
             // Check local player first (optimization for common case)
             if (client.player != null && isHolding(client.player, stack)) {
-                currentHolder = client.player;
+                holder = client.player;
             } else {
                 // Search among other players in the world
                 for (PlayerEntity player : client.world.getPlayers()) {
                     if (isHolding(player, stack)) {
-                        currentHolder = player;
+                        holder = player;
                         break;
                     }
                 }
             }
         }
 
-        super.render(renderData, transformType, poseStack, bufferSource, packedLight, packedOverlay, hasGlint);
-
-        // Note: We don't clear currentHolder here because particle keyframe events
-        // may need it during the same render frame. It will be overwritten on next render.
+        // Push holder onto stack wrapped in Optional (prevents NPE when holder is null)
+        holderStack.push(Optional.ofNullable(holder));
+        try {
+            super.render(renderData, transformType, poseStack, bufferSource, packedLight, packedOverlay, hasGlint);
+        } finally {
+            // Guaranteed cleanup even if rendering throws exception
+            holderStack.pop();
+        }
     }
 
     /**
