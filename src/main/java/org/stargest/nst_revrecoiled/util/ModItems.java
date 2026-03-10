@@ -116,7 +116,7 @@ public class ModItems {
                 .icon(() -> new ItemStack(COBBLESTONE_REVOLVER))
                 .displayName(Text.translatable("itemGroup.nst_revrecoiled.main"))
                 .entries((context, entries) -> {
-                    entries.add(ModBlocks.GUNNER_TABLE);
+                    entries.add(ModBlocks.ASSEMBLY_TABLE);
                     entries.add(STONE_BULLET);
                     entries.add(COBBLESTONE_REVOLVER);
                     entries.add(IRON_BULLET);

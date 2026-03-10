@@ -24,7 +24,7 @@
   ],
   "rewards": {
     "recipes": [
-      "nst_revrecoiled:gunner_table"
+      "nst_revrecoiled:assembly_table"
     ]
   },
   "sends_telemetry_data": false

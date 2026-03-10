@@ -9,11 +9,11 @@ import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 
-public class GunnerTableBlock extends Block {
+public class AssemblyTableBlock extends Block {
 
-    public static final MapCodec<GunnerTableBlock> CODEC = createCodec(GunnerTableBlock::new);
+    public static final MapCodec<AssemblyTableBlock> CODEC = createCodec(AssemblyTableBlock::new);
 
-    public GunnerTableBlock(Settings settings) {
+    public AssemblyTableBlock(Settings settings) {
         super(settings);
     }
 

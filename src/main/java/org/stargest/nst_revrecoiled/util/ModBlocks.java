@@ -8,20 +8,20 @@ import net.minecraft.registry.RegistryKey;
 import net.minecraft.registry.RegistryKeys;
 import net.minecraft.sound.BlockSoundGroup;
 import net.minecraft.util.Identifier;
-import org.stargest.nst_revrecoiled.Blocks.GunnerTableBlock;
+import org.stargest.nst_revrecoiled.Blocks.AssemblyTableBlock;
 import org.stargest.nst_revrecoiled.Main;
 
 public class ModBlocks {
-    public static Block GUNNER_TABLE;
+    public static Block ASSEMBLY_TABLE;
 
     public static void init(){
-        Identifier gunman_table_ID = Identifier.of(Main.MOD_ID, "gunner_table");
-        RegistryKey<Block> gunman_table_Key = RegistryKey.of(RegistryKeys.BLOCK, gunman_table_ID);
+        Identifier assembly_table_ID = Identifier.of(Main.MOD_ID, "assembly_table");
+        RegistryKey<Block> assembly_table_Key = RegistryKey.of(RegistryKeys.BLOCK, assembly_table_ID);
 
-        GUNNER_TABLE = Blocks.register(
-                gunman_table_Key,
-                GunnerTableBlock::new,
+        ASSEMBLY_TABLE = Blocks.register(
+                assembly_table_Key,
+                AssemblyTableBlock::new,
                 AbstractBlock.Settings.create().strength(3.0f).requiresTool().sounds(BlockSoundGroup.WOOD));
-        Items.register(GUNNER_TABLE);
+        Items.register(ASSEMBLY_TABLE);
     }
 }

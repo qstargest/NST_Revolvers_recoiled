@@ -8,5 +8,5 @@
   "item.nst_revrecoiled.golden_revolver": "Golden Revolver",
   "item.nst_revrecoiled.diamond_revolver": "Diamond Revolver",
   "itemGroup.nst_revrecoiled.main": "[NST] Revolvers recoiled",
-  "block.nst_revrecoiled.gunner_table": "Gunner Table"
+  "block.nst_revrecoiled.assembly_table": "Assembly Table"
 }
