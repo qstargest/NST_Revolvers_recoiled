@@ -7,5 +7,6 @@
   "item.nst_revrecoiled.iron_revolver": "Железен револвер",
   "item.nst_revrecoiled.golden_revolver": "Златен револвер",
   "item.nst_revrecoiled.diamond_revolver": "Диамантен револвер",
-  "block.nst_revrecoiled.assembly_table": "Монтажна маса"
+  "block.nst_revrecoiled.assembly_table": "Монтажна маса",
+  "entity.minecraft.villager.nst_revrecoiled.revolvermaker": "Револверджия"
 }

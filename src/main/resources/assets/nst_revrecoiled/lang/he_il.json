@@ -7,5 +7,6 @@
   "item.nst_revrecoiled.iron_revolver": "אקדח גלגל מברזל",
   "item.nst_revrecoiled.golden_revolver": "אקדח גלגל מזהב",
   "item.nst_revrecoiled.diamond_revolver": "אקדח גלגל מיהלום",
-  "block.nst_revrecoiled.assembly_table": "שולחן הרכבה"
+  "block.nst_revrecoiled.assembly_table": "שולחן הרכבה",
+  "entity.minecraft.villager.nst_revrecoiled.revolvermaker": "יצרן אקדחים"
 }

@@ -7,5 +7,6 @@
   "item.nst_revrecoiled.iron_revolver": "Темір револьвер",
   "item.nst_revrecoiled.golden_revolver": "Алтын револьвер",
   "item.nst_revrecoiled.diamond_revolver": "Алмаз револьвер",
-  "block.nst_revrecoiled.assembly_table": "Жинау үстелі"
+  "block.nst_revrecoiled.assembly_table": "Жинау үстелі",
+  "entity.minecraft.villager.nst_revrecoiled.revolvermaker": "Револьвер шебері"
 }

@@ -7,5 +7,6 @@
   "item.nst_revrecoiled.iron_revolver": "Железный револьвер",
   "item.nst_revrecoiled.golden_revolver": "Золотой револьвер",
   "item.nst_revrecoiled.diamond_revolver": "Алмазный револьвер",
-  "block.nst_revrecoiled.assembly_table": "Стол сборки"
+  "block.nst_revrecoiled.assembly_table": "Стол сборки",
+  "entity.minecraft.villager.nst_revrecoiled.revolvermaker": "Револьверщик"
 }

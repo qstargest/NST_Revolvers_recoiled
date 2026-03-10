@@ -7,5 +7,6 @@
   "item.nst_revrecoiled.iron_revolver": "Željezni revolver",
   "item.nst_revrecoiled.golden_revolver": "Zlatni revolver",
   "item.nst_revrecoiled.diamond_revolver": "Dijamantni revolver",
-  "block.nst_revrecoiled.assembly_table": "Montažni stol"
+  "block.nst_revrecoiled.assembly_table": "Montažni stol",
+  "entity.minecraft.villager.nst_revrecoiled.revolvermaker": "Izradivač revolvera"
 }

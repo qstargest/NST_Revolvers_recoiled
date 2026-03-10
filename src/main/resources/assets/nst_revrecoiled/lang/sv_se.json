@@ -7,5 +7,6 @@
   "item.nst_revrecoiled.iron_revolver": "Järnrevolver",
   "item.nst_revrecoiled.golden_revolver": "Guldrevolver",
   "item.nst_revrecoiled.diamond_revolver": "Diamantrevolver",
-  "block.nst_revrecoiled.assembly_table": "Monteringsbord"
+  "block.nst_revrecoiled.assembly_table": "Monteringsbord",
+  "entity.minecraft.villager.nst_revrecoiled.revolvermaker": "Revolvertillverkare"
 }

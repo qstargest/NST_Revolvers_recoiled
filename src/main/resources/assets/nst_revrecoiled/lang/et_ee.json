@@ -7,5 +7,6 @@
   "item.nst_revrecoiled.iron_revolver": "Raudrevolver",
   "item.nst_revrecoiled.golden_revolver": "Kullarevolver",
   "item.nst_revrecoiled.diamond_revolver": "Teemandrevolver",
-  "block.nst_revrecoiled.assembly_table": "Kokkupaneku laud"
+  "block.nst_revrecoiled.assembly_table": "Kokkupaneku laud",
+  "entity.minecraft.villager.nst_revrecoiled.revolvermaker": "Revolvritegija"
 }

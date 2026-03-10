@@ -4,6 +4,7 @@ import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.stargest.nst_revrecoiled.Villager.ModVillagers;
 import org.stargest.nst_revrecoiled.network.RevolverFireParticlePacket;
 import org.stargest.nst_revrecoiled.util.ModBlocks;
 import org.stargest.nst_revrecoiled.util.ModEntities;
@@ -26,6 +27,7 @@ public class Main implements ModInitializer {
         ModEntities.init();
         ModParticles.init();
         ModBlocks.init();
+        ModVillagers.init();
 
         PayloadTypeRegistry.playS2C().register(
                 RevolverFireParticlePacket.ID,

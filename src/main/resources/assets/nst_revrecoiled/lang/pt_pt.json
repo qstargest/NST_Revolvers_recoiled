@@ -7,5 +7,6 @@
   "item.nst_revrecoiled.iron_revolver": "Revólver de ferro",
   "item.nst_revrecoiled.golden_revolver": "Revólver de ouro",
   "item.nst_revrecoiled.diamond_revolver": "Revólver de diamante",
-  "block.nst_revrecoiled.assembly_table": "Mesa de montagem"
+  "block.nst_revrecoiled.assembly_table": "Mesa de montagem",
+  "entity.minecraft.villager.nst_revrecoiled.revolvermaker": "Fabricante de revólveres"
 }
