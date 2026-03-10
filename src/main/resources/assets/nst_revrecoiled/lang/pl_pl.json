@@ -6,5 +6,6 @@
   "item.nst_revrecoiled.cobblestone_revolver": "Brukowy rewolwer",
   "item.nst_revrecoiled.iron_revolver": "Żelazny rewolwer",
   "item.nst_revrecoiled.golden_revolver": "Złoty rewolwer",
-  "item.nst_revrecoiled.diamond_revolver": "Diamentowy rewolwer"
+  "item.nst_revrecoiled.diamond_revolver": "Diamentowy rewolwer",
+  "block.nst_revrecoiled.gunner_table": "Stół strzelca"
 }

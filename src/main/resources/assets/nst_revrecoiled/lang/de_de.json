@@ -6,5 +6,6 @@
   "item.nst_revrecoiled.cobblestone_revolver": "Kopfsteinpflaster-Revolver",
   "item.nst_revrecoiled.iron_revolver": "Eisenrevolver",
   "item.nst_revrecoiled.golden_revolver": "Goldrevolver",
-  "item.nst_revrecoiled.diamond_revolver": "Diamantrevolver"
+  "item.nst_revrecoiled.diamond_revolver": "Diamantrevolver",
+  "block.nst_revrecoiled.gunner_table": "Schützentisch"
 }

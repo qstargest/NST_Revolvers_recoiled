@@ -6,5 +6,6 @@
   "item.nst_revrecoiled.cobblestone_revolver": "Munakivisrevolver",
   "item.nst_revrecoiled.iron_revolver": "Raudrevolver",
   "item.nst_revrecoiled.golden_revolver": "Kullarevolver",
-  "item.nst_revrecoiled.diamond_revolver": "Teemandrevolver"
+  "item.nst_revrecoiled.diamond_revolver": "Teemandrevolver",
+  "block.nst_revrecoiled.gunner_table": "Küti laud"
 }

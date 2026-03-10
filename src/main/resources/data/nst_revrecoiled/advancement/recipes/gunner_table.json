@@ -1,0 +1,31 @@
+{
+  "parent": "minecraft:recipes/root",
+  "criteria": {
+    "has_spruce_planks": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          { "items": "minecraft:spruce_planks" }
+        ]
+      }
+    },
+    "has_paper": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          { "items": "minecraft:paper" }
+        ]
+      }
+    }
+  },
+  "requirements": [
+    ["has_spruce_planks"],
+    ["has_paper"]
+  ],
+  "rewards": {
+    "recipes": [
+      "nst_revrecoiled:gunner_table"
+    ]
+  },
+  "sends_telemetry_data": false
+}

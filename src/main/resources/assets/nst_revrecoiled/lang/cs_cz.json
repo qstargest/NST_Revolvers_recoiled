@@ -6,5 +6,6 @@
   "item.nst_revrecoiled.cobblestone_revolver": "Dlažební revolver",
   "item.nst_revrecoiled.iron_revolver": "Železný revolver",
   "item.nst_revrecoiled.golden_revolver": "Zlatý revolver",
-  "item.nst_revrecoiled.diamond_revolver": "Diamantový revolver"
+  "item.nst_revrecoiled.diamond_revolver": "Diamantový revolver",
+  "block.nst_revrecoiled.gunner_table": "Střelcův stůl"
 }

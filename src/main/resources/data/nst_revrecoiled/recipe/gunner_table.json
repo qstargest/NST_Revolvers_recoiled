@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "show_notification": true,
+  "category": "misc",
+  "key": {
+    "#": "minecraft:spruce_planks",
+    "&": "minecraft:paper"
+  },
+  "pattern": [
+    " &",
+    " #"
+  ],
+  "result": {
+    "count": 1,
+    "id": "nst_revrecoiled:gunner_table"
+  }
+}

@@ -6,5 +6,6 @@
   "item.nst_revrecoiled.cobblestone_revolver": "丸石のリボルバー",
   "item.nst_revrecoiled.iron_revolver": "鉄のリボルバー",
   "item.nst_revrecoiled.golden_revolver": "金のリボルバー",
-  "item.nst_revrecoiled.diamond_revolver": "ダイヤモンドのリボルバー"
+  "item.nst_revrecoiled.diamond_revolver": "ダイヤモンドのリボルバー",
+  "block.nst_revrecoiled.gunner_table": "ガンナーテーブル"
 }

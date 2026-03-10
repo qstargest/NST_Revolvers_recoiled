@@ -6,5 +6,6 @@
   "item.nst_revrecoiled.cobblestone_revolver": "Revolver en pierre taillée",
   "item.nst_revrecoiled.iron_revolver": "Revolver en fer",
   "item.nst_revrecoiled.golden_revolver": "Revolver en or",
-  "item.nst_revrecoiled.diamond_revolver": "Revolver en diamant"
+  "item.nst_revrecoiled.diamond_revolver": "Revolver en diamant",
+  "block.nst_revrecoiled.gunner_table": "Table du tireur"
 }

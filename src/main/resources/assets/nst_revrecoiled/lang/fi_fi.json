@@ -6,5 +6,6 @@
   "item.nst_revrecoiled.cobblestone_revolver": "Noppakivirevolveri",
   "item.nst_revrecoiled.iron_revolver": "Rautarevolveri",
   "item.nst_revrecoiled.golden_revolver": "Kultainen revolveri",
-  "item.nst_revrecoiled.diamond_revolver": "Timanttinen revolveri"
+  "item.nst_revrecoiled.diamond_revolver": "Timanttinen revolveri",
+  "block.nst_revrecoiled.gunner_table": "Ampujapöytä"
 }

@@ -6,5 +6,6 @@
   "item.nst_revrecoiled.cobblestone_revolver": "Калдъръмен револвер",
   "item.nst_revrecoiled.iron_revolver": "Железен револвер",
   "item.nst_revrecoiled.golden_revolver": "Златен револвер",
-  "item.nst_revrecoiled.diamond_revolver": "Диамантен револвер"
+  "item.nst_revrecoiled.diamond_revolver": "Диамантен револвер",
+  "block.nst_revrecoiled.gunner_table": "Маса на стрелеца"
 }

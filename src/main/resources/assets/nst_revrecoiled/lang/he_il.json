@@ -6,5 +6,6 @@
   "item.nst_revrecoiled.cobblestone_revolver": "אקדח גלגל מאבני ריצוף",
   "item.nst_revrecoiled.iron_revolver": "אקדח גלגל מברזל",
   "item.nst_revrecoiled.golden_revolver": "אקדח גלגל מזהב",
-  "item.nst_revrecoiled.diamond_revolver": "אקדח גלגל מיהלום"
+  "item.nst_revrecoiled.diamond_revolver": "אקדח גלגל מיהלום",
+  "block.nst_revrecoiled.gunner_table": "שולחן הגנר"
 }

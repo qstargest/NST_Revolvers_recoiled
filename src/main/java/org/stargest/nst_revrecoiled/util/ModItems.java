@@ -1,12 +1,16 @@
 package org.stargest.nst_revrecoiled.util;
 
+import net.fabricmc.fabric.api.itemgroup.v1.FabricItemGroup;
 import net.fabricmc.fabric.api.itemgroup.v1.ItemGroupEvents;
 import net.minecraft.item.Item;
+import net.minecraft.item.ItemGroup;
 import net.minecraft.item.ItemGroups;
+import net.minecraft.item.ItemStack;
 import net.minecraft.registry.Registries;
 import net.minecraft.registry.Registry;
 import net.minecraft.registry.RegistryKey;
 import net.minecraft.registry.RegistryKeys;
+import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 import org.stargest.nst_revrecoiled.Items.Bullets.DiamondBulletItem;
 import org.stargest.nst_revrecoiled.Items.Bullets.GoldenBulletItem;
@@ -76,6 +80,12 @@ public class ModItems {
             new Item.Settings().maxCount(1)
     );
 
+    // Creative Tab
+    public static final RegistryKey<ItemGroup> MOD_GROUP_KEY = RegistryKey.of(
+            Registries.ITEM_GROUP.getKey(),
+            Identifier.of(Main.MOD_ID, "main")
+    );
+
     /**
      * Registers an item using a factory pattern.
      *
@@ -91,10 +101,8 @@ public class ModItems {
                 RegistryKeys.ITEM,
                 Identifier.of(Main.MOD_ID, name)
         );
-
         Item item = factory.apply(settings.registryKey(key));
         Registry.register(Registries.ITEM, key, item);
-
         return item;
     }
 
@@ -104,15 +112,21 @@ public class ModItems {
     public static void init() {
         Main.LOGGER.info("Registering items for {}", Main.MOD_ID);
 
-        ItemGroupEvents.modifyEntriesEvent(ItemGroups.COMBAT).register(entries -> {
-            entries.add(STONE_BULLET);
-            entries.add(COBBLESTONE_REVOLVER);
-            entries.add(IRON_BULLET);
-            entries.add(IRON_REVOLVER);
-            entries.add(GOLDEN_BULLET);
-            entries.add(GOLDEN_REVOLVER);
-            entries.add(DIAMOND_BULLET);
-            entries.add(DIAMOND_REVOLVER);
-        });
+        Registry.register(Registries.ITEM_GROUP, MOD_GROUP_KEY, FabricItemGroup.builder()
+                .icon(() -> new ItemStack(COBBLESTONE_REVOLVER))
+                .displayName(Text.translatable("itemGroup.nst_revrecoiled.main"))
+                .entries((context, entries) -> {
+                    entries.add(ModBlocks.GUNNER_TABLE);
+                    entries.add(STONE_BULLET);
+                    entries.add(COBBLESTONE_REVOLVER);
+                    entries.add(IRON_BULLET);
+                    entries.add(IRON_REVOLVER);
+                    entries.add(GOLDEN_BULLET);
+                    entries.add(GOLDEN_REVOLVER);
+                    entries.add(DIAMOND_BULLET);
+                    entries.add(DIAMOND_REVOLVER);
+                })
+                .build()
+        );
     }
 }

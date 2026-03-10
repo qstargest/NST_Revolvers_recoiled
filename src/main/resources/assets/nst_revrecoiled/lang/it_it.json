@@ -6,5 +6,6 @@
   "item.nst_revrecoiled.cobblestone_revolver": "Rivoltella di acciottolato",
   "item.nst_revrecoiled.iron_revolver": "Rivoltella di ferro",
   "item.nst_revrecoiled.golden_revolver": "Rivoltella d'oro",
-  "item.nst_revrecoiled.diamond_revolver": "Rivoltella di diamante"
+  "item.nst_revrecoiled.diamond_revolver": "Rivoltella di diamante",
+  "block.nst_revrecoiled.gunner_table": "Tavolo del tiratore"
 }

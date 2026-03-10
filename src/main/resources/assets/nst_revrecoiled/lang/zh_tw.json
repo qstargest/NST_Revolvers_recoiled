@@ -1,10 +1,11 @@
 {
-  "item.nst_revrecoiled.stone_bullet": "石头子弹",
-  "item.nst_revrecoiled.iron_bullet": "铁子弹",
-  "item.nst_revrecoiled.golden_bullet": "金子弹",
-  "item.nst_revrecoiled.diamond_bullet": "钻石子弹",
-  "item.nst_revrecoiled.cobblestone_revolver": "圆石左轮手枪",
-  "item.nst_revrecoiled.iron_revolver": "铁左轮手枪",
-  "item.nst_revrecoiled.golden_revolver": "金左轮手枪",
-  "item.nst_revrecoiled.diamond_revolver": "钻石左轮手枪"
+  "item.nst_revrecoiled.stone_bullet": "石頭子彈",
+  "item.nst_revrecoiled.iron_bullet": "鐵子彈",
+  "item.nst_revrecoiled.golden_bullet": "金子彈",
+  "item.nst_revrecoiled.diamond_bullet": "鑽石子彈",
+  "item.nst_revrecoiled.cobblestone_revolver": "圓石左輪手槍",
+  "item.nst_revrecoiled.iron_revolver": "鐵左輪手槍",
+  "item.nst_revrecoiled.golden_revolver": "金左輪手槍",
+  "item.nst_revrecoiled.diamond_revolver": "鑽石左輪手槍",
+  "block.nst_revrecoiled.gunner_table": "射手工作台"
 }
