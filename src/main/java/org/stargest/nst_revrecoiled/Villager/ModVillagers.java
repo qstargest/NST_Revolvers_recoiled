@@ -13,29 +13,64 @@ import net.minecraft.world.poi.PointOfInterestType;
 import org.stargest.nst_revrecoiled.Main;
 import org.stargest.nst_revrecoiled.util.ModBlocks;
 
+/**
+ * Registers the revolvermaker villager profession and its associated Point of Interest.
+ *
+ * Key features:
+ * - Custom POI tied to the Assembly Table block
+ * - Revolvermaker profession uses Assembly Table as workstation
+ * - Plays armorer work sound for immersion
+ * - POI block states registered automatically via PointOfInterestHelper
+ *
+ * Registration order matters: POI is registered by PointOfInterestHelper at field
+ * initialization time, so only the profession needs explicit registration in init().
+ * Keeping POI registration implicit avoids double-registration issues.
+ */
 public class ModVillagers {
 
-    // --- Point of Interest ---
+    // -------------------------------------------------------------------------
+    // Point of Interest
+    // -------------------------------------------------------------------------
 
+    /**
+     * Registry key for the Assembly Table POI.
+     * Used to match the profession to its workstation via predicate.
+     */
     public static final RegistryKey<PointOfInterestType> ASSEMBLY_TABLE_POI_KEY =
             RegistryKey.of(RegistryKeys.POINT_OF_INTEREST_TYPE,
                     Identifier.of(Main.MOD_ID, "assembly_table_poi"));
 
-    // PointOfInterestHelper itself updates BLOCK_STATE_TO_POINT_OF_INTEREST_TYPE,
+    /**
+     * Point of Interest for the Assembly Table block.
+     * Allows only one villager to claim the table at a time (ticket count = 1).
+     * PointOfInterestHelper automatically registers all BlockStates of the block
+     * and updates BLOCK_STATE_TO_POINT_OF_INTEREST_TYPE — no manual state enumeration needed.
+     */
     public static final PointOfInterestType ASSEMBLY_TABLE_POI =
             PointOfInterestHelper.register(
                     Identifier.of(Main.MOD_ID, "assembly_table_poi"),
-                    1,  // Ticket count - how many villagers are using the POI at the same time
-                    1,  // Search distance
-                    ModBlocks.ASSEMBLY_TABLE  // all BlockStates of the block will be added automatically
+                    1,  // Ticket count — max villagers using this POI simultaneously
+                    1,  // Search distance in chunks
+                    ModBlocks.ASSEMBLY_TABLE
             );
 
-    // --- Profession ---
+    // -------------------------------------------------------------------------
+    // Profession
+    // -------------------------------------------------------------------------
 
+    /**
+     * Registry key for the revolvermaker profession.
+     */
     public static final RegistryKey<VillagerProfession> REVOLVERMAKER_KEY =
             RegistryKey.of(RegistryKeys.VILLAGER_PROFESSION,
                     Identifier.of(Main.MOD_ID, "revolvermaker"));
 
+    /**
+     * Revolvermaker villager profession.
+     * Associates with the Assembly Table POI for both acquisition and work destination.
+     * Empty item and block sets mean no vanilla gather or secondary work behavior.
+     * Uses armorer work sound since revolvers are closest to smithed goods.
+     */
     public static final VillagerProfession REVOLVERMAKER = new VillagerProfession(
             "revolvermaker",
             entry -> entry.matchesKey(ASSEMBLY_TABLE_POI_KEY),
@@ -45,11 +80,17 @@ public class ModVillagers {
             SoundEvents.ENTITY_VILLAGER_WORK_ARMORER
     );
 
-    // --- Registration ---
+    // -------------------------------------------------------------------------
+    // Registration
+    // -------------------------------------------------------------------------
 
+    /**
+     * Registers the revolvermaker profession into the villager profession registry.
+     * POI is already registered at class load time via PointOfInterestHelper;
+     * only the profession requires explicit registration here.
+     * Called from the mod's main initializer.
+     */
     public static void init() {
-        // POI is already registered via PointOfInterestHelper above,
-        // We're only registering the profession
         Registry.register(
                 Registries.VILLAGER_PROFESSION,
                 REVOLVERMAKER_KEY,

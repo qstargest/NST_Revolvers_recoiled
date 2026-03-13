@@ -142,7 +142,7 @@ public class CameraRecoilManager {
             }
 
             wasCharged = isCharged;
-            lastStack = stack.copy();
+            lastStack = stack;
         } else {
             wasCharged = false;
             lastStack = ItemStack.EMPTY;

@@ -11,6 +11,9 @@
   },
   "client": [
     "MouseRecoilMixin",
-    "PlayerEntityModelMixin"
+    "PlayerEntityModelMixin",
+    ,
+    "VillagerClothingFeatureRendererMixin",
+    "VillagerEntityRenderStateMixin"
   ]
 }

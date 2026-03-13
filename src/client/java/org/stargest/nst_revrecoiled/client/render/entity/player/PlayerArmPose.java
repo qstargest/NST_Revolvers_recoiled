@@ -1,4 +1,4 @@
-package org.stargest.nst_revrecoiled.client.render.player;
+package org.stargest.nst_revrecoiled.client.render.entity.player;
 
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.render.entity.model.BipedEntityModel;
@@ -23,8 +23,10 @@ import java.util.Map;
  * - Movement shake
  * - Smooth interpolation between states
  *
- * Uses a consolidated state management approach with a single Map<Integer, PlayerRevolverState>
+ * Uses a consolidated state management approach with a single Map&lt;Integer, PlayerRevolverState&gt;
  * instead of multiple parallel HashMaps, improving code organization and cache locality.
+ *
+ * Provides cleanup methods to prevent memory leaks when players disconnect or entities unload.
  */
 public class PlayerArmPose {
 
@@ -345,5 +347,27 @@ public class PlayerArmPose {
     private static float getProgress(PlayerEntity player, ItemStack stack) {
         int max = stack.getMaxUseTime(player);
         return max <= 0 ? 0 : MathHelper.clamp((float) (max - player.getItemUseTimeLeft()) / max, 0, 1);
+    }
+
+    // -------------------------------------------------------------------------
+    // Public cleanup methods (called from client event listeners)
+    // -------------------------------------------------------------------------
+
+    /**
+     * Clears cached state for a specific entity.
+     * Called when an entity unloads to prevent memory leaks.
+     *
+     * @param entityId The entity ID to clear state for
+     */
+    public static void clearState(int entityId) {
+        playerStates.remove(entityId);
+    }
+
+    /**
+     * Clears all cached player states.
+     * Called when disconnecting from server to prevent stale data.
+     */
+    public static void clearAllStates() {
+        playerStates.clear();
     }
 }

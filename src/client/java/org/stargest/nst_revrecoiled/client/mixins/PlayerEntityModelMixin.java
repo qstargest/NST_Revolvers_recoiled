@@ -8,7 +8,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-import org.stargest.nst_revrecoiled.client.render.player.PlayerArmPose;
+import org.stargest.nst_revrecoiled.client.render.entity.player.PlayerArmPose;
 
 /**
  * Mixin to apply custom arm poses for revolver weapons.

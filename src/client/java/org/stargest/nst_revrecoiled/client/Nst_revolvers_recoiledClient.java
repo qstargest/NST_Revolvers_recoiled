@@ -2,15 +2,18 @@ package org.stargest.nst_revrecoiled.client;
 
 import net.fabricmc.api.ClientModInitializer;
 
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientEntityEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.client.particle.v1.ParticleFactoryRegistry;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
+import net.minecraft.entity.player.PlayerEntity;
 import org.stargest.nst_revrecoiled.Items.BaseRevolverItem;
 import org.stargest.nst_revrecoiled.client.handlers.RevolverParticleHandler;
 import org.stargest.nst_revrecoiled.client.managers.CameraRecoilManager;
 import org.stargest.nst_revrecoiled.client.particles.RevolverParticle;
+import org.stargest.nst_revrecoiled.client.render.entity.player.PlayerArmPose;
 import org.stargest.nst_revrecoiled.client.util.ModEntityRenderers;
 import org.stargest.nst_revrecoiled.client.util.ModItemRenderers;
 import org.stargest.nst_revrecoiled.network.RevolverFireParticlePacket;
@@ -23,13 +26,14 @@ import java.util.Objects;
  * Orchestrates registration of renderers, particles, event listeners, and network handlers.
  *
  * Initialization order:
- * 1. Entity renderers (bullet projectiles)
+ * 1. Entity renderers (bullet projectiles, custom villager renderer)
  * 2. Item renderers (GeckoLib revolver models)
- * 3. Event listeners (disconnect handler for recoil reset)
+ * 3. Event listeners (disconnect handler for recoil reset and arm pose cleanup,
+ *    entity unload handler for per-entity arm pose cleanup)
  * 4. Particle factories (fire and reload effects)
  * 5. Animation particle handler (keyframe events for reload)
  * 6. Immediate fire callback (bypasses animation delay for fire particles)
- * 7. Network packet receiver (fire particle synchronization)
+ * 7. Network packet receiver (fire particle synchronization across players)
  *
  * The immediate fire callback is set separately from the keyframe handler to ensure
  * fire particles appear instantly when shooting, not when the animation keyframe is reached.
@@ -37,12 +41,16 @@ import java.util.Objects;
  *
  * Network synchronization ensures all nearby players see fire particles from other players,
  * while avoiding duplication for the local player who already sees particles via clientFireCallback.
+ *
+ * PlayerArmPose state is cleaned up on both disconnect (clearAllStates) and
+ * individual entity unload (clearState) to prevent memory leaks.
  */
 public class Nst_revolvers_recoiledClient implements ClientModInitializer {
 
     @Override
     public void onInitializeClient() {
-        // Register entity and item renderers
+        // Register entity renderers (bullet projectiles, revolvermaker villager)
+        // and item renderers (GeckoLib revolver models)
         ModEntityRenderers.init();
         ModItemRenderers.init();
 
@@ -51,18 +59,36 @@ public class Nst_revolvers_recoiledClient implements ClientModInitializer {
                 (handler, client) -> CameraRecoilManager.getInstance().reset()
         );
 
-        // Register particle factories for revolver effects
+        // Clear all cached arm pose states on disconnect to prevent stale data
+        // persisting across server sessions
+        ClientPlayConnectionEvents.DISCONNECT.register((handler, client) ->
+                PlayerArmPose.clearAllStates()
+        );
+
+        // Clear per-entity arm pose state when a player entity unloads
+        // (e.g. goes out of render distance) to prevent unbounded map growth
+        ClientEntityEvents.ENTITY_UNLOAD.register((entity, world) -> {
+            if (entity instanceof PlayerEntity) {
+                PlayerArmPose.clearState(entity.getId());
+            }
+        });
+
+        // Register particle factories for revolver muzzle flash and reload smoke
         ParticleFactoryRegistry registry = ParticleFactoryRegistry.getInstance();
         registry.register(ModParticles.REVOLVER_FIRE, RevolverParticle.FireFactory::new);
         registry.register(ModParticles.REVOLVER_RELOAD, RevolverParticle.ReloadFactory::new);
 
-        // Set up particle handler for GeckoLib animation keyframes (reload only)
+        // Bind GeckoLib keyframe handler — handles reload particles only.
+        // Fire particles are intentionally ignored here; see clientFireCallback below.
         BaseRevolverItem.setParticleKeyframeHandler(new RevolverParticleHandler());
 
-        // Set up immediate fire callback to bypass animation delay
+        // Bind immediate fire callback to bypass GeckoLib animation delay.
+        // Ensures muzzle flash particles appear at the exact moment of the shot,
+        // not when the fire animation keyframe is eventually reached.
         BaseRevolverItem.setClientFireCallback(RevolverParticleHandler::spawnFireImmediate);
 
-        // Register network packet receiver for fire particle synchronization
+        // Receive server-broadcast fire particle packets for other players' shots.
+        // Local player is skipped — already handled by clientFireCallback above.
         ClientPlayNetworking.registerGlobalReceiver(
                 RevolverFireParticlePacket.ID,
                 (payload, ctx) -> ctx.client().execute(() -> {
@@ -70,10 +96,10 @@ public class Nst_revolvers_recoiledClient implements ClientModInitializer {
                             .getEntityById(payload.entityId());
 
                     if (entity instanceof LivingEntity living) {
-                        // Skip local player - already handled by clientFireCallback
+                        // Skip local player — particles already spawned via clientFireCallback
                         if (entity == ctx.client().player) return;
 
-                        // Spawn fire particles for other players
+                        // Spawn fire particles for remote players
                         RevolverParticleHandler.spawnFireImmediate(living);
                     }
                 })
