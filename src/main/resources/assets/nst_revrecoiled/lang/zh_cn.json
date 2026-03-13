@@ -8,5 +8,5 @@
   "item.nst_revrecoiled.golden_revolver": "金左轮手枪",
   "item.nst_revrecoiled.diamond_revolver": "钻石左轮手枪",
   "block.nst_revrecoiled.assembly_table": "组装台",
-  "entity.minecraft.villager.nst_revrecoiled.revolvermaker": "左轮枪匠"
+  "entity.minecraft.villager.revolvermaker": "左轮枪匠"
 }

@@ -8,5 +8,5 @@
   "item.nst_revrecoiled.golden_revolver": "Zlatý revolver",
   "item.nst_revrecoiled.diamond_revolver": "Diamantový revolver",
   "block.nst_revrecoiled.assembly_table": "Montážní stůl",
-  "entity.minecraft.villager.nst_revrecoiled.revolvermaker": "Výrobce revolverů"
+  "entity.minecraft.villager.revolvermaker": "Výrobce revolverů"
 }

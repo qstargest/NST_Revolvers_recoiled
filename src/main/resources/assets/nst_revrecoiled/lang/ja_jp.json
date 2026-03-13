@@ -8,5 +8,5 @@
   "item.nst_revrecoiled.golden_revolver": "金のリボルバー",
   "item.nst_revrecoiled.diamond_revolver": "ダイヤモンドのリボルバー",
   "block.nst_revrecoiled.assembly_table": "組み立てテーブル",
-  "entity.minecraft.villager.nst_revrecoiled.revolvermaker": "リボルバー職人"
+  "entity.minecraft.villager.revolvermaker": "リボルバー職人"
 }

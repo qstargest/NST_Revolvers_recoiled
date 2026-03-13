@@ -8,5 +8,5 @@
   "item.nst_revrecoiled.golden_revolver": "Aranyrevolver",
   "item.nst_revrecoiled.diamond_revolver": "Gyémántrevolver",
   "block.nst_revrecoiled.assembly_table": "Szerelőasztal",
-  "entity.minecraft.villager.nst_revrecoiled.revolvermaker": "Revolverkészítő"
+  "entity.minecraft.villager.revolvermaker": "Revolverkészítő"
 }

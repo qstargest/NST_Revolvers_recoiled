@@ -8,5 +8,5 @@
   "item.nst_revrecoiled.golden_revolver": "Revolver de aur",
   "item.nst_revrecoiled.diamond_revolver": "Revolver de diamant",
   "block.nst_revrecoiled.assembly_table": "Masă de asamblare",
-  "entity.minecraft.villager.nst_revrecoiled.revolvermaker": "Fabricant de revolvere"
+  "entity.minecraft.villager.revolvermaker": "Fabricant de revolvere"
 }

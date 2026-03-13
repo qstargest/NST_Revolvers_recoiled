@@ -8,5 +8,5 @@
   "item.nst_revrecoiled.golden_revolver": "Złoty rewolwer",
   "item.nst_revrecoiled.diamond_revolver": "Diamentowy rewolwer",
   "block.nst_revrecoiled.assembly_table": "Stół montażowy",
-  "entity.minecraft.villager.nst_revrecoiled.revolvermaker": "Rewolwerownik"
+  "entity.minecraft.villager.revolvermaker": "Rewolwerownik"
 }

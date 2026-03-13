@@ -8,5 +8,5 @@
   "item.nst_revrecoiled.golden_revolver": "Kultainen revolveri",
   "item.nst_revrecoiled.diamond_revolver": "Timanttinen revolveri",
   "block.nst_revrecoiled.assembly_table": "Kokoonpanopöytä",
-  "entity.minecraft.villager.nst_revrecoiled.revolvermaker": "Revolverintekijä"
+  "entity.minecraft.villager.revolvermaker": "Revolverintekijä"
 }
