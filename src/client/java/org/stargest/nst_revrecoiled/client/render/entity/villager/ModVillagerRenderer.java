@@ -2,6 +2,7 @@ package org.stargest.nst_revrecoiled.client.render.entity.villager;
 
 import net.minecraft.client.render.entity.EntityRendererFactory;
 import net.minecraft.client.render.entity.VillagerEntityRenderer;
+import net.minecraft.client.render.entity.feature.VillagerHeldItemFeatureRenderer;
 import net.minecraft.client.render.entity.state.VillagerEntityRenderState;
 import net.minecraft.entity.passive.VillagerEntity;
 import net.minecraft.util.Identifier;
@@ -10,18 +11,22 @@ import org.stargest.nst_revrecoiled.Villager.ModVillagers;
 
 /**
  * Custom renderer for the revolvermaker villager profession.
- * Extends the vanilla VillagerEntityRenderer to override texture selection
- * and suppress vanilla clothing layers for revolvermaker villagers.
+ * Extends the vanilla VillagerEntityRenderer to override texture selection,
+ * suppress vanilla clothing layers, and fix revolver rendering in the villager's hand.
  *
  * Key features:
  * - Custom texture applied when the villager's profession is revolvermaker
  * - Falls back to vanilla texture resolution for all other professions
- * - Passes profession state into VillagerEntityRenderState via VillagerRenderStateAccess
- *   so that downstream feature renderers (e.g. VillagerClothingFeatureRendererMixin)
- *   can suppress the vanilla profession overlay without re-querying entity data
+ * - Passes profession state and held item into VillagerEntityRenderState via
+ *   VillagerRenderStateAccess so downstream feature renderers can access both
+ *   without re-querying entity data
+ * - Replaces the vanilla VillagerHeldItemFeatureRenderer with
+ *   ModVillagerHeldItemFeatureRenderer to render revolvers as 2D flat items
+ *   instead of triggering the GeckoLib 3D model when displayed during trades
  *
- * Profession detection happens once in updateRenderState() per frame,
- * keeping getTexture() a simple branch with no entity lookups.
+ * Profession detection and held item capture happen once per frame in
+ * updateRenderState(), keeping getTexture() and the feature renderer
+ * as simple, entity-free reads.
  */
 public class ModVillagerRenderer extends VillagerEntityRenderer {
 
@@ -31,22 +36,30 @@ public class ModVillagerRenderer extends VillagerEntityRenderer {
     private static final Identifier REVOLVERMAKER_TEXTURE =
             Identifier.of(Main.MOD_ID, "textures/entity/villager/revolvermaker.png");
 
+    /**
+     * Removes the vanilla held item feature renderer and replaces it with the
+     * mod's implementation that handles revolver items correctly.
+     */
     public ModVillagerRenderer(EntityRendererFactory.Context context) {
         super(context);
+        this.features.removeIf(f -> f instanceof VillagerHeldItemFeatureRenderer);
+        this.addFeature(new ModVillagerHeldItemFeatureRenderer<>(this));
     }
 
     /**
-     * Populates render state with revolvermaker profession flag.
-     * Called once per frame before rendering; result is consumed by
-     * getTexture() and VillagerClothingFeatureRendererMixin to avoid
-     * repeated profession lookups during the render pass.
+     * Populates render state with the revolvermaker flag and current held item.
+     * Called once per frame before rendering; results are consumed by getTexture()
+     * and ModVillagerHeldItemFeatureRenderer to avoid repeated entity lookups
+     * during the render pass.
      */
     @Override
     public void updateRenderState(VillagerEntity entity, VillagerEntityRenderState state, float tickDelta) {
         super.updateRenderState(entity, state, tickDelta);
-        ((VillagerRenderStateAccess) state).nst$setIsRevolvermaker(
+        VillagerRenderStateAccess access = (VillagerRenderStateAccess) state;
+        access.nst$setIsRevolvermaker(
                 entity.getVillagerData().getProfession() == ModVillagers.REVOLVERMAKER
         );
+        access.nst$setHeldItem(entity.getMainHandStack());
     }
 
     /**
