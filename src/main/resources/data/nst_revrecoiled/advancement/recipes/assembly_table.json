@@ -16,11 +16,20 @@
           { "items": "minecraft:paper" }
         ]
       }
+    },
+    "has_lapis_lazuli": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          { "items": "minecraft:lapis_lazuli" }
+        ]
+      }
     }
   },
   "requirements": [
     ["has_spruce_planks"],
-    ["has_paper"]
+    ["has_paper"],
+    ["has_lapis_lazuli"]
   ],
   "rewards": {
     "recipes": [

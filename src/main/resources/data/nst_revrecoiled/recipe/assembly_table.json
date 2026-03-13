@@ -3,12 +3,14 @@
   "show_notification": true,
   "category": "misc",
   "key": {
+    "&": "minecraft:paper",
+    "%": "minecraft:lapis_lazuli",
     "#": "minecraft:spruce_planks",
-    "&": "minecraft:paper"
+    "$": "minecraft:iron_ingot"
   },
   "pattern": [
-    " &",
-    " #"
+    " &%",
+    "$#$"
   ],
   "result": {
     "count": 1,
