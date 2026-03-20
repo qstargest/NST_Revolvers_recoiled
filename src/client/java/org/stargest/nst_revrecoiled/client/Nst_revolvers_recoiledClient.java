@@ -6,10 +6,12 @@ import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientEntityEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.client.particle.v1.ParticleFactoryRegistry;
+import net.minecraft.client.gui.screen.ingame.HandledScreens;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import org.stargest.nst_revrecoiled.Items.BaseRevolverItem;
+import org.stargest.nst_revrecoiled.client.gui.AssemblyTableScreen;
 import org.stargest.nst_revrecoiled.client.handlers.RevolverParticleHandler;
 import org.stargest.nst_revrecoiled.client.managers.CameraRecoilManager;
 import org.stargest.nst_revrecoiled.client.particles.RevolverParticle;
@@ -18,22 +20,25 @@ import org.stargest.nst_revrecoiled.client.util.ModEntityRenderers;
 import org.stargest.nst_revrecoiled.client.util.ModItemRenderers;
 import org.stargest.nst_revrecoiled.network.RevolverFireParticlePacket;
 import org.stargest.nst_revrecoiled.util.ModParticles;
+import org.stargest.nst_revrecoiled.util.ModScreenHandlers;
 
 import java.util.Objects;
 
 /**
  * Client-side initialization for the mod.
- * Orchestrates registration of renderers, particles, event listeners, and network handlers.
+ * Orchestrates registration of renderers, particles, screens, event listeners,
+ * and network handlers.
  *
  * Initialization order:
  * 1. Entity renderers (bullet projectiles, custom villager renderer)
  * 2. Item renderers (GeckoLib revolver models)
- * 3. Event listeners (disconnect handler for recoil reset and arm pose cleanup,
+ * 3. Screen handlers (Assembly Table GUI binding)
+ * 4. Event listeners (disconnect handler for recoil reset and arm pose cleanup,
  *    entity unload handler for per-entity arm pose cleanup)
- * 4. Particle factories (fire and reload effects)
- * 5. Animation particle handler (keyframe events for reload)
- * 6. Immediate fire callback (bypasses animation delay for fire particles)
- * 7. Network packet receiver (fire particle synchronization across players)
+ * 5. Particle factories (fire and reload effects)
+ * 6. Animation particle handler (keyframe events for reload)
+ * 7. Immediate fire callback (bypasses animation delay for fire particles)
+ * 8. Network packet receiver (fire particle synchronization across players)
  *
  * The immediate fire callback is set separately from the keyframe handler to ensure
  * fire particles appear instantly when shooting, not when the animation keyframe is reached.
@@ -53,6 +58,11 @@ public class Nst_revolvers_recoiledClient implements ClientModInitializer {
         // and item renderers (GeckoLib revolver models)
         ModEntityRenderers.init();
         ModItemRenderers.init();
+
+        // Bind the Assembly Table screen handler to its client-side GUI class
+        HandledScreens.register(
+                ModScreenHandlers.ASSEMBLY_TABLE_HANDLER,
+                AssemblyTableScreen::new);
 
         // Reset camera recoil when disconnecting from server
         ClientPlayConnectionEvents.DISCONNECT.register(

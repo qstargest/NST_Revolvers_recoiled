@@ -5,11 +5,9 @@ import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stargest.nst_revrecoiled.Villager.ModVillagers;
+import org.stargest.nst_revrecoiled.network.AssemblyCraftC2SPacket;
 import org.stargest.nst_revrecoiled.network.RevolverFireParticlePacket;
-import org.stargest.nst_revrecoiled.util.ModBlocks;
-import org.stargest.nst_revrecoiled.util.ModEntities;
-import org.stargest.nst_revrecoiled.util.ModItems;
-import org.stargest.nst_revrecoiled.util.ModParticles;
+import org.stargest.nst_revrecoiled.util.*;
 
 /**
  * Main mod initializer for the Revolver mod.
@@ -28,6 +26,8 @@ public class Main implements ModInitializer {
         ModParticles.init();
         ModBlocks.init();
         ModVillagers.init();
+        ModScreenHandlers.register();
+        AssemblyCraftC2SPacket.register();
 
         PayloadTypeRegistry.playS2C().register(
                 RevolverFireParticlePacket.ID,

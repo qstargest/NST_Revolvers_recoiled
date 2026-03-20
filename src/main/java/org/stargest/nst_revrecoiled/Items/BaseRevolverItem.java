@@ -201,6 +201,10 @@ public abstract class BaseRevolverItem extends RangedWeaponItem implements GeoIt
         return 15;
     }
 
+    public float getDamage() {
+        return baseDamage;
+    }
+
     /**
      * Called when player right-clicks with the revolver.
      * If charged: shoots, triggers immediate fire particles, and broadcasts to nearby players.

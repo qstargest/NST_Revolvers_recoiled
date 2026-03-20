@@ -9,5 +9,11 @@
   "item.nst_revrecoiled.diamond_revolver": "Diamond Revolver",
   "itemGroup.nst_revrecoiled.main": "[NST] Revolvers recoiled",
   "block.nst_revrecoiled.assembly_table": "Assembly Table",
-  "entity.minecraft.villager.revolvermaker": "Revolvermaker"
+  "entity.minecraft.villager.revolvermaker": "Revolvermaker",
+  "gui.nst_revrecoiled.assemble": "Craft",
+  "gui.nst_revrecoiled.damage": "Damage: %s",
+  "gui.nst_revrecoiled.pickaxe_tier_any":   "Requires any pickaxe",
+  "gui.nst_revrecoiled.pickaxe_tier_stone": "Requires stone pickaxe+",
+  "gui.nst_revrecoiled.pickaxe_tier_iron":  "Requires iron pickaxe+",
+  "gui.nst_revrecoiled.pickaxe_durability": "Pickaxe: %s/%s dur."
 }
