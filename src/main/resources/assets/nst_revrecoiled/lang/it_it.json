@@ -8,5 +8,12 @@
   "item.nst_revrecoiled.golden_revolver": "Rivoltella d'oro",
   "item.nst_revrecoiled.diamond_revolver": "Rivoltella di diamante",
   "block.nst_revrecoiled.assembly_table": "Tavolo di assemblaggio",
-  "entity.minecraft.villager.revolvermaker": "Fabbricante di rivoltelle"
+  "entity.minecraft.villager.revolvermaker": "Fabbricante di rivoltelle",
+  "itemGroup.nst_revrecoiled.main": "[NST] Revolvers recoiled",
+  "gui.nst_revrecoiled.assemble": "Crea",
+  "gui.nst_revrecoiled.damage": "Danno: %s",
+  "gui.nst_revrecoiled.pickaxe_tier_any": "Richiede un qualsiasi piccone",
+  "gui.nst_revrecoiled.pickaxe_tier_stone": "Richiede piccone di pietra+",
+  "gui.nst_revrecoiled.pickaxe_tier_iron": "Richiede piccone di ferro+",
+  "gui.nst_revrecoiled.pickaxe_durability": "Piccone: %s/%s dur."
 }

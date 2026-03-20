@@ -8,5 +8,12 @@
   "item.nst_revrecoiled.golden_revolver": "Revólver de ouro",
   "item.nst_revrecoiled.diamond_revolver": "Revólver de diamante",
   "block.nst_revrecoiled.assembly_table": "Mesa de montagem",
-  "entity.minecraft.villager.revolvermaker": "Fabricante de revólveres"
+  "entity.minecraft.villager.revolvermaker": "Fabricante de revólveres",
+  "itemGroup.nst_revrecoiled.main": "[NST] Revolvers recoiled",
+  "gui.nst_revrecoiled.assemble": "Fabricar",
+  "gui.nst_revrecoiled.damage": "Dano: %s",
+  "gui.nst_revrecoiled.pickaxe_tier_any": "Requer qualquer picareta",
+  "gui.nst_revrecoiled.pickaxe_tier_stone": "Requer picareta de pedra+",
+  "gui.nst_revrecoiled.pickaxe_tier_iron": "Requer picareta de ferro+",
+  "gui.nst_revrecoiled.pickaxe_durability": "Picareta: %s/%s dur."
 }

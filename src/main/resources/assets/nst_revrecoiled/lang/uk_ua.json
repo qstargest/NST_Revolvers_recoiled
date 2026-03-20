@@ -8,5 +8,12 @@
   "item.nst_revrecoiled.golden_revolver": "Золотий револьвер",
   "item.nst_revrecoiled.diamond_revolver": "Алмазний револьвер",
   "block.nst_revrecoiled.assembly_table": "Стіл збирання",
-  "entity.minecraft.villager.revolvermaker": "Револьверник"
+  "entity.minecraft.villager.revolvermaker": "Револьверник",
+  "itemGroup.nst_revrecoiled.main": "[NST] Revolvers recoiled",
+  "gui.nst_revrecoiled.assemble": "Створити",
+  "gui.nst_revrecoiled.damage": "Шкода: %s",
+  "gui.nst_revrecoiled.pickaxe_tier_any": "Потрібна будь-яка кирка",
+  "gui.nst_revrecoiled.pickaxe_tier_stone": "Потрібна кам'яна кирка+",
+  "gui.nst_revrecoiled.pickaxe_tier_iron": "Потрібна залізна кирка+",
+  "gui.nst_revrecoiled.pickaxe_durability": "Кирка: %s/%s од."
 }

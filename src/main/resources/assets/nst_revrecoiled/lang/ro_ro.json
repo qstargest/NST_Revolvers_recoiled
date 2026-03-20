@@ -8,5 +8,12 @@
   "item.nst_revrecoiled.golden_revolver": "Revolver de aur",
   "item.nst_revrecoiled.diamond_revolver": "Revolver de diamant",
   "block.nst_revrecoiled.assembly_table": "Masă de asamblare",
-  "entity.minecraft.villager.revolvermaker": "Fabricant de revolvere"
+  "entity.minecraft.villager.revolvermaker": "Fabricant de revolvere",
+  "itemGroup.nst_revrecoiled.main": "[NST] Revolvers recoiled",
+  "gui.nst_revrecoiled.assemble": "Fabrică",
+  "gui.nst_revrecoiled.damage": "Daune: %s",
+  "gui.nst_revrecoiled.pickaxe_tier_any": "Necesită orice târnăcop",
+  "gui.nst_revrecoiled.pickaxe_tier_stone": "Necesită târnăcop de piatră+",
+  "gui.nst_revrecoiled.pickaxe_tier_iron": "Necesită târnăcop de fier+",
+  "gui.nst_revrecoiled.pickaxe_durability": "Târnăcop: %s/%s dur."
 }

@@ -8,5 +8,12 @@
   "item.nst_revrecoiled.golden_revolver": "אקדח גלגל מזהב",
   "item.nst_revrecoiled.diamond_revolver": "אקדח גלגל מיהלום",
   "block.nst_revrecoiled.assembly_table": "שולחן הרכבה",
-  "entity.minecraft.villager.revolvermaker": "יצרן אקדחים"
+  "entity.minecraft.villager.revolvermaker": "יצרן אקדחים",
+  "itemGroup.nst_revrecoiled.main": "[NST] Revolvers recoiled",
+  "gui.nst_revrecoiled.assemble": "יצור",
+  "gui.nst_revrecoiled.damage": "נזק: %s",
+  "gui.nst_revrecoiled.pickaxe_tier_any": "דורש כל מקוש",
+  "gui.nst_revrecoiled.pickaxe_tier_stone": "דורש מקוש אבן+",
+  "gui.nst_revrecoiled.pickaxe_tier_iron": "דורש מקוש ברזל+",
+  "gui.nst_revrecoiled.pickaxe_durability": "מקוש: %s/%s עמ."
 }

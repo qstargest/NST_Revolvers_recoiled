@@ -8,5 +8,12 @@
   "item.nst_revrecoiled.golden_revolver": "Guldrevolver",
   "item.nst_revrecoiled.diamond_revolver": "Diamantrevolver",
   "block.nst_revrecoiled.assembly_table": "Monteringsbord",
-  "entity.minecraft.villager.revolvermaker": "Revolvertillverkare"
+  "entity.minecraft.villager.revolvermaker": "Revolvertillverkare",
+  "itemGroup.nst_revrecoiled.main": "[NST] Revolvers recoiled",
+  "gui.nst_revrecoiled.assemble": "Tillverka",
+  "gui.nst_revrecoiled.damage": "Skada: %s",
+  "gui.nst_revrecoiled.pickaxe_tier_any": "Kräver en hacka",
+  "gui.nst_revrecoiled.pickaxe_tier_stone": "Kräver stenhacka+",
+  "gui.nst_revrecoiled.pickaxe_tier_iron": "Kräver järnhacka+",
+  "gui.nst_revrecoiled.pickaxe_durability": "Hacka: %s/%s hvb."
 }

@@ -8,5 +8,12 @@
   "item.nst_revrecoiled.golden_revolver": "Zlatý revolver",
   "item.nst_revrecoiled.diamond_revolver": "Diamantový revolver",
   "block.nst_revrecoiled.assembly_table": "Montážní stůl",
-  "entity.minecraft.villager.revolvermaker": "Výrobce revolverů"
+  "entity.minecraft.villager.revolvermaker": "Výrobce revolverů",
+  "itemGroup.nst_revrecoiled.main": "[NST] Revolvers recoiled",
+  "gui.nst_revrecoiled.assemble": "Vyrobit",
+  "gui.nst_revrecoiled.damage": "Poškození: %s",
+  "gui.nst_revrecoiled.pickaxe_tier_any": "Vyžaduje jakýkoliv krumpáč",
+  "gui.nst_revrecoiled.pickaxe_tier_stone": "Vyžaduje kamenný krumpáč+",
+  "gui.nst_revrecoiled.pickaxe_tier_iron": "Vyžaduje železný krumpáč+",
+  "gui.nst_revrecoiled.pickaxe_durability": "Krumpáč: %s/%s trv."
 }

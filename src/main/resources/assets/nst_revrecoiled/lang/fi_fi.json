@@ -8,5 +8,12 @@
   "item.nst_revrecoiled.golden_revolver": "Kultainen revolveri",
   "item.nst_revrecoiled.diamond_revolver": "Timanttinen revolveri",
   "block.nst_revrecoiled.assembly_table": "Kokoonpanopöytä",
-  "entity.minecraft.villager.revolvermaker": "Revolverintekijä"
+  "entity.minecraft.villager.revolvermaker": "Revolverintekijä",
+  "itemGroup.nst_revrecoiled.main": "[NST] Revolvers recoiled",
+  "gui.nst_revrecoiled.assemble": "Valmista",
+  "gui.nst_revrecoiled.damage": "Vahinko: %s",
+  "gui.nst_revrecoiled.pickaxe_tier_any": "Vaatii jonkin hakun",
+  "gui.nst_revrecoiled.pickaxe_tier_stone": "Vaatii kivihakun+",
+  "gui.nst_revrecoiled.pickaxe_tier_iron": "Vaatii rautahakun+",
+  "gui.nst_revrecoiled.pickaxe_durability": "Hakku: %s/%s kes."
 }

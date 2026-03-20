@@ -8,5 +8,12 @@
   "item.nst_revrecoiled.golden_revolver": "金左轮手枪",
   "item.nst_revrecoiled.diamond_revolver": "钻石左轮手枪",
   "block.nst_revrecoiled.assembly_table": "组装台",
-  "entity.minecraft.villager.revolvermaker": "左轮枪匠"
+  "entity.minecraft.villager.revolvermaker": "左轮枪匠",
+  "itemGroup.nst_revrecoiled.main": "[NST] Revolvers recoiled",
+  "gui.nst_revrecoiled.assemble": "合成",
+  "gui.nst_revrecoiled.damage": "伤害: %s",
+  "gui.nst_revrecoiled.pickaxe_tier_any": "需要任意镐",
+  "gui.nst_revrecoiled.pickaxe_tier_stone": "需要石镐或更高",
+  "gui.nst_revrecoiled.pickaxe_tier_iron": "需要铁镐或更高",
+  "gui.nst_revrecoiled.pickaxe_durability": "镐: %s/%s 耐久"
 }

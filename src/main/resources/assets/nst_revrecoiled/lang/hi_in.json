@@ -8,5 +8,12 @@
   "item.nst_revrecoiled.golden_revolver": "सोने का रिवॉल्वर",
   "item.nst_revrecoiled.diamond_revolver": "हीरे का रिवॉल्वर",
   "block.nst_revrecoiled.assembly_table": "असेंबली टेबल",
-  "entity.minecraft.villager.revolvermaker": "रिवॉल्वर बनाने वाला"
+  "entity.minecraft.villager.revolvermaker": "रिवॉल्वर बनाने वाला",
+  "itemGroup.nst_revrecoiled.main": "[NST] Revolvers recoiled",
+  "gui.nst_revrecoiled.assemble": "बनाएं",
+  "gui.nst_revrecoiled.damage": "नुकसान: %s",
+  "gui.nst_revrecoiled.pickaxe_tier_any": "कोई भी कुदाल चाहिए",
+  "gui.nst_revrecoiled.pickaxe_tier_stone": "पत्थर की कुदाल या बेहतर चाहिए",
+  "gui.nst_revrecoiled.pickaxe_tier_iron": "लोहे की कुदाल या बेहतर चाहिए",
+  "gui.nst_revrecoiled.pickaxe_durability": "कुदाल: %s/%s टि."
 }
