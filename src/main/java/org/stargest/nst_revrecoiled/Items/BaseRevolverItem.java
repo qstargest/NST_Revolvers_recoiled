@@ -100,9 +100,14 @@ public abstract class BaseRevolverItem extends RangedWeaponItem implements GeoIt
     private static Consumer<ParticleKeyframeEvent<BaseRevolverItem>> particleKeyframeHandler = event -> {};
 
     /**
-     * Client-side fire callback for immediate particle spawning.
-     * Called directly from use() method to bypass GeckoLib animation delay.
-     * This ensures fire particles appear exactly when the shot is fired.
+     * Client-side fire callback invoked at the exact moment of firing.
+     * Called directly from use() on the client to bypass GeckoLib animation delay.
+     *
+     * The callback is intentionally a single composite action rather than a list:
+     * it triggers both camera recoil (CameraRecoilManager.applyRecoil) and
+     * immediate muzzle-flash particles (RevolverParticleHandler.spawnFireImmediate)
+     * in one call, registered from Nst_revolvers_recoiledClient.
+     *
      * Protected by IllegalStateException to prevent accidental double-initialization.
      */
     private static Consumer<LivingEntity> clientFireCallback = null;
@@ -206,9 +211,22 @@ public abstract class BaseRevolverItem extends RangedWeaponItem implements GeoIt
     }
 
     /**
-     * Called when player right-clicks with the revolver.
-     * If charged: shoots, triggers immediate fire particles, and broadcasts to nearby players.
-     * Otherwise: starts charging and plays reload animation.
+     * Called when the player right-clicks with the revolver.
+     *
+     * If the revolver is charged:
+     * - Server: fires the projectile via shoot().
+     * - Client: invokes clientFireCallback, which triggers camera recoil and
+     *   spawns muzzle-flash particles immediately, bypassing GeckoLib animation delay.
+     * - Server: broadcasts RevolverFireParticlePacket to all tracking players so
+     *   that nearby players also see the muzzle-flash (local player is skipped
+     *   on the receiving end to avoid duplication).
+     * - Returns PASS to suppress the vanilla hand-swing animation.
+     *
+     * If the revolver is not charged:
+     * - Returns FAIL if the player has no ammo and is not in creative mode.
+     * - Server: triggers the reload animation via GeckoLib triggerAnim().
+     * - Sets the active hand to begin the charge timer.
+     * - Returns CONSUME to prevent other interactions from firing.
      */
     @Override
     public ActionResult use(World world, PlayerEntity user, Hand hand) {
@@ -220,12 +238,13 @@ public abstract class BaseRevolverItem extends RangedWeaponItem implements GeoIt
                 shoot(world, user, hand, stack, PROJECTILE_VELOCITY, PROJECTILE_DIVERGENCE);
             }
 
-            // Immediate fire particles on client (bypasses GeckoLib animation delay)
+            // Immediate fire callback on client: camera recoil + muzzle-flash particles
+            // Bypasses GeckoLib animation delay for instant visual feedback
             if (world.isClient && clientFireCallback != null) {
                 clientFireCallback.accept(user);
             }
 
-            // Server-side: broadcast fire particles to all tracking players
+            // Server-side: broadcast fire particles to all players tracking this entity
             if (!world.isClient()) {
                 RevolverFireParticlePacket packet = new RevolverFireParticlePacket(user.getId());
                 PlayerLookup.tracking(user).forEach(p -> ServerPlayNetworking.send(p, packet));

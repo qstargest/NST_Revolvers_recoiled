@@ -4,11 +4,8 @@ import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.ItemStack;
 import net.minecraft.item.ModelTransformationMode;
 import org.jetbrains.annotations.Nullable;
-import org.joml.*;
 import org.stargest.nst_revrecoiled.Items.BaseRevolverItem;
 import software.bernie.geckolib.model.GeoModel;
 import software.bernie.geckolib.renderer.GeckolibSpecialRenderer;
@@ -26,28 +23,32 @@ import java.util.Optional;
  *
  * Key features:
  * - Holder tracking for particle spawn positioning
- * - Thread-safe single-threaded rendering with stack-based state
- * - Efficient holder lookup (checks local player first)
- * - Type-safe comparison using item identity
- * - Exception-safe cleanup using try-finally pattern
- * - NPE-safe handling when item is rendered without holder (e.g., in inventory)
+ * - Stack-based state supporting nested render calls (e.g. GUI preview inside world render)
+ * - Efficient holder lookup — only the local player is ever rendered in first/third person;
+ *   other entities' items are rendered without a living holder context
+ * - Optional wrapping prevents NPE when items are rendered without a holder
+ *   (inventory UI, item frames, dropped items on the ground)
+ * - Exception-safe cleanup via try-finally guarantees stack balance even on render errors
+ *
+ * Rendering is single-threaded on the client, so static Deque storage is safe.
  */
 public abstract class BaseRevolverItemRenderer<T extends BaseRevolverItem> extends GeoItemRenderer<T> {
 
     /**
-     * Stack-based holder tracking for nested render calls.
-     * Uses Deque, Optional & LivingEntity to support null holders safely.
-     * Wrapped in Optional to prevent NullPointerException when items are rendered
-     * without a holder (e.g., in inventory UI, item frames, ground).
-     * Rendering is single-threaded, so static storage is safe.
+     * Stack of current holder entities, one entry per active render call.
+     * A Deque is used instead of a single field to correctly handle nested renders
+     * (e.g. the Assembly Table GUI renders a revolver model inside a world frame).
+     * Each entry is wrapped in Optional to distinguish "no holder" from an absent frame.
      */
     private static final Deque<Optional<LivingEntity>> holderStack = new ArrayDeque<>();
 
     /**
-     * Gets the current holder entity being rendered.
-     * Used by RevolverParticleHandler to determine particle spawn position.
+     * Returns the living entity currently being rendered holding this revolver.
+     * Used by RevolverParticleHandler to calculate the correct particle spawn position.
+     * Returns null when the stack is empty (no render in progress) or when the item
+     * is being rendered without a holder (inventory, item frames, ground).
      *
-     * @return The living entity holding the revolver, or null if stack is empty or holder not found
+     * @return the current holder, or null if unavailable
      */
     public static @Nullable LivingEntity getCurrentHolder() {
         Optional<LivingEntity> top = holderStack.peek();
@@ -59,55 +60,46 @@ public abstract class BaseRevolverItemRenderer<T extends BaseRevolverItem> exten
     }
 
     /**
-     * Renders the revolver and tracks its holder for particle effects.
-     * Searches for the holder entity before rendering to support particle keyframe events.
-     * Uses try-finally to ensure stack cleanup even if rendering throws an exception.
-     * Wraps holder in Optional to safely handle cases where no holder exists.
+     * Renders the revolver and tracks its holder for particle keyframe events.
+     * Pushes the resolved holder onto the stack before delegating to GeckoLib,
+     * and pops it in a finally block to guarantee stack balance on exceptions.
+     *
+     * The holder is only non-null for first/third-person transform modes, where
+     * the local player is the implied holder. All other modes (GUI, ground, fixed)
+     * push Optional.empty() so getCurrentHolder() returns null safely.
      */
     @Override
     public void render(GeckolibSpecialRenderer.RenderData renderData, ModelTransformationMode transformType,
                        MatrixStack poseStack, VertexConsumerProvider bufferSource, int packedLight,
                        int packedOverlay, boolean hasGlint) {
 
-        MinecraftClient client = MinecraftClient.getInstance();
-        ItemStack stack = renderData.itemstack();
+        LivingEntity holder = getLivingEntity(transformType);
 
-        LivingEntity holder = null;
-        if (client.world != null) {
-            // Check local player first (optimization for common case)
-            if (client.player != null && isHolding(client.player, stack)) {
-                holder = client.player;
-            } else {
-                // Search among other players in the world
-                for (PlayerEntity player : client.world.getPlayers()) {
-                    if (isHolding(player, stack)) {
-                        holder = player;
-                        break;
-                    }
-                }
-            }
-        }
-
-        // Push holder onto stack wrapped in Optional (prevents NPE when holder is null)
         holderStack.push(Optional.ofNullable(holder));
         try {
             super.render(renderData, transformType, poseStack, bufferSource, packedLight, packedOverlay, hasGlint);
         } finally {
-            // Guaranteed cleanup even if rendering throws exception
             holderStack.pop();
         }
     }
 
     /**
-     * Checks if an entity is holding this item stack.
-     * Compares item types rather than stack instances since ItemStack may be a copy.
+     * Resolves the holder entity for the given transform mode.
+     * First/third-person modes imply the local player as holder.
+     * All other modes (GUI, ground, fixed, none) return null — no holder is available.
      *
-     * @param entity Entity to check
-     * @param stack Item stack to look for
-     * @return true if entity is holding this item in either hand
+     * @param transformType the current item transform mode
+     * @return the local player if rendering in hand, null otherwise
      */
-    private boolean isHolding(LivingEntity entity, ItemStack stack) {
-        return entity.getMainHandStack().getItem() == stack.getItem() ||
-                entity.getOffHandStack().getItem() == stack.getItem();
+    private static @Nullable LivingEntity getLivingEntity(ModelTransformationMode transformType) {
+        MinecraftClient client = MinecraftClient.getInstance();
+
+        if (transformType == ModelTransformationMode.FIRST_PERSON_RIGHT_HAND
+                || transformType == ModelTransformationMode.FIRST_PERSON_LEFT_HAND
+                || transformType == ModelTransformationMode.THIRD_PERSON_RIGHT_HAND
+                || transformType == ModelTransformationMode.THIRD_PERSON_LEFT_HAND) {
+            return client.player;
+        }
+        return null;
     }
 }

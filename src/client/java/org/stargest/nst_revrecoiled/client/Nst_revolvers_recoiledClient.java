@@ -37,15 +37,16 @@ import java.util.Objects;
  *    entity unload handler for per-entity arm pose cleanup)
  * 5. Particle factories (fire and reload effects)
  * 6. Animation particle handler (keyframe events for reload)
- * 7. Immediate fire callback (bypasses animation delay for fire particles)
+ * 7. Immediate fire callback (camera recoil + muzzle-flash particles, bypasses animation delay)
  * 8. Network packet receiver (fire particle synchronization across players)
  *
- * The immediate fire callback is set separately from the keyframe handler to ensure
- * fire particles appear instantly when shooting, not when the animation keyframe is reached.
- * This provides better visual feedback and perceived responsiveness.
+ * The immediate fire callback is a single composite action combining camera recoil
+ * and muzzle-flash particle spawning. It is called directly from BaseRevolverItem.use()
+ * at the exact moment of firing, bypassing the GeckoLib animation keyframe delay.
  *
- * Network synchronization ensures all nearby players see fire particles from other players,
- * while avoiding duplication for the local player who already sees particles via clientFireCallback.
+ * Network synchronization ensures all nearby players see fire particles from other
+ * players' shots, while avoiding duplication for the local player who already
+ * sees particles via clientFireCallback.
  *
  * PlayerArmPose state is cleaned up on both disconnect (clearAllStates) and
  * individual entity unload (clearState) to prevent memory leaks.
@@ -92,13 +93,16 @@ public class Nst_revolvers_recoiledClient implements ClientModInitializer {
         // Fire particles are intentionally ignored here; see clientFireCallback below.
         BaseRevolverItem.setParticleKeyframeHandler(new RevolverParticleHandler());
 
-        // Bind immediate fire callback to bypass GeckoLib animation delay.
-        // Ensures muzzle flash particles appear at the exact moment of the shot,
-        // not when the fire animation keyframe is eventually reached.
-        BaseRevolverItem.setClientFireCallback(RevolverParticleHandler::spawnFireImmediate);
+        // Composite fire callback: triggers camera recoil and spawns muzzle-flash particles
+        // in a single call at the exact moment of firing, bypassing GeckoLib animation delay.
+        // Camera recoil must come first so the offset is applied before the next frame renders.
+        BaseRevolverItem.setClientFireCallback(user -> {
+            CameraRecoilManager.getInstance().applyRecoil();
+            RevolverParticleHandler.spawnFireImmediate(user);
+        });
 
         // Receive server-broadcast fire particle packets for other players' shots.
-        // Local player is skipped — already handled by clientFireCallback above.
+        // Local player is skipped — particles already spawned via clientFireCallback above.
         ClientPlayNetworking.registerGlobalReceiver(
                 RevolverFireParticlePacket.ID,
                 (payload, ctx) -> ctx.client().execute(() -> {
