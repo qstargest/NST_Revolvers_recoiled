@@ -7,6 +7,7 @@ import org.slf4j.LoggerFactory;
 import org.stargest.nst_revrecoiled.Villager.ModVillagers;
 import org.stargest.nst_revrecoiled.network.AssemblyCraftC2SPacket;
 import org.stargest.nst_revrecoiled.network.RevolverFireParticlePacket;
+import org.stargest.nst_revrecoiled.network.RevolverReloadParticlePacket;
 import org.stargest.nst_revrecoiled.util.*;
 
 /**
@@ -28,6 +29,11 @@ public class Main implements ModInitializer {
         ModVillagers.init();
         ModScreenHandlers.register();
         AssemblyCraftC2SPacket.register();
+
+        PayloadTypeRegistry.playS2C().register(
+                RevolverReloadParticlePacket.ID,
+                RevolverReloadParticlePacket.CODEC
+        );
 
         PayloadTypeRegistry.playS2C().register(
                 RevolverFireParticlePacket.ID,

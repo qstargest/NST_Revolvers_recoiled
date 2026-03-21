@@ -6,17 +6,11 @@ import net.minecraft.particle.ParticleEffect;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
-import org.stargest.nst_revrecoiled.Items.BaseRevolverItem;
-import org.stargest.nst_revrecoiled.client.render.revolvers.BaseRevolverItemRenderer;
 import org.stargest.nst_revrecoiled.util.ModParticles;
-import software.bernie.geckolib.animation.keyframe.event.ParticleKeyframeEvent;
-
-import java.util.function.Consumer;
 
 /**
- * Handles GeckoLib keyframe particle events for revolver animations.
- * Spawns REVOLVER_FIRE and REVOLVER_RELOAD particles at the correct world position
- * for both first-person and third-person camera modes.
+ * Handles immediate particle spawning for revolver fire and reload effects.
+ * Calculates correct spawn positions for both first-person and third-person camera modes.
  *
  * Particle positions are calculated using vector math to account for:
  * - Player look direction
@@ -24,24 +18,26 @@ import java.util.function.Consumer;
  * - Weapon positioning in hand
  * - Body rotation (third-person only)
  *
- * Registered from the client initializer via BaseRevolverItem.setParticleKeyframeHandler()
- * to avoid importing client-only classes from the common item class.
+ * Both fire and reload particles bypass GeckoLib animation keyframes entirely:
+ * - Fire particles: spawned via spawnFireImmediate(), called from the clientFireCallback
+ *   registered in Nst_revolvers_recoiledClient, which is invoked directly by
+ *   BaseRevolverItem.use() at the exact moment of firing.
+ * - Reload particles: spawned via spawnReloadImmediate(), called from the
+ *   RevolverReloadParticlePacket receiver registered in Nst_revolvers_recoiledClient,
+ *   which is sent server-side at tick 20 of the charge — matching the bullet-insertion
+ *   keyframe timing without depending on GeckoLib keyframe callbacks.
  *
- * The holder entity is resolved via BaseRevolverItemRenderer.getCurrentHolder() since
- * DataTickets.ENTITY is not populated for item animatables in GeckoLib 4.8.5.
- *
- * Fire particles bypass GeckoLib animation delay by using spawnFireImmediate() called
- * directly from BaseRevolverItem.use() via clientFireCallback. This ensures particles
- * appear exactly when the shot is fired, not when the animation keyframe is reached.
+ * The holder entity is resolved from the network packet's entity ID rather than from
+ * GeckoLib DataTickets.ENTITY, which is not populated for item animatables in GeckoLib 4.8.5.
  */
-public class RevolverParticleHandler implements Consumer<ParticleKeyframeEvent<BaseRevolverItem>> {
+public class RevolverParticleHandler {
 
     // First-person offsets (forward / right / up)
     private static final double FP_FIRE_F   =  0.85, FP_FIRE_R   =  0.40, FP_FIRE_U   = -0.25;
     private static final double FP_RELOAD_F =  0.15, FP_RELOAD_R =  0.10, FP_RELOAD_U = -0.15;
 
     // Third-person fire offsets
-    private static final double TP_FIRE_SHOULDER = 0.35;   // Body-right offset to shoulder
+    private static final double TP_FIRE_SHOULDER = 0.35; // Body-right offset to shoulder
     private static final double TP_FIRE_F        = 1.0;
     private static final double TP_FIRE_R        = -0.20;
     private static final double TP_FIRE_U        = 0.05;
@@ -49,40 +45,9 @@ public class RevolverParticleHandler implements Consumer<ParticleKeyframeEvent<B
     // Third-person reload offsets
     private static final double TP_RELOAD_F = 0.20, TP_RELOAD_R = -0.10, TP_RELOAD_U = 0.0;
 
-    /**
-     * Handles particle keyframe events from GeckoLib animations.
-     * Fire events are ignored since fire particles use immediate spawning.
-     * Reload events spawn particles at the calculated position.
-     */
-    @Override
-    public void accept(ParticleKeyframeEvent<BaseRevolverItem> event) {
-        MinecraftClient client = MinecraftClient.getInstance();
-
-        // Get holder from our base renderer
-        LivingEntity holder = BaseRevolverItemRenderer.getCurrentHolder();
-        if (holder == null) return;
-
-        String effect = event.getKeyframeData().getEffect();
-
-        boolean isLocal = (holder == client.player);
-        // Fire particles use immediate spawning, ignore keyframe event
-        if ("fire".equals(effect)) return;
-
-        World world = holder.getWorld();
-        float tickDelta = client.getRenderTickCounter().getTickDelta(true);
-
-        // Logic: if this is the local player, check their camera settings.
-        // If this is another player, they are ALWAYS in third-person for us.
-        boolean firstPerson = isLocal && client.options.getPerspective().isFirstPerson();
-
-        Vec3d spawnPos = firstPerson
-                ? calcFirstPersonPos(client, holder, tickDelta, effect)
-                : calcThirdPersonPos(holder, tickDelta, effect);
-
-        spawnParticles(world, spawnPos, effect);
-    }
-
+    // -------------------------------------------------------------------------
     // Position calculation helpers
+    // -------------------------------------------------------------------------
 
     /**
      * Calculates particle spawn position for first-person view.
@@ -104,6 +69,7 @@ public class RevolverParticleHandler implements Consumer<ParticleKeyframeEvent<B
     /**
      * Calculates particle spawn position for third-person view.
      * Accounts for body rotation and shoulder positioning for realistic placement.
+     * Fire particles spawn from the barrel/shoulder; reload particles from the hand.
      */
     private static Vec3d calcThirdPersonPos(LivingEntity holder, float tickDelta, String effect) {
         float pitch  = holder.getPitch(tickDelta);
@@ -112,7 +78,6 @@ public class RevolverParticleHandler implements Consumer<ParticleKeyframeEvent<B
         double lerpZ = MathHelper.lerp(tickDelta, holder.prevZ, holder.getZ());
 
         if ("fire".equals(effect)) {
-            // Fire particle spawns from shoulder position
             float bodyYaw = MathHelper.lerpAngleDegrees(tickDelta, holder.prevBodyYaw, holder.bodyYaw);
             double lerpY  = MathHelper.lerp(tickDelta, holder.prevY, holder.getY()) + 1.45;
 
@@ -121,7 +86,6 @@ public class RevolverParticleHandler implements Consumer<ParticleKeyframeEvent<B
             Vec3d lookUp    = Vec3d.fromPolar(pitch - 90, yaw);
             Vec3d lookRight = lookFwd.crossProduct(lookUp).normalize();
 
-            // Calculate shoulder position
             Vec3d shoulder = new Vec3d(
                     lerpX + bodyRight.x * TP_FIRE_SHOULDER,
                     lerpY,
@@ -130,7 +94,6 @@ public class RevolverParticleHandler implements Consumer<ParticleKeyframeEvent<B
             return offset(shoulder, lookFwd, lookRight, lookUp, TP_FIRE_F, TP_FIRE_R, TP_FIRE_U);
 
         } else {
-            // Reload particle spawns from hand position
             double lerpY = MathHelper.lerp(tickDelta, holder.prevY, holder.getY()) + 1.2;
 
             Vec3d bodyFwd   = Vec3d.fromPolar(0, yaw);
@@ -142,27 +105,33 @@ public class RevolverParticleHandler implements Consumer<ParticleKeyframeEvent<B
     }
 
     /**
-     * Applies directional offset to base position.
+     * Applies directional offset to a base position.
      * Formula: base + (forward * f) + (right * r) + (up * u)
      */
     private static Vec3d offset(Vec3d base, Vec3d fwd, Vec3d right, Vec3d up, double f, double r, double u) {
         return base.add(fwd.multiply(f)).add(right.multiply(r)).add(up.multiply(u));
     }
 
+    // -------------------------------------------------------------------------
     // Particle spawning
+    // -------------------------------------------------------------------------
 
     /**
-     * Spawns fire particles immediately at shot time, bypassing GeckoLib keyframe delay.
-     * Called directly from BaseRevolverItem.use() on the client side via clientFireCallback.
-     * This ensures particles appear exactly when the shot is fired, providing instant visual feedback.
+     * Spawns muzzle-flash particles at the barrel position immediately on firing.
+     * Called from the clientFireCallback registered in Nst_revolvers_recoiledClient,
+     * which is invoked directly by BaseRevolverItem.use() on the client at shot time.
+     * This bypasses GeckoLib animation delay, providing instant visual feedback.
      *
-     * @param holder The living entity firing the revolver
+     * The local player receives particles via this path; other players receive them
+     * via RevolverFireParticlePacket to avoid duplication.
+     *
+     * @param holder the living entity firing the revolver
      */
     public static void spawnFireImmediate(LivingEntity holder) {
         MinecraftClient client = MinecraftClient.getInstance();
         float tickDelta = client.getRenderTickCounter().getTickDelta(true);
 
-        boolean isLocal = (holder == client.player);
+        boolean isLocal     = (holder == client.player);
         boolean firstPerson = isLocal && client.options.getPerspective().isFirstPerson();
 
         Vec3d spawnPos = firstPerson
@@ -173,26 +142,36 @@ public class RevolverParticleHandler implements Consumer<ParticleKeyframeEvent<B
     }
 
     /**
-     * Spawns appropriate particle type at the given position.
-     * Fire particles are short-lived with minimal spread for precise muzzle flash.
-     * Reload particles last longer with wider spread for smoke effect.
+     * Spawns reload smoke particles at the cylinder position on bullet insertion.
+     * Called from the RevolverReloadParticlePacket receiver registered in
+     * Nst_revolvers_recoiledClient, which is triggered by the server at tick 20
+     * of the charge — matching the bullet-insertion keyframe timing.
+     *
+     * Sent to all players including the shooter, so no local-player skip is needed.
+     *
+     * @param holder the living entity reloading the revolver
      */
-    private void spawnParticles(World world, Vec3d pos, String effect) {
-        if ("fire".equals(effect)) {
-            // Fire particles now use immediate spawning (this path shouldn't be reached)
-            spawnScattered(world, ModParticles.REVOLVER_FIRE, pos, 12, 0.01);
-        } else {
-            spawnScattered(world, ModParticles.REVOLVER_RELOAD, pos, 20, 0.04);
-        }
+    public static void spawnReloadImmediate(LivingEntity holder) {
+        MinecraftClient client = MinecraftClient.getInstance();
+        float tickDelta = client.getRenderTickCounter().getTickDelta(true);
+
+        boolean isLocal     = (holder == client.player);
+        boolean firstPerson = isLocal && client.options.getPerspective().isFirstPerson();
+
+        Vec3d spawnPos = firstPerson
+                ? calcFirstPersonPos(client, holder, tickDelta, "reload")
+                : calcThirdPersonPos(holder, tickDelta, "reload");
+
+        spawnScattered(holder.getWorld(), ModParticles.REVOLVER_RELOAD, spawnPos, 20, 0.04);
     }
 
     /**
      * Spawns multiple particles in a scattered pattern using Gaussian distribution.
      *
-     * @param world  World to spawn in
-     * @param type   Particle type to spawn
-     * @param pos    Center position
-     * @param count  Number of particles
+     * @param world  world to spawn in
+     * @param type   particle type to spawn
+     * @param pos    center position
+     * @param count  number of particles
      * @param spread Gaussian spread radius
      */
     private static void spawnScattered(World world, ParticleEffect type, Vec3d pos, int count, double spread) {

@@ -14,6 +14,7 @@ import net.minecraft.item.ModelTransformationMode;
 import net.minecraft.item.RangedWeaponItem;
 import net.minecraft.item.consume.UseAction;
 import net.minecraft.nbt.NbtCompound;
+import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.sound.SoundCategory;
 import net.minecraft.sound.SoundEvents;
@@ -25,6 +26,7 @@ import org.apache.commons.lang3.mutable.MutableObject;
 import org.jetbrains.annotations.Nullable;
 import org.stargest.nst_revrecoiled.Entities.BulletProjectileEntity;
 import org.stargest.nst_revrecoiled.network.RevolverFireParticlePacket;
+import org.stargest.nst_revrecoiled.network.RevolverReloadParticlePacket;
 import org.stargest.nst_revrecoiled.util.ModItems;
 import software.bernie.geckolib.animatable.GeoItem;
 import software.bernie.geckolib.animatable.SingletonGeoAnimatable;
@@ -34,7 +36,6 @@ import software.bernie.geckolib.animation.AnimatableManager;
 import software.bernie.geckolib.animation.AnimationController;
 import software.bernie.geckolib.animation.PlayState;
 import software.bernie.geckolib.animation.RawAnimation;
-import software.bernie.geckolib.animation.keyframe.event.ParticleKeyframeEvent;
 import software.bernie.geckolib.constant.DataTickets;
 import software.bernie.geckolib.util.GeckoLibUtil;
 
@@ -51,13 +52,14 @@ import java.util.function.Predicate;
  *
  * Key features:
  * - Charge-based shooting system (hold to reload, release to fire)
- * - GeckoLib animations with particle effects
- * - Perspective-aware rendering (different animations for 1st/3rd person)
+ * - GeckoLib animations (fire, reload, draw, idle)
+ * - Perspective-aware rendering (draw animation suppressed in third-person)
  * - Draw animation when equipping
  * - Prevents vanilla animations (hand swing, item switch)
- * - Immediate fire particles (bypasses GeckoLib animation delay)
- * - Ballistic projectiles with gravity (spawns from calculated barrel position)
- * - Networked particle synchronization (all nearby players see fire particles)
+ * - Ballistic projectiles with gravity (spawned from calculated barrel position)
+ * - Immediate fire callback (camera recoil + muzzle-flash particles at exact shot moment)
+ * - Server-timed reload particles (sent via packet at animation keyframe tick, no GeckoLib dependency)
+ * - Networked particle synchronization (all nearby players see fire and reload particles)
  */
 public abstract class BaseRevolverItem extends RangedWeaponItem implements GeoItem {
 
@@ -91,13 +93,6 @@ public abstract class BaseRevolverItem extends RangedWeaponItem implements GeoIt
     public final MutableObject<GeoRenderProvider> renderProvider = new MutableObject<>();
 
     private final float baseDamage;
-
-    /**
-     * Particle handler for animation keyframes.
-     * Set during client initialization to handle reload particle spawning.
-     * Fire particles use immediate callback instead to avoid animation delay.
-     */
-    private static Consumer<ParticleKeyframeEvent<BaseRevolverItem>> particleKeyframeHandler = event -> {};
 
     /**
      * Client-side fire callback invoked at the exact moment of firing.
@@ -208,6 +203,33 @@ public abstract class BaseRevolverItem extends RangedWeaponItem implements GeoIt
 
     public float getDamage() {
         return baseDamage;
+    }
+
+    /**
+     * Called every tick while the revolver is being actively used (charging).
+     * Sends RevolverReloadParticlePacket to the shooter and all tracking players
+     * at tick 20 (1.0 second into the charge) — the moment the bullet-insertion
+     * keyframe occurs in the reload animation.
+     *
+     * Sending the packet server-side at a fixed tick is simpler and more reliable
+     * than relying on GeckoLib animation keyframe callbacks, and ensures reload
+     * particles are visible to all nearby players regardless of their GeckoLib state.
+     */
+    @Override
+    public void usageTick(World world, LivingEntity user, ItemStack stack, int remainingUseTicks) {
+        int elapsed = CHARGE_TIME_TICKS - remainingUseTicks; // сколько тиков прошло
+
+        // Tick 20 = 1.0 second = bullet-insertion keyframe in the reload animation
+        if (elapsed == 20 && !world.isClient) {
+            RevolverReloadParticlePacket packet = new RevolverReloadParticlePacket(user.getId());
+
+            // Send to the shooter themselves
+            if (user instanceof ServerPlayerEntity shooter) {
+                ServerPlayNetworking.send(shooter, packet);
+            }
+            // Send to all other players tracking this entity
+            PlayerLookup.tracking(user).forEach(p -> ServerPlayNetworking.send(p, packet));
+        }
     }
 
     /**
@@ -503,16 +525,6 @@ public abstract class BaseRevolverItem extends RangedWeaponItem implements GeoIt
         return component != null && !component.isEmpty();
     }
 
-    /**
-     * Sets the particle keyframe handler for GeckoLib animations.
-     * Called during client initialization.
-     *
-     * @param handler Consumer that handles particle keyframe events
-     */
-    public static void setParticleKeyframeHandler(Consumer<ParticleKeyframeEvent<BaseRevolverItem>> handler) {
-        particleKeyframeHandler = handler;
-    }
-
     // -------------------------------------------------------------------------
     // GeckoLib animation setup
     // -------------------------------------------------------------------------
@@ -544,9 +556,6 @@ public abstract class BaseRevolverItem extends RangedWeaponItem implements GeoIt
 
             return PlayState.CONTINUE;
         });
-
-        // Set particle handler for animation keyframe events
-        controller.setParticleKeyframeHandler(event -> particleKeyframeHandler.accept(event));
 
         controller
                 .receiveTriggeredAnimations() // Required for predicate to be called during triggers
