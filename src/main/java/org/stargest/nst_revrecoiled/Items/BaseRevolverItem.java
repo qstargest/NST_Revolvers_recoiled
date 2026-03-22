@@ -9,17 +9,17 @@ import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.projectile.ProjectileEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.ModelTransformationMode;
-import net.minecraft.item.RangedWeaponItem;
+import net.minecraft.item.*;
 import net.minecraft.item.consume.UseAction;
 import net.minecraft.nbt.NbtCompound;
+import net.minecraft.registry.Registries;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.sound.SoundCategory;
 import net.minecraft.sound.SoundEvents;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Hand;
+import net.minecraft.util.Identifier;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 import org.apache.commons.lang3.mutable.MutableObject;
@@ -41,6 +41,8 @@ import software.bernie.geckolib.util.GeckoLibUtil;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
@@ -57,9 +59,14 @@ import java.util.function.Predicate;
  * - Draw animation when equipping
  * - Prevents vanilla animations (hand swing, item switch)
  * - Ballistic projectiles with gravity (spawned from calculated barrel position)
- * - Immediate fire callback (camera recoil + muzzle-flash particles at exact shot moment)
+ * - Per-item recoil and particle callbacks (extensible for addon mods)
  * - Server-timed reload particles (sent via packet at animation keyframe tick, no GeckoLib dependency)
  * - Networked particle synchronization (all nearby players see fire and reload particles)
+ *
+ * Addon mods can register custom recoil and particle behavior per item via
+ * registerRecoilCallback() and registerParticleCallback(), called during client initialization.
+ * Core methods (loadBullet, calcBarrelPosition, performShoot, draw animation helpers)
+ * are protected to allow subclasses to override shooting and animation behavior.
  */
 public abstract class BaseRevolverItem extends RangedWeaponItem implements GeoItem {
 
@@ -94,31 +101,78 @@ public abstract class BaseRevolverItem extends RangedWeaponItem implements GeoIt
 
     private final float baseDamage;
 
-    /**
-     * Client-side fire callback invoked at the exact moment of firing.
-     * Called directly from use() on the client to bypass GeckoLib animation delay.
-     *
-     * The callback is intentionally a single composite action rather than a list:
-     * it triggers both camera recoil (CameraRecoilManager.applyRecoil) and
-     * immediate muzzle-flash particles (RevolverParticleHandler.spawnFireImmediate)
-     * in one call, registered from Nst_revolvers_recoiledClient.
-     *
-     * Protected by IllegalStateException to prevent accidental double-initialization.
-     */
-    private static Consumer<LivingEntity> clientFireCallback = null;
+    // -------------------------------------------------------------------------
+    // Per-item client-side fire callbacks
+    // -------------------------------------------------------------------------
 
     /**
-     * Sets the immediate fire callback.
-     * Called during client initialization.
+     * Per-item camera recoil callbacks, keyed by item registry ID.
+     * Invoked on the client at the exact moment of firing, before the next frame renders.
+     * ConcurrentHashMap used defensively — registration happens during client init,
+     * but the map may be read from the render thread.
      *
-     * @param callback Consumer invoked on the client when the revolver is fired
-     * @throws IllegalStateException if callback is already set
+     * Addon mods register their own callbacks via registerRecoilCallback() to apply
+     * custom recoil behavior for their revolver items without subclassing the callback system.
      */
-    public static void setClientFireCallback(Consumer<LivingEntity> callback) {
-        if (clientFireCallback != null) {
-            throw new IllegalStateException("clientFireCallback is already defined!");
+    private static final Map<Identifier, Consumer<LivingEntity>> RECOIL_CALLBACKS =
+            new ConcurrentHashMap<>();
+
+    /**
+     * Per-item muzzle-flash particle callbacks, keyed by item registry ID.
+     * Invoked on the client at the exact moment of firing to bypass GeckoLib animation delay.
+     * ConcurrentHashMap used defensively — registration happens during client init,
+     * but the map may be read from the render thread.
+     *
+     * Addon mods register their own callbacks via registerParticleCallback() to apply
+     * custom particle effects for their revolver items.
+     */
+    private static final Map<Identifier, Consumer<LivingEntity>> PARTICLE_CALLBACKS =
+            new ConcurrentHashMap<>();
+
+    /**
+     * Registers a camera recoil callback for a specific revolver item.
+     * Called during client initialization from Nst_revolvers_recoiledClient
+     * or from an addon mod's ClientModInitializer.
+     *
+     * The callback is invoked on the client at the exact moment of firing,
+     * before the next frame renders, so recoil offsets are applied immediately.
+     *
+     * @param item     the revolver item to bind the callback to
+     * @param callback consumer invoked on the client when the revolver is fired
+     * @throws IllegalStateException if the item has not yet been registered
+     *                               in the item registry at call time
+     */
+    public static void registerRecoilCallback(Item item, Consumer<LivingEntity> callback) {
+        Identifier id = Registries.ITEM.getId(item);
+        if (id == null || id.equals(Registries.ITEM.getId(Items.AIR))) {
+            throw new IllegalStateException(
+                    "registerRecoilCallback called before item registration for: " + item
+            );
         }
-        clientFireCallback = callback;
+        RECOIL_CALLBACKS.put(id, callback);
+    }
+
+    /**
+     * Registers a muzzle-flash particle callback for a specific revolver item.
+     * Called during client initialization from Nst_revolvers_recoiledClient
+     * or from an addon mod's ClientModInitializer.
+     *
+     * The callback is invoked on the client at the exact moment of firing,
+     * bypassing GeckoLib animation delay for instant visual feedback.
+     *
+     * @param item     the revolver item to bind the callback to
+     * @param callback consumer invoked on the client when the revolver is fired
+     * @throws IllegalStateException if the item has not yet been registered
+     *                               in the item registry at call time
+     */
+    public static void registerParticleCallback(Item item, Consumer<LivingEntity> callback) {
+        Identifier id = Registries.ITEM.getId(item);
+        if (id == null || id.equals(Registries.ITEM.getId(Items.AIR))) {
+            throw new IllegalStateException(
+                    "registerParticleCallback called before item registration for: " + item
+            );
+        }
+        PARTICLE_CALLBACKS.put(id, callback);
     }
 
     public BaseRevolverItem(Settings settings, float baseDamage) {
@@ -144,13 +198,13 @@ public abstract class BaseRevolverItem extends RangedWeaponItem implements GeoIt
     }
 
     // -------------------------------------------------------------------------
-    // RangedWeaponItem — required abstract method (unused; logic is in shoot())
+    // RangedWeaponItem — required abstract method (unused; logic is in performShoot())
     // -------------------------------------------------------------------------
 
     @Override
     protected void shoot(LivingEntity shooter, ProjectileEntity projectile, int index,
                          float speed, float divergence, float yaw, @Nullable LivingEntity target) {
-        // Not used — custom shooting logic is in the private shoot() method below
+        // Not used — custom shooting logic is in the protected performShoot() method below
     }
 
     // -------------------------------------------------------------------------
@@ -217,7 +271,7 @@ public abstract class BaseRevolverItem extends RangedWeaponItem implements GeoIt
      */
     @Override
     public void usageTick(World world, LivingEntity user, ItemStack stack, int remainingUseTicks) {
-        int elapsed = CHARGE_TIME_TICKS - remainingUseTicks; // сколько тиков прошло
+        int elapsed = CHARGE_TIME_TICKS - remainingUseTicks;
 
         // Tick 20 = 1.0 second = bullet-insertion keyframe in the reload animation
         if (elapsed == 20 && !world.isClient) {
@@ -236,9 +290,11 @@ public abstract class BaseRevolverItem extends RangedWeaponItem implements GeoIt
      * Called when the player right-clicks with the revolver.
      *
      * If the revolver is charged:
-     * - Server: fires the projectile via shoot().
-     * - Client: invokes clientFireCallback, which triggers camera recoil and
-     *   spawns muzzle-flash particles immediately, bypassing GeckoLib animation delay.
+     * - Server: fires the projectile via performShoot().
+     * - Client: looks up and invokes the recoil callback registered for this item,
+     *   then the particle callback — both bypassing GeckoLib animation delay.
+     *   Callbacks are keyed by item registry ID, allowing addon mods to register
+     *   custom behavior per item without modifying this class.
      * - Server: broadcasts RevolverFireParticlePacket to all tracking players so
      *   that nearby players also see the muzzle-flash (local player is skipped
      *   on the receiving end to avoid duplication).
@@ -257,13 +313,23 @@ public abstract class BaseRevolverItem extends RangedWeaponItem implements GeoIt
         if (isCharged(stack)) {
             // Shoot only on server
             if (!world.isClient) {
-                shoot(world, user, hand, stack, PROJECTILE_VELOCITY, PROJECTILE_DIVERGENCE);
+                performShoot(world, user, hand, stack, PROJECTILE_VELOCITY, PROJECTILE_DIVERGENCE);
             }
 
-            // Immediate fire callback on client: camera recoil + muzzle-flash particles
-            // Bypasses GeckoLib animation delay for instant visual feedback
-            if (world.isClient && clientFireCallback != null) {
-                clientFireCallback.accept(user);
+            // Invoke per-item recoil and particle callbacks on the client.
+            // Keyed by item ID so addon mods can register different behavior per revolver.
+            if (world.isClient()) {
+                Identifier itemId = Registries.ITEM.getId(stack.getItem());
+
+                Consumer<LivingEntity> recoilCallback = RECOIL_CALLBACKS.get(itemId);
+                if (recoilCallback != null) {
+                    recoilCallback.accept(user);
+                }
+
+                Consumer<LivingEntity> particleCallback = PARTICLE_CALLBACKS.get(itemId);
+                if (particleCallback != null) {
+                    particleCallback.accept(user);
+                }
             }
 
             // Server-side: broadcast fire particles to all players tracking this entity
@@ -350,18 +416,20 @@ public abstract class BaseRevolverItem extends RangedWeaponItem implements GeoIt
     // -------------------------------------------------------------------------
 
     /**
-     * Checks if draw animation has already been played for this item stack.
+     * Checks if the draw animation has already been played for this item stack.
+     * Protected to allow subclasses to override draw animation tracking behavior.
      */
-    private boolean hasDrawAnimationPlayed(ItemStack stack) {
+    protected boolean hasDrawAnimationPlayed(ItemStack stack) {
         return stack.getOrDefault(DataComponentTypes.CUSTOM_DATA, NbtComponent.DEFAULT)
                 .copyNbt()
                 .getBoolean(DRAW_PLAYED_KEY);
     }
 
     /**
-     * Marks that draw animation has been played for this item stack.
+     * Marks that the draw animation has been played for this item stack.
+     * Protected to allow subclasses to override draw animation tracking behavior.
      */
-    private void markDrawAnimationPlayed(ItemStack stack) {
+    protected void markDrawAnimationPlayed(ItemStack stack) {
         stack.apply(DataComponentTypes.CUSTOM_DATA, NbtComponent.DEFAULT, nbt -> {
             NbtCompound compound = nbt.copyNbt();
             compound.putBoolean(DRAW_PLAYED_KEY, true);
@@ -371,8 +439,9 @@ public abstract class BaseRevolverItem extends RangedWeaponItem implements GeoIt
 
     /**
      * Clears the draw animation flag from this item stack.
+     * Protected to allow subclasses to override draw animation tracking behavior.
      */
-    private void clearDrawAnimationFlag(ItemStack stack) {
+    protected void clearDrawAnimationFlag(ItemStack stack) {
         stack.apply(DataComponentTypes.CUSTOM_DATA, NbtComponent.DEFAULT, nbt -> {
             NbtCompound compound = nbt.copyNbt();
             compound.remove(DRAW_PLAYED_KEY);
@@ -387,8 +456,9 @@ public abstract class BaseRevolverItem extends RangedWeaponItem implements GeoIt
     /**
      * Loads a bullet from the user's inventory into the revolver.
      * Uses vanilla ChargedProjectilesComponent for compatibility.
+     * Protected to allow subclasses to override ammo selection or loading logic.
      */
-    private boolean loadBullet(LivingEntity shooter, ItemStack revolver) {
+    protected boolean loadBullet(LivingEntity shooter, ItemStack revolver) {
         ItemStack ammo = shooter.getProjectileType(revolver);
 
         if (ammo.isEmpty() && !(shooter instanceof PlayerEntity p && p.getAbilities().creativeMode)) {
@@ -419,8 +489,9 @@ public abstract class BaseRevolverItem extends RangedWeaponItem implements GeoIt
      * mirroring the third-person fire particle offset in RevolverParticleHandler.
      * This ensures bullets spawn from the visually correct position.
      * Uses constants that match RevolverParticleHandler's TP_FIRE_* offsets.
+     * Protected to allow subclasses to override barrel positioning for custom models.
      */
-    private static Vec3d calcBarrelPosition(LivingEntity shooter) {
+    protected Vec3d calcBarrelPosition(LivingEntity shooter) {
         float pitch   = shooter.getPitch();
         float yaw     = shooter.getYaw();
         float bodyYaw = shooter.getBodyYaw();
@@ -451,9 +522,11 @@ public abstract class BaseRevolverItem extends RangedWeaponItem implements GeoIt
      * Combines revolver base damage with bullet damage.
      * Spawns projectile from calculated barrel position for visual accuracy.
      * Triggers fire animation and plays explosion sound.
+     * Protected to allow subclasses to override projectile type, damage scaling,
+     * sound, or animation behavior.
      */
-    private void shoot(World world, LivingEntity shooter, Hand hand, ItemStack stack,
-                       float velocity, float divergence) {
+    protected void performShoot(World world, LivingEntity shooter, Hand hand, ItemStack stack,
+                                float velocity, float divergence) {
         if (world.isClient) {
             return;
         }

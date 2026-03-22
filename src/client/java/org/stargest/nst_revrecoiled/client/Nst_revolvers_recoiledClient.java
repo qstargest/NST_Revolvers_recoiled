@@ -20,10 +20,12 @@ import org.stargest.nst_revrecoiled.client.util.ModEntityRenderers;
 import org.stargest.nst_revrecoiled.client.util.ModItemRenderers;
 import org.stargest.nst_revrecoiled.network.RevolverFireParticlePacket;
 import org.stargest.nst_revrecoiled.network.RevolverReloadParticlePacket;
+import org.stargest.nst_revrecoiled.util.ModItems;
 import org.stargest.nst_revrecoiled.util.ModParticles;
 import org.stargest.nst_revrecoiled.util.ModScreenHandlers;
 
 import java.util.Objects;
+import java.util.function.Consumer;
 
 /**
  * Client-side initialization for the mod.
@@ -37,24 +39,45 @@ import java.util.Objects;
  * 4. Event listeners (disconnect handler for recoil reset and arm pose cleanup,
  *    entity unload handler for per-entity arm pose cleanup)
  * 5. Particle factories (fire and reload effects)
- * 6. Immediate fire callback (camera recoil + muzzle-flash particles, bypasses animation delay)
+ * 6. Per-item recoil and particle callbacks (registered for all base-mod revolvers)
  * 7. Network packet receiver for reload particles (server-timed, sent at animation keyframe tick)
  * 8. Network packet receiver for fire particles (synchronization to nearby players)
  *
  * Both fire and reload particles bypass GeckoLib animation keyframe callbacks entirely.
- * Fire particles are triggered client-side at the exact moment of firing via clientFireCallback.
- * Reload particles are triggered by a server packet sent at tick 20 of the charge,
- * matching the bullet-insertion keyframe without depending on GeckoLib keyframe events.
+ * Fire particles are triggered client-side at the exact moment of firing via per-item
+ * callbacks registered in PARTICLE_CALLBACKS. Reload particles are triggered by a server
+ * packet sent at tick 20 of the charge, matching the bullet-insertion keyframe timing.
+ *
+ * Per-item callbacks (DEFAULT_RECOIL, DEFAULT_PARTICLES) are shared across all base-mod
+ * revolvers. Addon mods can register their own callbacks for custom revolver items via
+ * BaseRevolverItem.registerRecoilCallback() and BaseRevolverItem.registerParticleCallback()
+ * from their own ClientModInitializer without modifying this class.
  *
  * Network synchronization ensures all nearby players see fire and reload particles.
  * For fire particles, the local player is skipped on the packet receiver side since
- * it is already handled by clientFireCallback to avoid duplication.
+ * it is already handled by the particle callback to avoid duplication.
  * For reload particles, the server sends to all players including the shooter.
  *
  * PlayerArmPose state is cleaned up on both disconnect (clearAllStates) and
  * individual entity unload (clearState) to prevent memory leaks.
  */
 public class Nst_revolvers_recoiledClient implements ClientModInitializer {
+
+    /**
+     * Default recoil callback shared by all base-mod revolvers.
+     * Triggers camera kickback via CameraRecoilManager at the moment of firing.
+     * Extracted as a constant to avoid allocating a new lambda per item registration.
+     */
+    private static final Consumer<LivingEntity> DEFAULT_RECOIL =
+            shooter -> CameraRecoilManager.getInstance().applyRecoil();
+
+    /**
+     * Default muzzle-flash particle callback shared by all base-mod revolvers.
+     * Spawns fire particles immediately at shot time, bypassing GeckoLib animation delay.
+     * Extracted as a constant to avoid allocating a new lambda per item registration.
+     */
+    private static final Consumer<LivingEntity> DEFAULT_PARTICLES =
+            RevolverParticleHandler::spawnFireImmediate;
 
     @Override
     public void onInitializeClient() {
@@ -92,13 +115,21 @@ public class Nst_revolvers_recoiledClient implements ClientModInitializer {
         registry.register(ModParticles.REVOLVER_FIRE, RevolverParticle.FireFactory::new);
         registry.register(ModParticles.REVOLVER_RELOAD, RevolverParticle.ReloadFactory::new);
 
-        // Composite fire callback: triggers camera recoil and spawns muzzle-flash particles
-        // in a single call at the exact moment of firing, bypassing GeckoLib animation delay.
-        // Camera recoil must come first so the offset is applied before the next frame renders.
-        BaseRevolverItem.setClientFireCallback(user -> {
-            CameraRecoilManager.getInstance().applyRecoil();
-            RevolverParticleHandler.spawnFireImmediate(user);
-        });
+        // Register per-item recoil callbacks for all base-mod revolvers.
+        // Addon mods can call registerRecoilCallback() with their own items
+        // and a custom consumer from their ClientModInitializer.
+        BaseRevolverItem.registerRecoilCallback(ModItems.COBBLESTONE_REVOLVER, DEFAULT_RECOIL);
+        BaseRevolverItem.registerRecoilCallback(ModItems.IRON_REVOLVER,        DEFAULT_RECOIL);
+        BaseRevolverItem.registerRecoilCallback(ModItems.GOLDEN_REVOLVER,      DEFAULT_RECOIL);
+        BaseRevolverItem.registerRecoilCallback(ModItems.DIAMOND_REVOLVER,     DEFAULT_RECOIL);
+
+        // Register per-item muzzle-flash particle callbacks for all base-mod revolvers.
+        // Addon mods can call registerParticleCallback() with their own items
+        // and a custom consumer from their ClientModInitializer.
+        BaseRevolverItem.registerParticleCallback(ModItems.COBBLESTONE_REVOLVER, DEFAULT_PARTICLES);
+        BaseRevolverItem.registerParticleCallback(ModItems.IRON_REVOLVER,        DEFAULT_PARTICLES);
+        BaseRevolverItem.registerParticleCallback(ModItems.GOLDEN_REVOLVER,      DEFAULT_PARTICLES);
+        BaseRevolverItem.registerParticleCallback(ModItems.DIAMOND_REVOLVER,     DEFAULT_PARTICLES);
 
         // Receive server-timed reload particle packets.
         // Sent to all players including the shooter at tick 20 of the charge,
@@ -116,7 +147,7 @@ public class Nst_revolvers_recoiledClient implements ClientModInitializer {
         );
 
         // Receive server-broadcast fire particle packets for other players' shots.
-        // Local player is skipped — particles already spawned via clientFireCallback above.
+        // Local player is skipped — particles already spawned via the particle callback above.
         ClientPlayNetworking.registerGlobalReceiver(
                 RevolverFireParticlePacket.ID,
                 (payload, ctx) -> ctx.client().execute(() -> {
@@ -124,7 +155,7 @@ public class Nst_revolvers_recoiledClient implements ClientModInitializer {
                             .getEntityById(payload.entityId());
 
                     if (entity instanceof LivingEntity living) {
-                        // Skip local player — particles already spawned via clientFireCallback
+                        // Skip local player — particles already spawned via particle callback
                         if (entity == ctx.client().player) return;
 
                         // Spawn fire particles for remote players

@@ -177,7 +177,7 @@ public class BulletProjectileEntity extends PersistentProjectileEntity implement
      * @param world Server world
      * @param pos Impact position
      */
-    private void spawnImpactParticles(ServerWorld world, Vec3d pos) {
+    protected void spawnImpactParticles(ServerWorld world, Vec3d pos) {
         ItemStack displayStack = this.getStack();
 
         world.spawnParticles(
