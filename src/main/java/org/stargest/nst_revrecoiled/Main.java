@@ -1,6 +1,7 @@
 package org.stargest.nst_revrecoiled;
 
 import net.fabricmc.api.ModInitializer;
+import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -8,6 +9,7 @@ import org.stargest.nst_revrecoiled.Villager.ModVillagers;
 import org.stargest.nst_revrecoiled.network.AssemblyCraftC2SPacket;
 import org.stargest.nst_revrecoiled.network.RevolverFireParticlePacket;
 import org.stargest.nst_revrecoiled.network.RevolverReloadParticlePacket;
+import org.stargest.nst_revrecoiled.recipe.AssemblyRecipes;
 import org.stargest.nst_revrecoiled.util.*;
 
 /**
@@ -29,6 +31,12 @@ public class Main implements ModInitializer {
         ModVillagers.init();
         ModScreenHandlers.register();
         AssemblyCraftC2SPacket.register();
+
+        ServerLifecycleEvents.SERVER_STARTING.register(server -> {
+            if (!AssemblyRecipes.isFrozen()) {
+                AssemblyRecipes.freeze();
+            }
+        });
 
         PayloadTypeRegistry.playS2C().register(
                 RevolverReloadParticlePacket.ID,

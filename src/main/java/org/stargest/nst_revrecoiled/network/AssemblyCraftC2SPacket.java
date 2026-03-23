@@ -19,13 +19,17 @@ import java.util.List;
  * at the Assembly Table.
  *
  * Contains two payload types:
- * - Payload      — crafts a single revolver
- * - BulletPayload — crafts a configurable number of bullets
+ * - Payload      — crafts a single revolver, identified by namespaced Identifier
+ * - BulletPayload — crafts a configurable number of bullets, identified by list index
+ *
+ * The revolver payload uses an Identifier rather than a list index so that recipe
+ * order changes in AssemblyRecipes do not silently break in-flight or replayed packets.
+ * The bullet payload retains the list index for now since bullet recipes are
+ * resolved server-side and quantity validation provides sufficient safety.
  *
  * Both payload types are registered via register(), which must be called once
- * from the main ModInitializer. The server validates the recipe index and
- * executes the craft; inventory changes are synced back through the normal
- * slot-sync mechanism.
+ * from the main ModInitializer. The server validates the recipe before executing
+ * the craft; inventory changes are synced back through the normal slot-sync mechanism.
  */
 public class AssemblyCraftC2SPacket {
 
@@ -39,12 +43,14 @@ public class AssemblyCraftC2SPacket {
 
     /**
      * Payload for crafting a single revolver.
+     * Uses the recipe's namespaced Identifier so the server can look up the recipe
+     * via AssemblyRecipes.getById(), independent of declaration order.
      *
-     * @param recipeIndex index of the recipe in AssemblyRecipes.getAll()
+     * @param recipeId namespaced identifier of the recipe to craft
      */
-    public record Payload(int recipeIndex) implements CustomPayload {
+    public record Payload(Identifier recipeId) implements CustomPayload {
         public static final PacketCodec<RegistryByteBuf, Payload> CODEC =
-                PacketCodec.tuple(PacketCodecs.INTEGER, Payload::recipeIndex, Payload::new);
+                PacketCodec.tuple(Identifier.PACKET_CODEC, Payload::recipeId, Payload::new);
 
         @Override
         public CustomPayload.Id<? extends CustomPayload> getId() { return ID; }
@@ -84,22 +90,21 @@ public class AssemblyCraftC2SPacket {
      * Registers both packet types with the Fabric networking API and binds
      * their server-side handlers. Must be called once from the main ModInitializer.
      *
-     * The server handler validates the recipe index bounds before executing the craft.
-     * For bullet packets, quantity is clamped to a minimum of 1 to guard against
-     * malformed or replayed packets.
+     * The revolver handler resolves the recipe by Identifier via AssemblyRecipes.getById(),
+     * silently ignoring unknown IDs to handle version mismatches gracefully.
+     * The bullet handler validates the list index bounds and clamps quantity to a
+     * minimum of 1 to guard against malformed or replayed packets.
      */
     public static void register() {
-        // Revolver packet — crafts a single revolver from the given recipe index
+        // Revolver packet — resolves recipe by Identifier, independent of list order
         PayloadTypeRegistry.playC2S().register(ID, Payload.CODEC);
         ServerPlayNetworking.registerGlobalReceiver(ID, (payload, context) ->
                 context.server().execute(() -> {
-                    List<AssemblyRecipe> recipes = AssemblyRecipes.getAll();
-                    int idx = payload.recipeIndex();
-                    if (idx < 0 || idx >= recipes.size()) return;
-                    recipes.get(idx).craft(context.player().getInventory());
+                    AssemblyRecipes.getById(payload.recipeId())
+                            .ifPresent(r -> r.craft(context.player().getInventory()));
                 }));
 
-        // Bullet packet — crafts a batch of bullets from the given recipe index and quantity
+        // Bullet packet — resolves recipe by list index and crafts the requested quantity
         PayloadTypeRegistry.playC2S().register(BULLET_ID, BulletPayload.CODEC);
         ServerPlayNetworking.registerGlobalReceiver(BULLET_ID, (payload, context) ->
                 context.server().execute(() -> {

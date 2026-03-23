@@ -3,6 +3,7 @@ package org.stargest.nst_revrecoiled.recipe;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
+import net.minecraft.util.Identifier;
 
 import java.util.List;
 
@@ -14,14 +15,18 @@ import java.util.List;
  *
  * Instances are declared and registered in AssemblyRecipes.
  * Bullet-specific recipes extend this class via BulletAssemblyRecipe.
+ *
+ * Recipes are identified by a namespaced Identifier rather than a plain string,
+ * enabling addon mods to register recipes under their own namespace without
+ * risking collisions with base-mod or other addon recipe names.
  */
 public class AssemblyRecipe {
 
     /** A pair of an item and a required quantity representing a single crafting ingredient. */
     public record Ingredient(Item item, int count) {}
 
-    /** Unique string identifier, e.g. "cobblestone_revolver". */
-    private final String id;
+    /** Unique namespaced identifier, e.g. Identifier.of("nst_revrecoiled", "cobblestone_revolver"). */
+    private final Identifier id;
     /** Item produced when the recipe is successfully crafted. */
     private final Item result;
     /** Translation key used as the GUI label, e.g. "item.nst_revrecoiled.cobblestone_revolver". */
@@ -32,12 +37,12 @@ public class AssemblyRecipe {
     /**
      * Creates a new recipe.
      *
-     * @param id             unique identifier
+     * @param id             unique namespaced identifier
      * @param result         item given to the player on craft
      * @param translationKey i18n key for the GUI label
      * @param ingredients    required materials (copied defensively)
      */
-    public AssemblyRecipe(String id, Item result, String translationKey,
+    public AssemblyRecipe(Identifier id, Item result, String translationKey,
                           List<Ingredient> ingredients) {
         this.id             = id;
         this.result         = result;
@@ -49,8 +54,8 @@ public class AssemblyRecipe {
     // Getters
     // -------------------------------------------------------------------------
 
-    /** @return unique string identifier of this recipe */
-    public String           getId()             { return id;             }
+    /** @return unique namespaced identifier of this recipe */
+    public Identifier       getId()             { return id;             }
     /** @return item produced by this recipe */
     public Item             getResult()         { return result;         }
     /** @return i18n translation key for the GUI label */

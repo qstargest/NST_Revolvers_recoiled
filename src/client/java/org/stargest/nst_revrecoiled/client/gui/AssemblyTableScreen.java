@@ -6,6 +6,7 @@ import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
+import net.minecraft.client.gui.screen.ingame.HandledScreens;
 import net.minecraft.client.render.DiffuseLighting;
 import net.minecraft.client.render.LightmapTextureManager;
 import net.minecraft.client.render.OverlayTexture;
@@ -13,7 +14,6 @@ import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
 import net.minecraft.item.ModelTransformationMode;
 import net.minecraft.text.Text;
 import net.minecraft.util.math.RotationAxis;
@@ -50,11 +50,16 @@ import java.util.List;
  * - Detail panel shows a rotating 3D GeckoLib model for revolvers and a spinning
  *   2D icon for bullets, with damage stat and ingredient counts
  * - Bullet detail includes quantity controls (−, text input, +) and a craft button
- *   that doubles as a pickaxe-durability indicator
+ *   that doubles as a pickaxe-durability indicator; the icon shows the weakest
+ *   valid pickaxe for the tier when none is present in the inventory
  * - Per-frame inventory cache (refreshInventoryCache) avoids redundant ingredient
  *   counts, canCraft checks, and pickaxe searches during the render pass
  * - Recipe-change cache (onRecipeSelected) avoids rebuilding ingredient ItemStacks
  *   and scale factors every frame
+ *
+ * Key render and input methods are protected to allow addon mods to subclass this
+ * screen and override recipe display, detail panels, or input handling for custom
+ * recipe types registered via AssemblyRecipes.register().
  */
 @Environment(EnvType.CLIENT)
 public class AssemblyTableScreen extends HandledScreen<AssemblyTableScreenHandler> {
@@ -158,6 +163,9 @@ public class AssemblyTableScreen extends HandledScreen<AssemblyTableScreenHandle
     private static final int C_THUMB_NORMAL        = 0xFFAAAAAA;
     private static final int C_THUMB_HOVER         = 0xFFCCCCCC;
 
+    public static HandledScreens.Provider<AssemblyTableScreenHandler, AssemblyTableScreen> FACTORY =
+            AssemblyTableScreen::new;
+
     // ── State ─────────────────────────────────────────────────────────────────
     private List<AssemblyRecipe> recipes;
     private int selectedRecipe = -1;
@@ -237,7 +245,7 @@ public class AssemblyTableScreen extends HandledScreen<AssemblyTableScreenHandle
      * that does not depend on current inventory state.
      * Avoids rebuilding this data on every frame — only on actual selection changes.
      */
-    private void onRecipeSelected(int newIndex) {
+    protected void onRecipeSelected(int newIndex) {
         selectedRecipe = newIndex;
         if (newIndex >= 0) bulletQuantity = 1;
 
@@ -269,8 +277,13 @@ public class AssemblyTableScreen extends HandledScreen<AssemblyTableScreenHandle
      * findBestPickaxeSlot, and getMaxCraftable into a single pass.
      * Results are stored in cachedCanCraft, cachedIngCounts, cachedPickaxeSlot,
      * and cachedDisplayPickaxeStack for use during the render pass.
+     *
+     * When no valid pickaxe is present, the GUI icon falls back to the weakest
+     * pickaxe in the tier's valid list (PickaxeTier.getValidPickaxes().get(0)),
+     * giving the player a visual hint of the minimum tool required.
+     * The ItemStack is only recreated when the displayed pickaxe type actually changes.
      */
-    private void refreshInventoryCache() {
+    protected void refreshInventoryCache() {
         if (selectedRecipe < 0 || selectedRecipe >= recipes.size()
                 || cachedIngredients == null) return;
 
@@ -291,11 +304,7 @@ public class AssemblyTableScreen extends HandledScreen<AssemblyTableScreenHandle
             // drawPickaxeStatus() and drawQuantityControls()
             Item newPickaxe = cachedPickaxeSlot >= 0
                     ? inv.main.get(cachedPickaxeSlot).getItem()
-                    : switch (br.getRequiredTier()) {
-                case ANY        -> Items.WOODEN_PICKAXE;
-                case STONE_PLUS -> Items.STONE_PICKAXE;
-                case IRON_PLUS  -> Items.IRON_PICKAXE;
-            };
+                    : br.getRequiredTier().getValidPickaxes().get(0);
             // Recreate ItemStack only when the pickaxe type actually changes
             if (newPickaxe != cachedDisplayPickaxe) {
                 cachedDisplayPickaxe      = newPickaxe;
@@ -348,7 +357,7 @@ public class AssemblyTableScreen extends HandledScreen<AssemblyTableScreenHandle
                     if (rx >= CRAFT_BTN_X && rx < CRAFT_BTN_X + CRAFT_BTN_W
                             && ry >= CRAFT_BTN_Y && ry < CRAFT_BTN_Y + CRAFT_BTN_H) {
                         if (cachedCanCraft)
-                            ClientPlayNetworking.send(new AssemblyCraftC2SPacket.Payload(selectedRecipe));
+                            ClientPlayNetworking.send(new AssemblyCraftC2SPacket.Payload(recipes.get(selectedRecipe).getId()));
                         return true;
                     }
                 }
@@ -369,7 +378,7 @@ public class AssemblyTableScreen extends HandledScreen<AssemblyTableScreenHandle
      * Handles a left-click on a scrollbar track or thumb.
      * Clicking the thumb starts a drag; clicking the track jumps the scroll position.
      */
-    private boolean handleScrollbarClick(int rx, int ry, int absMouseY) {
+    protected boolean handleScrollbarClick(int rx, int ry, int absMouseY) {
         if (revolverCount > MAX_VISIBLE_BTNS
                 && rx >= REV_SCROLLBAR_X && rx < REV_SCROLLBAR_X + SCROLLBAR_W
                 && ry >= BTN_Y_START && ry < BTN_Y_START + SCROLL_ZONE_H) {
@@ -621,7 +630,7 @@ public class AssemblyTableScreen extends HandledScreen<AssemblyTableScreenHandle
     // Recipe buttons + scrollbars
     // ─────────────────────────────────────────────────────────────────────────
 
-    private void drawRecipeSelector(DrawContext ctx, int mx, int my) {
+    protected void drawRecipeSelector(DrawContext ctx, int mx, int my) {
         // Scissor clips the button area to the recipe zone.
         // Scrollbars are drawn outside the scissor region (to the right of clipX2)
         // so their thumbs are never accidentally clipped.
@@ -665,7 +674,7 @@ public class AssemblyTableScreen extends HandledScreen<AssemblyTableScreenHandle
      * Thumb: raised (light top/left border, dark bottom/right border, medium fill).
      * Thumb brightens on hover or while dragging.
      */
-    private void drawVanillaScrollbar(DrawContext ctx, int mx, int my,
+    protected void drawVanillaScrollbar(DrawContext ctx, int mx, int my,
                                       int absX, int absY,
                                       int offset, int total, boolean dragging) {
         int maxOffset = total - MAX_VISIBLE_BTNS;
@@ -698,7 +707,7 @@ public class AssemblyTableScreen extends HandledScreen<AssemblyTableScreenHandle
     // Detail panel — BULLETS
     // ─────────────────────────────────────────────────────────────────────────
 
-    private void drawBulletDetail(DrawContext ctx, int mx, int my, BulletAssemblyRecipe recipe) {
+    protected void drawBulletDetail(DrawContext ctx, int mx, int my, BulletAssemblyRecipe recipe) {
         int cx       = x + DETAIL_X + DETAIL_PAD;
         int mY       = y + RECIPE_ZONE_TOP + MODEL_OFFSET;
         int nameMaxW = BG_W - (DETAIL_X + DETAIL_PAD) - 4;
@@ -857,7 +866,7 @@ public class AssemblyTableScreen extends HandledScreen<AssemblyTableScreenHandle
     // Detail panel — REVOLVERS
     // ─────────────────────────────────────────────────────────────────────────
 
-    private void drawRecipeDetail(DrawContext ctx, int mx, int my, AssemblyRecipe recipe) {
+    protected void drawRecipeDetail(DrawContext ctx, int mx, int my, AssemblyRecipe recipe) {
         int cx       = x + DETAIL_X + DETAIL_PAD;
         int mY       = y + RECIPE_ZONE_TOP + MODEL_OFFSET;
         int nameMaxW = BG_W - (DETAIL_X + DETAIL_PAD) - 4;
@@ -933,7 +942,7 @@ public class AssemblyTableScreen extends HandledScreen<AssemblyTableScreenHandle
      * DiffuseLighting is toggled around the render call to match GUI lighting expectations.
      */
     @SuppressWarnings({"unchecked", "rawtypes"})
-    private void renderGeckoModel(DrawContext ctx, ItemStack stack, int centerX, int centerY,
+    protected void renderGeckoModel(DrawContext ctx, ItemStack stack, int centerX, int centerY,
                                   float scale, float yawDeg, float pitchDeg) {
         if (!(stack.getItem() instanceof BaseRevolverItem revolver)) {
             ctx.drawItem(stack, centerX - 8, centerY - 8); return;
@@ -977,7 +986,7 @@ public class AssemblyTableScreen extends HandledScreen<AssemblyTableScreenHandle
      * Draws text scaled down to fit within maxWidth if the natural width exceeds it.
      * Scaling is applied via matrix transform to preserve sub-pixel alignment.
      */
-    private void drawTextFitted(DrawContext ctx, Text text, int tx, int ty, int maxWidth, int color) {
+    protected void drawTextFitted(DrawContext ctx, Text text, int tx, int ty, int maxWidth, int color) {
         int w = textRenderer.getWidth(text);
         if (w <= maxWidth) { ctx.drawText(textRenderer, text, tx, ty, color, false); return; }
         var m = ctx.getMatrices(); m.push();
@@ -994,7 +1003,7 @@ public class AssemblyTableScreen extends HandledScreen<AssemblyTableScreenHandle
      * Draws a raised panel with a 1-pixel dark outer border, 1-pixel light highlight
      * on the bottom/right, and a 1-pixel bright inner highlight on top/left for depth.
      */
-    private void drawPanel(DrawContext ctx, int px, int py, int pw, int ph, int bg) {
+    protected void drawPanel(DrawContext ctx, int px, int py, int pw, int ph, int bg) {
         ctx.fill(px + 1,      py + 1,      px + pw - 1, py + ph - 1, bg);
         ctx.fill(px,          py,          px + pw,     py + 1,      C_DARK);
         ctx.fill(px,          py,          px + 1,      py + ph,     C_DARK);
@@ -1009,7 +1018,7 @@ public class AssemblyTableScreen extends HandledScreen<AssemblyTableScreenHandle
      * Dark top/left edges, light bottom/right edges — gives the appearance of
      * a pressed-in surface.
      */
-    private void drawBevelBorder(DrawContext ctx, int sx, int sy, int sw, int sh) {
+    protected void drawBevelBorder(DrawContext ctx, int sx, int sy, int sw, int sh) {
         ctx.fill(sx,          sy,          sx + sw, sy + 1,  C_SLOT_SHADOW);
         ctx.fill(sx,          sy,          sx + 1,  sy + sh, C_SLOT_SHADOW);
         ctx.fill(sx,          sy + sh - 1, sx + sw, sy + sh, C_LIGHT);

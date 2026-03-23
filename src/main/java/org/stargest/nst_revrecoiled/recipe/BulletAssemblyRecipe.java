@@ -3,9 +3,9 @@ package org.stargest.nst_revrecoiled.recipe;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
 import net.minecraft.sound.SoundCategory;
 import net.minecraft.sound.SoundEvents;
+import net.minecraft.util.Identifier;
 import net.minecraft.world.World;
 
 import java.util.List;
@@ -21,6 +21,10 @@ import java.util.List;
  * Unlike revolver recipes, bullet recipes support batch crafting via craftBullets(),
  * which scales both material and durability costs linearly by count.
  * Results are distributed across multiple stacks when count exceeds the item's max stack size.
+ *
+ * The required tier is expressed as a PickaxeTier interface rather than the built-in
+ * Vanilla enum, allowing addon mods to pass custom tiers with different valid pickaxe
+ * sets and translation keys without modifying this class.
  */
 public class BulletAssemblyRecipe extends AssemblyRecipe {
 
@@ -28,45 +32,21 @@ public class BulletAssemblyRecipe extends AssemblyRecipe {
     // Required pickaxe tier
     // -------------------------------------------------------------------------
 
-    /**
-     * Minimum pickaxe tier required to craft this bullet type.
-     *   ANY        — stone bullet:        any pickaxe accepted
-     *   STONE_PLUS — iron bullet:         stone pickaxe or better
-     *   IRON_PLUS  — gold/diamond bullet: iron pickaxe or better
-     */
-    public enum PickaxeTier {
-        ANY,        // stone bullet  — any pickaxe
-        STONE_PLUS, // iron bullet   — stone pickaxe or better
-        IRON_PLUS   // gold/diamond  — iron pickaxe or better
-    }
-
-    // Ordered weakest to strongest; used for valid-pickaxe checks and tooltip display
-    private static final List<Item> TIER_ANY = List.of(
-            Items.WOODEN_PICKAXE, Items.STONE_PICKAXE, Items.IRON_PICKAXE,
-            Items.GOLDEN_PICKAXE, Items.DIAMOND_PICKAXE, Items.NETHERITE_PICKAXE
-    );
-    private static final List<Item> TIER_STONE_PLUS = List.of(
-            Items.STONE_PICKAXE, Items.IRON_PICKAXE, Items.GOLDEN_PICKAXE,
-            Items.DIAMOND_PICKAXE, Items.NETHERITE_PICKAXE
-    );
-    private static final List<Item> TIER_IRON_PLUS = List.of(
-            Items.IRON_PICKAXE, Items.GOLDEN_PICKAXE,
-            Items.DIAMOND_PICKAXE, Items.NETHERITE_PICKAXE
-    );
-
     /** The minimum pickaxe tier needed to craft this bullet type. */
     private final PickaxeTier requiredTier;
 
     /**
      * Creates a new bullet recipe.
      *
-     * @param id             unique identifier
+     * @param id             unique namespaced identifier
      * @param result         bullet item produced by this recipe
      * @param translationKey i18n key for the GUI label
      * @param ingredients    required materials
-     * @param requiredTier   minimum pickaxe tier required to craft
+     * @param requiredTier   minimum pickaxe tier required to craft;
+     *                       use PickaxeTier.Vanilla constants for base-mod tiers,
+     *                       or supply a custom implementation for addon tiers
      */
-    public BulletAssemblyRecipe(String id, Item result, String translationKey,
+    public BulletAssemblyRecipe(Identifier id, Item result, String translationKey,
                                 List<Ingredient> ingredients, PickaxeTier requiredTier) {
         super(id, result, translationKey, ingredients);
         this.requiredTier = requiredTier;
@@ -81,30 +61,23 @@ public class BulletAssemblyRecipe extends AssemblyRecipe {
 
     /**
      * Returns the list of pickaxe items that satisfy the required tier,
-     * ordered from weakest to strongest.
+     * ordered from weakest to strongest. Delegates to PickaxeTier.getValidPickaxes().
      *
      * @return immutable list of valid pickaxe items
      */
     public List<Item> getValidPickaxes() {
-        return switch (requiredTier) {
-            case ANY        -> TIER_ANY;
-            case STONE_PLUS -> TIER_STONE_PLUS;
-            case IRON_PLUS  -> TIER_IRON_PLUS;
-        };
+        return requiredTier.getValidPickaxes();
     }
 
     /**
      * Returns the translation key for the minimum-tier requirement label shown in the GUI.
      * Displayed in red when no valid pickaxe is present in the player's inventory.
+     * Delegates to PickaxeTier.getTranslationKey().
      *
      * @return i18n key describing the pickaxe tier requirement
      */
     public String getTierTranslationKey() {
-        return switch (requiredTier) {
-            case ANY        -> "gui.nst_revrecoiled.pickaxe_tier_any";
-            case STONE_PLUS -> "gui.nst_revrecoiled.pickaxe_tier_stone";
-            case IRON_PLUS  -> "gui.nst_revrecoiled.pickaxe_tier_iron";
-        };
+        return requiredTier.getTranslationKey();
     }
 
     /**
@@ -112,7 +85,7 @@ public class BulletAssemblyRecipe extends AssemblyRecipe {
      * @return true if the item satisfies this recipe's pickaxe tier requirement
      */
     public boolean isValidPickaxe(Item item) {
-        return getValidPickaxes().contains(item);
+        return requiredTier.getValidPickaxes().contains(item);
     }
 
     // -------------------------------------------------------------------------

@@ -89,7 +89,8 @@ public class Nst_revolvers_recoiledClient implements ClientModInitializer {
         // Bind the Assembly Table screen handler to its client-side GUI class
         HandledScreens.register(
                 ModScreenHandlers.ASSEMBLY_TABLE_HANDLER,
-                AssemblyTableScreen::new);
+                AssemblyTableScreen.FACTORY
+        );
 
         // Reset camera recoil when disconnecting from server
         ClientPlayConnectionEvents.DISCONNECT.register(
