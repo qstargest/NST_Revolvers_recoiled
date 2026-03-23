@@ -28,7 +28,7 @@ public class RevolverParticle extends SpriteBillboardParticle {
      * @param maxAge Particle lifetime in ticks
      * @param particleScale Particle size multiplier
      */
-    private RevolverParticle(ClientWorld world, double x, double y, double z,
+    protected RevolverParticle(ClientWorld world, double x, double y, double z,
                              double vx, double vy, double vz,
                              SpriteProvider spriteProvider, int maxAge, float particleScale) {
         super(world, x, y, z, 0, 0, 0);

@@ -105,6 +105,35 @@ public class RevolverParticleHandler {
     }
 
     /**
+     * Calculates the fire particle spawn position for the given holder.
+     * Can be called from addons to spawn custom particles at the correct position.
+     */
+    public static Vec3d calcFirePosition(LivingEntity holder) {
+        MinecraftClient client = MinecraftClient.getInstance();
+        float tickDelta = client.getRenderTickCounter().getTickDelta(true);
+        boolean isLocal     = (holder == client.player);
+        boolean firstPerson = isLocal && client.options.getPerspective().isFirstPerson();
+
+        return firstPerson
+                ? calcFirstPersonPos(client, holder, tickDelta, "fire")
+                : calcThirdPersonPos(holder, tickDelta, "fire");
+    }
+
+    /**
+     * Calculates the reload particle spawn position for the given holder.
+     */
+    public static Vec3d calcReloadPosition(LivingEntity holder) {
+        MinecraftClient client = MinecraftClient.getInstance();
+        float tickDelta = client.getRenderTickCounter().getTickDelta(true);
+        boolean isLocal     = (holder == client.player);
+        boolean firstPerson = isLocal && client.options.getPerspective().isFirstPerson();
+
+        return firstPerson
+                ? calcFirstPersonPos(client, holder, tickDelta, "reload")
+                : calcThirdPersonPos(holder, tickDelta, "reload");
+    }
+
+    /**
      * Applies directional offset to a base position.
      * Formula: base + (forward * f) + (right * r) + (up * u)
      */
@@ -128,17 +157,8 @@ public class RevolverParticleHandler {
      * @param holder the living entity firing the revolver
      */
     public static void spawnFireImmediate(LivingEntity holder) {
-        MinecraftClient client = MinecraftClient.getInstance();
-        float tickDelta = client.getRenderTickCounter().getTickDelta(true);
-
-        boolean isLocal     = (holder == client.player);
-        boolean firstPerson = isLocal && client.options.getPerspective().isFirstPerson();
-
-        Vec3d spawnPos = firstPerson
-                ? calcFirstPersonPos(client, holder, tickDelta, "fire")
-                : calcThirdPersonPos(holder, tickDelta, "fire");
-
-        spawnScattered(holder.getWorld(), ModParticles.REVOLVER_FIRE, spawnPos, 12, 0.01);
+        spawnScattered(holder.getWorld(), ModParticles.REVOLVER_FIRE,
+                calcFirePosition(holder), 12, 0.01);
     }
 
     /**
@@ -152,17 +172,8 @@ public class RevolverParticleHandler {
      * @param holder the living entity reloading the revolver
      */
     public static void spawnReloadImmediate(LivingEntity holder) {
-        MinecraftClient client = MinecraftClient.getInstance();
-        float tickDelta = client.getRenderTickCounter().getTickDelta(true);
-
-        boolean isLocal     = (holder == client.player);
-        boolean firstPerson = isLocal && client.options.getPerspective().isFirstPerson();
-
-        Vec3d spawnPos = firstPerson
-                ? calcFirstPersonPos(client, holder, tickDelta, "reload")
-                : calcThirdPersonPos(holder, tickDelta, "reload");
-
-        spawnScattered(holder.getWorld(), ModParticles.REVOLVER_RELOAD, spawnPos, 20, 0.04);
+        spawnScattered(holder.getWorld(), ModParticles.REVOLVER_RELOAD,
+                calcReloadPosition(holder), 20, 0.04);
     }
 
     /**
@@ -174,7 +185,7 @@ public class RevolverParticleHandler {
      * @param count  number of particles
      * @param spread Gaussian spread radius
      */
-    private static void spawnScattered(World world, ParticleEffect type, Vec3d pos, int count, double spread) {
+    public static void spawnScattered(World world, ParticleEffect type, Vec3d pos, int count, double spread) {
         for (int i = 0; i < count; i++) {
             world.addParticle(type,
                     pos.x + world.random.nextGaussian() * spread,
