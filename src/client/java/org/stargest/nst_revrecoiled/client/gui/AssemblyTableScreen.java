@@ -533,13 +533,20 @@ public class AssemblyTableScreen extends HandledScreen<AssemblyTableScreenHandle
             }
         }
 
-        // Scroll adjusts bullet quantity when a bullet recipe is selected
+        // Scroll adjusts bullet quantity only when hovering over the quantity controls row
         if (selectedRecipe >= 0 && selectedRecipe < recipes.size()
                 && recipes.get(selectedRecipe) instanceof BulletAssemblyRecipe) {
-            bulletQuantity = Math.max(1, Math.min(BULLET_QTY_MAX,
-                    bulletQuantity + (verticalAmount > 0 ? 1 : -1)));
-            return true;
+            ry = (int) mouseY - this.y;
+            rx = (int) mouseX - this.x;
+            boolean overQtyRow = rx >= QTY_MINUS_X && rx < QTY_PLUS_X + QTY_PLUS_W
+                    && ry >= QTY_ROW_Y && ry < QTY_ROW_Y + QTY_MINUS_H;
+            if (overQtyRow) {
+                bulletQuantity = Math.max(1, Math.min(BULLET_QTY_MAX,
+                        bulletQuantity + (verticalAmount > 0 ? 1 : -1)));
+                return true;
+            }
         }
+
         return super.mouseScrolled(mouseX, mouseY, horizontalAmount, verticalAmount);
     }
 
