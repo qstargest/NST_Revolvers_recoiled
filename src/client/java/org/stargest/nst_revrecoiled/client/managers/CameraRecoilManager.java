@@ -38,6 +38,9 @@ public class CameraRecoilManager {
     private float targetPitchOffset  = 0.0f;
     private float targetYawOffset    = 0.0f;
 
+    private float recoilKickDuration     = RECOIL_DURATION;
+    private float recoilRecoveryDuration = RECOVERY_DURATION;
+
     private long        recoilStartTime = 0;
     private RecoilPhase currentPhase    = RecoilPhase.IDLE;
 
@@ -64,20 +67,32 @@ public class CameraRecoilManager {
     // -------------------------------------------------------------------------
 
     /**
-     * Triggers a new recoil event at the moment of firing.
-     * Called directly from the clientFireCallback registered in
-     * Nst_revolvers_recoiledClient, which is invoked by BaseRevolverItem.use()
-     * on the client side exactly when the shot is processed.
-     *
-     * Randomised yaw variance gives each shot a slightly different sideways kick,
-     * preventing the recoil from feeling mechanical or predictable.
+     * Triggers a recoil event with default parameters.
+     * Used by the base mod's revolvers.
      */
     public void applyRecoil() {
+        applyRecoil(RECOIL_PITCH, RECOIL_YAW_VARIANCE, RECOIL_DURATION, RECOVERY_DURATION);
+    }
+
+    /**
+     * Triggers a recoil event with custom parameters.
+     * Intended for addon weapons with different recoil characteristics.
+     *
+     * @param pitch           upward kick in degrees
+     * @param yawVariance     horizontal variance in degrees
+     * @param kickDuration    time to reach peak recoil in seconds
+     * @param recoveryDuration time to return to rest in seconds
+     */
+    public void applyRecoil(float pitch, float yawVariance,
+                            float kickDuration, float recoveryDuration) {
         MinecraftClient client = MinecraftClient.getInstance();
         if (client.world == null) return;
 
-        targetPitchOffset = -RECOIL_PITCH; // Negative = camera kicks upward
-        targetYawOffset   = (client.world.random.nextFloat() - 0.5f) * 2.0f * RECOIL_YAW_VARIANCE;
+        this.recoilKickDuration    = kickDuration;
+        this.recoilRecoveryDuration = recoveryDuration;
+
+        targetPitchOffset = -pitch;
+        targetYawOffset   = (client.world.random.nextFloat() - 0.5f) * 2.0f * yawVariance;
 
         recoilStartTime = System.currentTimeMillis();
         currentPhase    = RecoilPhase.KICKBACK;
@@ -102,21 +117,21 @@ public class CameraRecoilManager {
 
         switch (currentPhase) {
             case KICKBACK:
-                if (elapsedSeconds >= RECOIL_DURATION) {
+                if (elapsedSeconds >= recoilKickDuration) {
                     // Kickback complete — lock to peak and start recovery
                     currentPhase      = RecoilPhase.RECOVERY;
                     recoilStartTime   = System.currentTimeMillis();
                     currentPitchOffset = targetPitchOffset;
                     currentYawOffset   = targetYawOffset;
                 } else {
-                    float eased = easeOutQuad(elapsedSeconds / RECOIL_DURATION);
+                    float eased = easeOutQuad(elapsedSeconds / recoilKickDuration);
                     currentPitchOffset = targetPitchOffset * eased;
                     currentYawOffset   = targetYawOffset   * eased;
                 }
                 break;
 
             case RECOVERY:
-                if (elapsedSeconds >= RECOVERY_DURATION) {
+                if (elapsedSeconds >= recoilRecoveryDuration) {
                     // Recovery complete — return to idle
                     currentPhase       = RecoilPhase.IDLE;
                     currentPitchOffset = 0.0f;
@@ -124,7 +139,7 @@ public class CameraRecoilManager {
                     targetPitchOffset  = 0.0f;
                     targetYawOffset    = 0.0f;
                 } else {
-                    float eased = easeInOutCubic(elapsedSeconds / RECOVERY_DURATION);
+                    float eased = easeInOutCubic(elapsedSeconds / recoilRecoveryDuration);
                     currentPitchOffset = targetPitchOffset * (1.0f - eased);
                     currentYawOffset   = targetYawOffset   * (1.0f - eased);
                 }
