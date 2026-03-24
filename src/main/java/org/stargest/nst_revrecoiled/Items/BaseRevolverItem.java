@@ -68,7 +68,7 @@ import java.util.function.Predicate;
  * Core methods (loadBullet, calcBarrelPosition, performShoot, draw animation helpers)
  * are protected to allow subclasses to override shooting and animation behavior.
  */
-public abstract class BaseRevolverItem extends RangedWeaponItem implements GeoItem {
+public abstract class BaseRevolverItem extends RangedWeaponItem implements GeoItem, RevolverArmPoseItem {
 
     private static final int MAX_DURABILITY = 500;
     private static final int CHARGE_TIME_TICKS = 50; // 2.5 seconds at 20 TPS

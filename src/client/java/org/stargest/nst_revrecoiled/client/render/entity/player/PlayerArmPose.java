@@ -10,6 +10,7 @@ import net.minecraft.util.Arm;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
 import org.stargest.nst_revrecoiled.Items.BaseRevolverItem;
+import org.stargest.nst_revrecoiled.Items.RevolverArmPoseItem;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -162,7 +163,7 @@ public class PlayerArmPose {
         if (!(entity instanceof PlayerEntity player)) return;
 
         ItemStack stack = player.getStackInHand(player.getActiveHand());
-        if (!(stack.getItem() instanceof BaseRevolverItem)) {
+        if (!(stack.getItem() instanceof RevolverArmPoseItem)) {
             // Not holding revolver - remove cached state
             playerStates.remove(renderState.id);
             return;
