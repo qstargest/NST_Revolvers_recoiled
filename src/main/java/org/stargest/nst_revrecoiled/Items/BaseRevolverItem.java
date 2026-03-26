@@ -70,7 +70,6 @@ import java.util.function.Predicate;
  */
 public abstract class BaseRevolverItem extends RangedWeaponItem implements GeoItem, RevolverArmPoseItem {
 
-    private static final int MAX_DURABILITY = 500;
     private static final int CHARGE_TIME_TICKS = 50; // 2.5 seconds at 20 TPS
     private static final float PROJECTILE_VELOCITY = 6.0f;
     private static final float PROJECTILE_DIVERGENCE = 0.2f; // Reduced for better accuracy
@@ -175,8 +174,8 @@ public abstract class BaseRevolverItem extends RangedWeaponItem implements GeoIt
         PARTICLE_CALLBACKS.put(id, callback);
     }
 
-    public BaseRevolverItem(Settings settings, float baseDamage) {
-        super(settings.maxDamage(MAX_DURABILITY));
+    public BaseRevolverItem(Settings settings, float baseDamage, int maxDurability) {
+        super(settings.maxDamage(maxDurability));
         this.baseDamage = baseDamage;
         SingletonGeoAnimatable.registerSyncedAnimatable(this);
     }

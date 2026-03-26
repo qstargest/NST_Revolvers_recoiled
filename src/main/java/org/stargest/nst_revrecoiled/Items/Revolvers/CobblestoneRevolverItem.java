@@ -9,8 +9,9 @@ import org.stargest.nst_revrecoiled.Items.BaseRevolverItem;
 public class CobblestoneRevolverItem extends BaseRevolverItem {
 
     private static final float COBBLESTONE_REVOLVER_DAMAGE = 4.0f;
+    private static final int MAX_DURABILITY = 131;
 
     public CobblestoneRevolverItem(Settings settings) {
-        super(settings, COBBLESTONE_REVOLVER_DAMAGE);
+        super(settings, COBBLESTONE_REVOLVER_DAMAGE, MAX_DURABILITY);
     }
 }

@@ -9,8 +9,9 @@ import org.stargest.nst_revrecoiled.Items.BaseRevolverItem;
 public class IronRevolverItem extends BaseRevolverItem {
 
     private static final float IRON_REVOLVER_DAMAGE = 5.0f;
+    private static final int MAX_DURABILITY = 250;
 
     public IronRevolverItem(Settings settings) {
-        super(settings, IRON_REVOLVER_DAMAGE);
+        super(settings, IRON_REVOLVER_DAMAGE, MAX_DURABILITY);
     }
 }

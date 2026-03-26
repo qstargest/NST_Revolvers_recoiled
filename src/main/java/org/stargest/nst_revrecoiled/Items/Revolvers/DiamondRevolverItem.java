@@ -9,8 +9,8 @@ import org.stargest.nst_revrecoiled.Items.BaseRevolverItem;
 public class DiamondRevolverItem extends BaseRevolverItem {
 
     private static final float DIAMOND_REVOLVER_DAMAGE = 7.0f;
-
+    private static final int MAX_DURABILITY = 1561;
     public DiamondRevolverItem(Settings settings) {
-        super(settings, DIAMOND_REVOLVER_DAMAGE);
+        super(settings, DIAMOND_REVOLVER_DAMAGE, MAX_DURABILITY);
     }
 }

@@ -1,25 +1,30 @@
 {
   "model": {
     "type": "minecraft:select",
+    "property": "minecraft:display_context",
     "cases": [
       {
+        "when": ["firstperson_righthand", "firstperson_lefthand",
+          "thirdperson_righthand", "thirdperson_lefthand", "head", "ground"],
+        "model": {
+          "type": "minecraft:special",
+          "base": "nst_revrecoiled:item/cobblestone_revolver",
+          "model": {
+            "type": "geckolib:geckolib"
+          }
+        }
+      },
+      {
+        "when": ["gui", "fixed"],
         "model": {
           "type": "minecraft:model",
           "model": "nst_revrecoiled:item/golden_revolver_item"
-        },
-        "when": [
-          "gui",
-          "fixed"
-        ]
+        }
       }
     ],
     "fallback": {
-      "type": "minecraft:special",
-      "base": "nst_revrecoiled:item/cobblestone_revolver",
-      "model": {
-        "type": "geckolib:geckolib"
-      }
-    },
-    "property": "minecraft:display_context"
+      "type": "minecraft:model",
+      "model": "nst_revrecoiled:item/golden_revolver_item"
+    }
   }
 }
