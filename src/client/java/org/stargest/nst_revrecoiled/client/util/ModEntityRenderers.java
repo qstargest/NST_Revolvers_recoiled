@@ -4,6 +4,7 @@ import net.fabricmc.fabric.api.client.rendering.v1.EntityRendererRegistry;
 import net.minecraft.client.render.entity.FlyingItemEntityRenderer;
 import net.minecraft.entity.EntityType;
 import org.stargest.nst_revrecoiled.client.render.entity.villager.ModVillagerRenderer;
+import org.stargest.nst_revrecoiled.client.render.entity.zombie_villager.ModZombieVillagerRenderer;
 import org.stargest.nst_revrecoiled.util.ModEntities;
 
 /**
@@ -38,5 +39,6 @@ public final class ModEntityRenderers {
         // custom texture and suppressed clothing overlay for revolvermakers,
         // full vanilla fallback for all other professions
         EntityRendererRegistry.register(EntityType.VILLAGER, ModVillagerRenderer::new);
+        EntityRendererRegistry.register(EntityType.ZOMBIE_VILLAGER, ModZombieVillagerRenderer::new);
     }
 }

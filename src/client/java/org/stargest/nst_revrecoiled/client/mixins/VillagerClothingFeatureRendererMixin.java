@@ -4,12 +4,14 @@ import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.client.render.entity.feature.VillagerClothingFeatureRenderer;
 import net.minecraft.client.render.entity.state.LivingEntityRenderState;
 import net.minecraft.client.render.entity.state.VillagerEntityRenderState;
+import net.minecraft.client.render.entity.state.ZombieVillagerRenderState;
 import net.minecraft.client.util.math.MatrixStack;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.stargest.nst_revrecoiled.client.render.entity.villager.VillagerRenderStateAccess;
+import org.stargest.nst_revrecoiled.client.render.entity.zombie_villager.ZombieVillagerRenderStateAccess;
 
 /**
  * Suppresses the vanilla profession clothing overlay for revolvermaker villagers.
@@ -44,6 +46,11 @@ public class VillagerClothingFeatureRendererMixin {
                           float limbAngle, float limbDistance, CallbackInfo ci) {
         if (state instanceof VillagerEntityRenderState villagerState
                 && ((VillagerRenderStateAccess) villagerState).nst$isRevolvermaker()) {
+            ci.cancel();
+            return;
+        }
+        if (state instanceof ZombieVillagerRenderState zombieState
+                && ((ZombieVillagerRenderStateAccess) zombieState).nst$isRevolvermaker()) {
             ci.cancel();
         }
     }

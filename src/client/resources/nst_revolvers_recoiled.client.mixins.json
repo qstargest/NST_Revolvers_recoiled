@@ -12,7 +12,8 @@
   "client": [
     "MouseRecoilMixin",
     "PlayerEntityModelMixin",
+    "VillagerClothingFeatureRendererMixin",
     "VillagerEntityRenderStateMixin",
-    "VillagerClothingFeatureRendererMixin"
+    "ZombieVillagerEntityRenderStateMixin"
   ]
 }
