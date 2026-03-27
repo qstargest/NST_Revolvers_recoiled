@@ -4,10 +4,13 @@
   "version": "${version}",
   "name": "[NST] Revolvers recoiled",
   "description": "",
-  "authors": [],
-  "contact": {},
+  "authors": ["Elixx", "stargest"],
+  "contact": {
+    "issues": "https://github.com/qstargest/NST_Revolvers_recoiled/issues",
+    "sources": "https://github.com/qstargest/NST_Revolvers_recoiled"
+  },
   "license": "GPL-3.0",
-  "icon": "assets/nst_revolvers_recoiled/icon.png",
+  "icon": "assets/nst_revrecoiled/icon.png",
   "environment": "*",
   "entrypoints": {
     "fabric-datagen": [

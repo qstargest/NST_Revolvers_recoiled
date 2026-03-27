@@ -12,6 +12,8 @@ import org.stargest.nst_revrecoiled.network.RevolverReloadParticlePacket;
 import org.stargest.nst_revrecoiled.recipe.AssemblyRecipes;
 import org.stargest.nst_revrecoiled.util.*;
 
+import static org.stargest.nst_revrecoiled.Structures.ModStructures.*;
+
 /**
  * Main mod initializer for the Revolver mod.
  * Handles server-side and common initialization.
@@ -36,7 +38,16 @@ public class Main implements ModInitializer {
             if (!AssemblyRecipes.isFrozen()) {
                 AssemblyRecipes.freeze();
             }
+            reinit(server);
         });
+
+        ServerLifecycleEvents.END_DATA_PACK_RELOAD.register(
+                (server, resourceManager, success) -> {
+                    if (success) {
+                        reinit(server);
+                    }
+                }
+        );
 
         PayloadTypeRegistry.playS2C().register(
                 RevolverReloadParticlePacket.ID,
