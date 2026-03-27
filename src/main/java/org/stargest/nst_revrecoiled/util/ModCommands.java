@@ -19,7 +19,7 @@ public class ModCommands {
      */
     public static void register() {
         CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) -> dispatcher.register(CommandManager.literal("nst_rev")
-                .requires(source -> source.hasPermissionLevel(2)) // OP level 2
+                .requires(source -> source.hasPermissionLevel(3)) // OP level 3
                 .then(CommandManager.literal("reload")
                         .executes(ModCommands::reloadConfig)
                 )
