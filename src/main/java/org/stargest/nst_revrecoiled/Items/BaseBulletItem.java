@@ -1,5 +1,6 @@
 package org.stargest.nst_revrecoiled.Items;
 
+import org.stargest.nst_revrecoiled.util.ModConfig;
 import net.minecraft.item.Item;
 
 /**
@@ -8,7 +9,7 @@ import net.minecraft.item.Item;
  */
 public class BaseBulletItem extends Item {
 
-    private final float damage;
+    private final float fallbackDamage;
 
     /**
      * @param settings Item settings
@@ -16,13 +17,15 @@ public class BaseBulletItem extends Item {
      */
     public BaseBulletItem(Settings settings, float damage) {
         super(settings);
-        this.damage = damage;
+        this.fallbackDamage = damage;
     }
 
     /**
-     * @return The damage value of this bullet
+     * @return The damage value of this bullet, fetched from configuration if available.
      */
     public float getDamage() {
-        return damage;
+        String id = net.minecraft.registry.Registries.ITEM.getId(this).getPath();
+        Float configDamage = ModConfig.get().bullets.damage.get(id);
+        return configDamage != null ? configDamage : fallbackDamage;
     }
 }

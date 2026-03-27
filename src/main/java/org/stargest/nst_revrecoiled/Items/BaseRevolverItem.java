@@ -28,6 +28,7 @@ import org.stargest.nst_revrecoiled.Entities.BulletProjectileEntity;
 import org.stargest.nst_revrecoiled.network.RevolverFireParticlePacket;
 import org.stargest.nst_revrecoiled.network.RevolverReloadParticlePacket;
 import org.stargest.nst_revrecoiled.util.ModItems;
+import org.stargest.nst_revrecoiled.util.ModConfig;
 import software.bernie.geckolib.animatable.GeoItem;
 import software.bernie.geckolib.animatable.SingletonGeoAnimatable;
 import software.bernie.geckolib.animatable.client.GeoRenderProvider;
@@ -70,9 +71,10 @@ import java.util.function.Predicate;
  */
 public abstract class BaseRevolverItem extends RangedWeaponItem implements GeoItem, RevolverArmPoseItem {
 
-    private static final int CHARGE_TIME_TICKS = 50; // 2.5 seconds at 20 TPS
-    private static final float PROJECTILE_VELOCITY = 6.0f;
-    private static final float PROJECTILE_DIVERGENCE = 0.2f; // Reduced for better accuracy
+    // Default constants for fallback
+    private static final int DEFAULT_CHARGE_TIME_TICKS = 50; // 2.5 seconds at 20 TPS
+    private static final float DEFAULT_PROJECTILE_VELOCITY = 6.0f;
+    private static final float DEFAULT_PROJECTILE_DIVERGENCE = 0.2f; // Reduced for better accuracy
 
     // Barrel position offsets — mirror TP_FIRE_* constants in RevolverParticleHandler
     private static final double BARREL_SHOULDER = 0.35; // Body-right offset to shoulder
@@ -98,7 +100,24 @@ public abstract class BaseRevolverItem extends RangedWeaponItem implements GeoIt
      */
     public final MutableObject<GeoRenderProvider> renderProvider = new MutableObject<>();
 
-    private final float baseDamage;
+    private final float fallbackDamage;
+    private final int fallbackDurability;
+
+    // -------------------------------------------------------------------------
+    // Config properties for dynamic behavior
+    // -------------------------------------------------------------------------
+
+    public int getChargeTimeTicks() {
+        return ModConfig.get().revolvers.chargeTimeTicks;
+    }
+
+    public float getProjectileVelocity() {
+        return ModConfig.get().revolvers.projectileVelocity;
+    }
+
+    public float getProjectileDivergence() {
+        return ModConfig.get().revolvers.projectileDivergence;
+    }
 
     // -------------------------------------------------------------------------
     // Per-item client-side fire callbacks
@@ -176,7 +195,8 @@ public abstract class BaseRevolverItem extends RangedWeaponItem implements GeoIt
 
     public BaseRevolverItem(Settings settings, float baseDamage, int maxDurability) {
         super(settings.maxDamage(maxDurability));
-        this.baseDamage = baseDamage;
+        this.fallbackDamage = baseDamage;
+        this.fallbackDurability = maxDurability;
         SingletonGeoAnimatable.registerSyncedAnimatable(this);
     }
 
@@ -241,7 +261,7 @@ public abstract class BaseRevolverItem extends RangedWeaponItem implements GeoIt
 
     @Override
     public int getMaxUseTime(ItemStack stack, LivingEntity user) {
-        return CHARGE_TIME_TICKS;
+        return getChargeTimeTicks();
     }
 
     @Override
@@ -255,7 +275,10 @@ public abstract class BaseRevolverItem extends RangedWeaponItem implements GeoIt
     }
 
     public float getDamage() {
-        return baseDamage;
+        String id = Registries.ITEM.getId(this).getPath();
+        ModConfig.RevolverStats stats =
+                ModConfig.get().revolvers.stats.get(id);
+        return stats != null ? stats.damage : fallbackDamage;
     }
 
     /**
@@ -270,10 +293,12 @@ public abstract class BaseRevolverItem extends RangedWeaponItem implements GeoIt
      */
     @Override
     public void usageTick(World world, LivingEntity user, ItemStack stack, int remainingUseTicks) {
-        int elapsed = CHARGE_TIME_TICKS - remainingUseTicks;
+        int chargeTimerMax = getChargeTimeTicks();
+        int elapsed = chargeTimerMax - remainingUseTicks;
 
-        // Tick 20 = 1.0 second = bullet-insertion keyframe in the reload animation
-        if (elapsed == 20 && !world.isClient) {
+        // Trigger reload particles at 40% of the charge duration (matches default tick 20/50)
+        int triggerTick = (int) (0.4f * chargeTimerMax);
+        if (elapsed == triggerTick && !world.isClient) {
             RevolverReloadParticlePacket packet = new RevolverReloadParticlePacket(user.getId());
 
             // Send to the shooter themselves
@@ -312,7 +337,7 @@ public abstract class BaseRevolverItem extends RangedWeaponItem implements GeoIt
         if (isCharged(stack)) {
             // Shoot only on server
             if (!world.isClient) {
-                performShoot(world, user, hand, stack, PROJECTILE_VELOCITY, PROJECTILE_DIVERGENCE);
+                performShoot(world, user, hand, stack, getProjectileVelocity(), getProjectileDivergence());
             }
 
             // Invoke per-item recoil and particle callbacks on the client.
@@ -363,8 +388,9 @@ public abstract class BaseRevolverItem extends RangedWeaponItem implements GeoIt
      */
     @Override
     public boolean onStoppedUsing(ItemStack stack, World world, LivingEntity user, int remainingUseTicks) {
-        int chargedTicks = this.getMaxUseTime(stack, user) - remainingUseTicks;
-        float chargeProgress = (float) chargedTicks / CHARGE_TIME_TICKS;
+        int chargeTimerMax = getChargeTimeTicks();
+        int chargedTicks = chargeTimerMax - remainingUseTicks;
+        float chargeProgress = (float) chargedTicks / chargeTimerMax;
 
         if (chargeProgress >= 1.0f && !isCharged(stack)) {
             if (loadBullet(user, stack)) {
@@ -541,7 +567,7 @@ public abstract class BaseRevolverItem extends RangedWeaponItem implements GeoIt
         if (bulletStack.getItem() instanceof BaseBulletItem bulletItem) {
             bulletDamage = bulletItem.getDamage();
         }
-        float totalDamage = this.baseDamage + bulletDamage;
+        float totalDamage = this.getDamage() + bulletDamage;
 
         BulletProjectileEntity projectile = new BulletProjectileEntity(
                 world,
@@ -606,6 +632,7 @@ public abstract class BaseRevolverItem extends RangedWeaponItem implements GeoIt
         AnimationController<BaseRevolverItem> controller = new AnimationController<>(this, "controller", 5, state -> {
             // Get render perspective (may be null in some contexts)
             ModelTransformationMode perspective = state.getData(DataTickets.ITEM_RENDER_PERSPECTIVE);
+            ModConfig config = ModConfig.get();
             if (perspective == null) {
                 return PlayState.CONTINUE;
             }
@@ -623,6 +650,18 @@ public abstract class BaseRevolverItem extends RangedWeaponItem implements GeoIt
                 if (triggered != null && DRAW_ANIM.equals(triggered)) {
                     ctrl.setAnimation(IDLE_ANIM);
                     return PlayState.CONTINUE;
+                }
+            }
+
+            // Update animation speed ONLY when a new animation is triggered.
+            // This ensures the speed remains stable for the duration of the animation
+            // and doesn't reset to 1.0f prematurely once the trigger is processed.
+            RawAnimation triggered = ctrl.getTriggeredAnimation();
+            if (triggered != null) {
+                if (RELOAD_ANIM.equals(triggered)) {
+                    ctrl.setAnimationSpeed(50.0f / config.revolvers.chargeTimeTicks);
+                } else {
+                    ctrl.setAnimationSpeed(1.0f);
                 }
             }
 

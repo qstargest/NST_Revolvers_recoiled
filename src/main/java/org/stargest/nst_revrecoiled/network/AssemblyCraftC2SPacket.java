@@ -6,6 +6,8 @@ import net.minecraft.network.RegistryByteBuf;
 import net.minecraft.network.codec.PacketCodec;
 import net.minecraft.network.codec.PacketCodecs;
 import net.minecraft.network.packet.CustomPayload;
+import net.minecraft.sound.SoundCategory;
+import net.minecraft.sound.SoundEvents;
 import net.minecraft.util.Identifier;
 import org.stargest.nst_revrecoiled.Main;
 import org.stargest.nst_revrecoiled.recipe.AssemblyRecipe;
@@ -99,10 +101,13 @@ public class AssemblyCraftC2SPacket {
         // Revolver packet — resolves recipe by Identifier, independent of list order
         PayloadTypeRegistry.playC2S().register(ID, Payload.CODEC);
         ServerPlayNetworking.registerGlobalReceiver(ID, (payload, context) ->
-                context.server().execute(() -> {
-                    AssemblyRecipes.getById(payload.recipeId())
-                            .ifPresent(r -> r.craft(context.player().getInventory()));
-                }));
+                context.server().execute(() -> AssemblyRecipes.getById(payload.recipeId())
+                        .ifPresent(r -> {
+                            if (r.craft(context.player().getInventory())) {
+                                context.player().getWorld().playSound(null, context.player().getBlockPos(),
+                                        SoundEvents.BLOCK_ANVIL_USE, SoundCategory.BLOCKS, 1.0f, 0.8f);
+                            }
+                        })));
 
         // Bullet packet — resolves recipe by list index and crafts the requested quantity
         PayloadTypeRegistry.playC2S().register(BULLET_ID, BulletPayload.CODEC);
@@ -114,7 +119,10 @@ public class AssemblyCraftC2SPacket {
                     if (!(recipes.get(idx) instanceof BulletAssemblyRecipe bullet)) return;
 
                     int qty = Math.max(1, payload.quantity());
-                    bullet.craftBullets(context.player().getInventory(), qty);
+                    if (bullet.craftBullets(context.player().getInventory(), qty)) {
+                        context.player().getWorld().playSound(null, context.player().getBlockPos(),
+                                SoundEvents.ENTITY_VILLAGER_WORK_TOOLSMITH, SoundCategory.BLOCKS, 1.0f, 1.0f);
+                    }
                 }));
     }
 }

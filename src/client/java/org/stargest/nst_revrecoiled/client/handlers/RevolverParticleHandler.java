@@ -6,6 +6,7 @@ import net.minecraft.particle.ParticleEffect;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
+import org.stargest.nst_revrecoiled.util.ModConfig;
 import org.stargest.nst_revrecoiled.util.ModParticles;
 
 /**
@@ -157,6 +158,7 @@ public class RevolverParticleHandler {
      * @param holder the living entity firing the revolver
      */
     public static void spawnFireImmediate(LivingEntity holder) {
+        if (!ModConfig.get().visuals.particles.enableFireParticle) return;
         spawnScattered(holder.getWorld(), ModParticles.REVOLVER_FIRE,
                 calcFirePosition(holder), 12, 0.01);
     }
@@ -172,6 +174,7 @@ public class RevolverParticleHandler {
      * @param holder the living entity reloading the revolver
      */
     public static void spawnReloadImmediate(LivingEntity holder) {
+        if (!ModConfig.get().visuals.particles.enableReloadParticle) return;
         spawnScattered(holder.getWorld(), ModParticles.REVOLVER_RELOAD,
                 calcReloadPosition(holder), 20, 0.04);
     }

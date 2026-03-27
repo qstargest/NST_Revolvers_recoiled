@@ -11,6 +11,7 @@ import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import org.stargest.nst_revrecoiled.Items.BaseRevolverItem;
+import org.stargest.nst_revrecoiled.Main;
 import org.stargest.nst_revrecoiled.client.gui.AssemblyTableScreen;
 import org.stargest.nst_revrecoiled.client.handlers.RevolverParticleHandler;
 import org.stargest.nst_revrecoiled.client.managers.CameraRecoilManager;
@@ -20,6 +21,8 @@ import org.stargest.nst_revrecoiled.client.util.ModEntityRenderers;
 import org.stargest.nst_revrecoiled.client.util.ModItemRenderers;
 import org.stargest.nst_revrecoiled.network.RevolverFireParticlePacket;
 import org.stargest.nst_revrecoiled.network.RevolverReloadParticlePacket;
+import org.stargest.nst_revrecoiled.network.SyncConfigS2CPacket;
+import org.stargest.nst_revrecoiled.util.ModConfig;
 import org.stargest.nst_revrecoiled.util.ModItems;
 import org.stargest.nst_revrecoiled.util.ModParticles;
 import org.stargest.nst_revrecoiled.util.ModScreenHandlers;
@@ -161,6 +164,26 @@ public class Nst_revolvers_recoiledClient implements ClientModInitializer {
 
                         // Spawn fire particles for remote players
                         RevolverParticleHandler.spawnFireImmediate(living);
+                    }
+                })
+        );
+
+        // Receive configuration synchronization packet from server.
+        // Updates the local ModConfig singleton to match the server's values.
+        ClientPlayNetworking.registerGlobalReceiver(
+                SyncConfigS2CPacket.ID,
+                (payload, ctx) -> ctx.client().execute(() -> {
+                    com.google.gson.Gson gson = new com.google.gson.Gson();
+                    ModConfig config =
+                            gson.fromJson(payload.configJson(), ModConfig.class);
+                    if (config != null) {
+                        ModConfig.set(config);
+                        Main.LOGGER.info("Synchronized configuration with server.");
+                        
+                        // If the assembly table is open, refresh the selected recipe to show new costs
+                        if (ctx.client().currentScreen instanceof AssemblyTableScreen screen) {
+                            screen.refreshSelectedRecipe();
+                        }
                     }
                 })
         );

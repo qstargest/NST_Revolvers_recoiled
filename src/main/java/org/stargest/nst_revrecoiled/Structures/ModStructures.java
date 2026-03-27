@@ -7,6 +7,7 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.structure.pool.StructurePool;
 import net.minecraft.structure.pool.StructurePoolElement;
 import net.minecraft.util.Identifier;
+import org.stargest.nst_revrecoiled.util.ModConfig;
 import org.stargest.nst_revrecoiled.Main;
 import org.stargest.nst_revrecoiled.Mixins.StructurePoolAccessor;
 
@@ -27,14 +28,19 @@ public class ModStructures {
             "minecraft:village/taiga/houses"
     };
 
-    /** How often the structure spawns relative to other houses. 1 = rare, 5+ = common. */
-    private static final int WEIGHT = 5;
-
     /**
      * Injects the revolvermaker house into the configured village biome house pools.
      * Call exactly once; subsequent calls will add duplicate entries.
      */
     public static void init(MinecraftServer server) {
+        ModConfig config = org.stargest.nst_revrecoiled.util.ModConfig.get();
+        if (!config.worldGen.spawnHouse) {
+            Main.LOGGER.info("Village house spawn is disabled in config. Skipping injection.");
+            return;
+        }
+
+        int weight = config.worldGen.houseWeight;
+
         var poolRegistry = server.getRegistryManager().getOrThrow(RegistryKeys.TEMPLATE_POOL);
 
         StructurePoolElement element = StructurePoolElement
@@ -56,14 +62,14 @@ public class ModStructures {
 
                 List<Pair<StructurePoolElement, Integer>> newWeights =
                         new ArrayList<>(accessor.getElementWeights());
-                newWeights.add(Pair.of(element, WEIGHT));
+                newWeights.add(Pair.of(element, weight));
                 accessor.setElementWeights(newWeights);
 
-                for (int i = 0; i < WEIGHT; i++) {
+                for (int i = 0; i < weight; i++) {
                     accessor.getElements().add(element);
                 }
 
-                Main.LOGGER.info("Injected revolvermaker_house into {}", poolId);
+                Main.LOGGER.info("Injected revolvermaker_house into {} with weight {}", poolId, weight);
 
             } catch (Exception e) {
                 Main.LOGGER.error("Failed to inject into pool {}: {}", poolId, e.getMessage(), e);
@@ -71,12 +77,38 @@ public class ModStructures {
         }
     }
 
-    public static void clearInjectedPools() {
-        // no-op: pool objects are recreated on each reload, no deduplication needed
+    public static void clearInjectedPools(MinecraftServer server) {
+        var poolRegistry = server.getRegistryManager().getOrThrow(RegistryKeys.TEMPLATE_POOL);
+        String targetId = Main.MOD_ID + ":revolvermaker_house";
+
+        for (String poolId : VILLAGE_POOLS) {
+            try {
+                RegistryKey<StructurePool> key =
+                        RegistryKey.of(RegistryKeys.TEMPLATE_POOL, Identifier.of(poolId));
+
+                StructurePool pool = poolRegistry.get(key);
+                if (pool == null) continue;
+
+                StructurePoolAccessor accessor = (StructurePoolAccessor) pool;
+
+                // Remove from elementWeights list
+                accessor.getElementWeights().removeIf(pair -> {
+                    StructurePoolElement element = pair.getFirst();
+                    return element.toString().contains(targetId);
+                });
+
+                // Remove from flattend elements list
+                accessor.getElements().removeIf(element -> element.toString().contains(targetId));
+
+                Main.LOGGER.info("Cleared revolvermaker_house from {}", poolId);
+            } catch (Exception e) {
+                Main.LOGGER.error("Failed to clear pool {}: {}", poolId, e.getMessage());
+            }
+        }
     }
 
     public static void reinit(MinecraftServer server) {
-        clearInjectedPools();
+        clearInjectedPools(server);
         init(server);
     }
 }

@@ -163,7 +163,7 @@ public class PlayerArmPose {
         float reloadBaseYaw   = baseYaw;
 
         // Apply aim tracking after draw animation is mostly complete
-        if (cfg.enableAimTracking && drawProgress > 0.5f) {
+        if (org.stargest.nst_revrecoiled.util.ModConfig.get().visuals.enableAimTracking && drawProgress > 0.5f) {
             float trackingStrength = MathHelper.clamp((drawProgress - 0.5f) / 0.5f, 0f, 1f);
             basePitch += headPitch * trackingStrength;
             baseYaw   += headYaw  * trackingStrength;

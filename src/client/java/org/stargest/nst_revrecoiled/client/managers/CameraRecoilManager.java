@@ -1,6 +1,7 @@
 package org.stargest.nst_revrecoiled.client.managers;
 
 import net.minecraft.client.MinecraftClient;
+import org.stargest.nst_revrecoiled.util.ModConfig;
 
 /**
  * Manages camera recoil effects for revolver weapons.
@@ -67,11 +68,13 @@ public class CameraRecoilManager {
     // -------------------------------------------------------------------------
 
     /**
-     * Triggers a recoil event with default parameters.
+     * Triggers a recoil event with default parameters from configuration.
      * Used by the base mod's revolvers.
      */
     public void applyRecoil() {
-        applyRecoil(RECOIL_PITCH, RECOIL_YAW_VARIANCE, RECOIL_DURATION, RECOVERY_DURATION);
+        org.stargest.nst_revrecoiled.util.ModConfig.VisualsConfig.RecoilConfig cfg =
+                ModConfig.get().visuals.recoil;
+        applyRecoil(cfg.pitch, cfg.yawVariance, cfg.kickDuration, cfg.recoveryDuration);
     }
 
     /**
@@ -85,6 +88,7 @@ public class CameraRecoilManager {
      */
     public void applyRecoil(float pitch, float yawVariance,
                             float kickDuration, float recoveryDuration) {
+        if (!ModConfig.get().visuals.recoil.enabled) return;
         MinecraftClient client = MinecraftClient.getInstance();
         if (client.world == null) return;
 

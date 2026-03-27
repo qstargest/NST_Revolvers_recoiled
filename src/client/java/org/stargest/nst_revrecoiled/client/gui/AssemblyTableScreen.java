@@ -11,10 +11,12 @@ import net.minecraft.client.render.DiffuseLighting;
 import net.minecraft.client.render.LightmapTextureManager;
 import net.minecraft.client.render.OverlayTexture;
 import net.minecraft.client.render.VertexConsumerProvider;
+import net.minecraft.client.sound.PositionedSoundInstance;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.ModelTransformationMode;
+import net.minecraft.sound.SoundEvents;
 import net.minecraft.text.Text;
 import net.minecraft.util.math.RotationAxis;
 import org.lwjgl.glfw.GLFW;
@@ -239,6 +241,22 @@ public class AssemblyTableScreen extends HandledScreen<AssemblyTableScreenHandle
         playerInventoryTitleY = 134;
     }
 
+    protected void playUiClick(){
+        MinecraftClient.getInstance().getSoundManager().play(
+                PositionedSoundInstance.master(SoundEvents.UI_BUTTON_CLICK, 1.0f)
+        );
+    }
+
+    /**
+     * Public wrapper to refresh the currently selected recipe's data.
+     * Useful when recipes are updated via configuration sync while the screen is open.
+     */
+    public void refreshSelectedRecipe() {
+        if (selectedRecipe >= 0) {
+            onRecipeSelected(selectedRecipe);
+        }
+    }
+
     /**
      * Called whenever selectedRecipe changes.
      * Rebuilds recipe-dependent cache (ingredient list, ItemStacks, and row scale)
@@ -344,6 +362,7 @@ public class AssemblyTableScreen extends HandledScreen<AssemblyTableScreenHandle
                 if (rx >= bx && rx < bx + BTN_SIZE && ry >= by && ry < by + BTN_SIZE) {
                     if (selectedRecipe != i) onRecipeSelected(i);
                     else onRecipeSelected(-1); // clicking selected recipe deselects it
+                    playUiClick();
                     return true;
                 }
             }
@@ -356,8 +375,10 @@ public class AssemblyTableScreen extends HandledScreen<AssemblyTableScreenHandle
                 } else {
                     if (rx >= CRAFT_BTN_X && rx < CRAFT_BTN_X + CRAFT_BTN_W
                             && ry >= CRAFT_BTN_Y && ry < CRAFT_BTN_Y + CRAFT_BTN_H) {
-                        if (cachedCanCraft)
+                        if (cachedCanCraft) {
                             ClientPlayNetworking.send(new AssemblyCraftC2SPacket.Payload(recipes.get(selectedRecipe).getId()));
+                            playUiClick();
+                        }
                         return true;
                     }
                 }
@@ -469,9 +490,11 @@ public class AssemblyTableScreen extends HandledScreen<AssemblyTableScreenHandle
         }
         if (rx >= QTY_PICK_X && rx < QTY_PICK_X + QTY_PICK_W
                 && ry >= QTY_ROW_Y && ry < QTY_ROW_Y + QTY_MINUS_H) {
-            if (cachedCanCraft)
+            if (cachedCanCraft) {
                 ClientPlayNetworking.send(
                         new AssemblyCraftC2SPacket.BulletPayload(selectedRecipe, bulletQuantity));
+                playUiClick();
+            }
             return true;
         }
         return false;

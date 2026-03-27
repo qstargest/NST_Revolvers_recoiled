@@ -60,8 +60,21 @@ public class AssemblyRecipe {
     public Item             getResult()         { return result;         }
     /** @return i18n translation key for the GUI label */
     public String           getTranslationKey() { return translationKey; }
-    /** @return immutable list of required ingredients */
-    public List<Ingredient> getIngredients()    { return ingredients;    }
+    
+    /** @return list of required ingredients, fetched from configuration if available. */
+    public List<Ingredient> getIngredients() {
+        List<org.stargest.nst_revrecoiled.util.ModConfig.IngredientConfig> configIngs = 
+                org.stargest.nst_revrecoiled.util.ModConfig.get().recipes.get(id.toString());
+        
+        if (configIngs != null) {
+            return configIngs.stream()
+                .map(ci -> new Ingredient(
+                    net.minecraft.registry.Registries.ITEM.get(net.minecraft.util.Identifier.of(ci.item)),
+                    ci.count
+                )).toList();
+        }
+        return ingredients;
+    }
 
     // -------------------------------------------------------------------------
     // Craft logic (server-side)
@@ -71,7 +84,7 @@ public class AssemblyRecipe {
      * @return true if the player's inventory contains all required materials
      */
     public boolean canCraft(PlayerInventory inventory) {
-        for (Ingredient ing : ingredients) {
+        for (Ingredient ing : getIngredients()) {
             if (countInInventory(inventory, ing.item()) < ing.count()) return false;
         }
         return true;
@@ -84,9 +97,10 @@ public class AssemblyRecipe {
      * @return true if the craft succeeded
      */
     public boolean craft(PlayerInventory inventory) {
+        List<Ingredient> currentIngredients = getIngredients();
         if (!canCraft(inventory)) return false;
 
-        for (Ingredient ing : ingredients) {
+        for (Ingredient ing : currentIngredients) {
             removeFromInventory(inventory, ing.item(), ing.count());
         }
 

@@ -22,6 +22,7 @@ import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 import org.stargest.nst_revrecoiled.util.ModEntities;
 import org.stargest.nst_revrecoiled.util.ModItems;
+import org.stargest.nst_revrecoiled.util.ModConfig;
 
 import java.util.Optional;
 
@@ -39,9 +40,6 @@ import java.util.Optional;
  * - Auto-despawn after 1 second or on impact
  */
 public class BulletProjectileEntity extends PersistentProjectileEntity implements FlyingItemEntity {
-
-    private static final int MAX_AGE_TICKS = 20; // 1 second lifetime
-    private static final double GRAVITY = 0.15; // Ballistic drop for ~30 block range
 
     // Tracked data for client-server synchronization
     private static final TrackedData<ItemStack> DATA_BULLET_STACK =
@@ -87,7 +85,7 @@ public class BulletProjectileEntity extends PersistentProjectileEntity implement
      */
     @Override
     protected double getGravity() {
-        return GRAVITY;
+        return ModConfig.get().bullets.gravity;
     }
 
     /**
@@ -258,7 +256,7 @@ public class BulletProjectileEntity extends PersistentProjectileEntity implement
             super.tick();
 
             // Auto-despawn after max age
-            if (this.age >= MAX_AGE_TICKS) {
+            if (this.age >= ModConfig.get().bullets.maxAgeTicks) {
                 this.discard();
             }
         }
