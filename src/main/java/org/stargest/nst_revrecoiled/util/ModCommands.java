@@ -46,7 +46,7 @@ public class ModCommands {
                 net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.send(player, new org.stargest.nst_revrecoiled.network.SyncConfigS2CPacket(json));
             });
             
-            source.sendFeedback(() -> Text.literal("§a[NST Revolvers] Configuration reloaded and synced successfully!"), true);
+            source.sendFeedback(() -> Text.literal("§a[NST Revolvers recoiled] Configuration reloaded and synced successfully!"), true);
             return 1;
         } catch (Exception e) {
             source.sendError(Text.literal("§c[NST Revolvers] Failed to reload configuration: " + e.getMessage()));
