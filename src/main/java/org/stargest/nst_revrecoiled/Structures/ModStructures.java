@@ -28,7 +28,7 @@ public class ModStructures {
     };
 
     /** How often the structure spawns relative to other houses. 1 = rare, 5+ = common. */
-    private static final int WEIGHT = 6;
+    private static final int WEIGHT = 5;
 
     /**
      * Injects the revolvermaker house into the configured village biome house pools.

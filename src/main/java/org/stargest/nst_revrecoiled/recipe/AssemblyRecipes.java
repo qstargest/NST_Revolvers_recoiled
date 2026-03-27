@@ -49,9 +49,9 @@ public class AssemblyRecipes {
             Identifier.of(Main.MOD_ID, "cobblestone_revolver"), ModItems.COBBLESTONE_REVOLVER,
             "item.nst_revrecoiled.cobblestone_revolver",
             List.of(
-                    new AssemblyRecipe.Ingredient(Items.COBBLESTONE, 10),
-                    new AssemblyRecipe.Ingredient(Items.OAK_PLANKS,   3),
-                    new AssemblyRecipe.Ingredient(Items.GUNPOWDER,    5)
+                    new AssemblyRecipe.Ingredient(Items.COBBLESTONE, 16),
+                    new AssemblyRecipe.Ingredient(Items.SPRUCE_PLANKS,   2),
+                    new AssemblyRecipe.Ingredient(Items.GUNPOWDER,    3)
             )
     ));
 
@@ -59,8 +59,8 @@ public class AssemblyRecipes {
             Identifier.of(Main.MOD_ID, "iron_revolver"), ModItems.IRON_REVOLVER,
             "item.nst_revrecoiled.iron_revolver",
             List.of(
-                    new AssemblyRecipe.Ingredient(Items.IRON_INGOT,  12),
-                    new AssemblyRecipe.Ingredient(Items.OAK_PLANKS,   3),
+                    new AssemblyRecipe.Ingredient(Items.IRON_INGOT,  10),
+                    new AssemblyRecipe.Ingredient(Items.SPRUCE_PLANKS,   2),
                     new AssemblyRecipe.Ingredient(Items.GUNPOWDER,    6)
             )
     ));
@@ -69,9 +69,9 @@ public class AssemblyRecipes {
             Identifier.of(Main.MOD_ID, "golden_revolver"), ModItems.GOLDEN_REVOLVER,
             "item.nst_revrecoiled.golden_revolver",
             List.of(
-                    new AssemblyRecipe.Ingredient(Items.GOLD_INGOT,  12),
-                    new AssemblyRecipe.Ingredient(Items.OAK_PLANKS,   3),
-                    new AssemblyRecipe.Ingredient(Items.GUNPOWDER,    7)
+                    new AssemblyRecipe.Ingredient(Items.GOLD_INGOT,  14),
+                    new AssemblyRecipe.Ingredient(Items.SPRUCE_PLANKS,   2),
+                    new AssemblyRecipe.Ingredient(Items.GUNPOWDER,    8)
             )
     ));
 
@@ -79,9 +79,9 @@ public class AssemblyRecipes {
             Identifier.of(Main.MOD_ID, "diamond_revolver"), ModItems.DIAMOND_REVOLVER,
             "item.nst_revrecoiled.diamond_revolver",
             List.of(
-                    new AssemblyRecipe.Ingredient(Items.DIAMOND,     8),
-                    new AssemblyRecipe.Ingredient(Items.OAK_PLANKS,  3),
-                    new AssemblyRecipe.Ingredient(Items.GUNPOWDER,   7)
+                    new AssemblyRecipe.Ingredient(Items.DIAMOND,     5),
+                    new AssemblyRecipe.Ingredient(Items.SPRUCE_PLANKS,  2),
+                    new AssemblyRecipe.Ingredient(Items.GUNPOWDER,   12)
             )
     ));
 
