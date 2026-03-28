@@ -3,13 +3,13 @@
   "id": "nst_revolvers_recoiled",
   "version": "${version}",
   "name": "[NST] Revolvers recoiled",
-  "description": "",
+  "description": "Revolvers recoiled introduces new weapon type into the game - revolvers. Take some gunpowder, collect some materials and have fun with whem.\n\nThe mod was developed by a small team. If you find any bugs, please report them on Github Issues.",
   "authors": ["Elixx", "stargest"],
   "contact": {
     "issues": "https://github.com/qstargest/NST_Revolvers_recoiled/issues",
     "sources": "https://github.com/qstargest/NST_Revolvers_recoiled"
   },
-  "license": "GPL-3.0",
+  "license": "GNU GPLv3",
   "icon": "assets/nst_revrecoiled/icon.png",
   "environment": "*",
   "entrypoints": {
