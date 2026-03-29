@@ -11,6 +11,7 @@ import net.minecraft.entity.projectile.PersistentProjectileEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtElement;
+import net.minecraft.nbt.NbtOps;
 import net.minecraft.particle.ItemStackParticleEffect;
 import net.minecraft.particle.ParticleTypes;
 import net.minecraft.registry.RegistryWrapper;
@@ -134,7 +135,7 @@ public class BulletProjectileEntity extends PersistentProjectileEntity implement
         World world = this.getWorld();
 
         if (world instanceof ServerWorld serverWorld) {
-            if (target.damage(serverWorld, this.getDamageSources().arrow(this, owner), this.fixedDamage)) {
+            if (target.damage(this.getDamageSources().arrow(this, owner), this.fixedDamage)) {
                 if (target instanceof LivingEntity livingTarget) {
                     this.onHit(livingTarget);
                 }
@@ -197,8 +198,9 @@ public class BulletProjectileEntity extends PersistentProjectileEntity implement
 
         if (this.bulletStack != null && !this.bulletStack.isEmpty()) {
             RegistryWrapper.WrapperLookup lookup = this.getWorld().getRegistryManager();
-            NbtElement element = this.bulletStack.toNbt(lookup);
-            nbt.put("BulletItem", element);
+            ItemStack.CODEC
+                    .encodeStart(lookup.getOps(NbtOps.INSTANCE), this.bulletStack)
+                    .ifSuccess(element -> nbt.put("BulletItem", element));
         }
 
         nbt.putFloat("FixedDamage", this.fixedDamage);

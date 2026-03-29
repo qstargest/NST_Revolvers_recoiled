@@ -10,10 +10,9 @@
     "requireAnnotations": true
   },
   "client": [
+    "ItemRendererAccessor",
     "MouseRecoilMixin",
     "PlayerEntityModelMixin",
-    "VillagerClothingFeatureRendererMixin",
-    "VillagerEntityRenderStateMixin",
-    "ZombieVillagerEntityRenderStateMixin"
+    "VillagerClothingFeatureRendererMixin"
   ]
 }

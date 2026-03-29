@@ -3,7 +3,7 @@
   "parent": "builtin/entity",
   "gui_light": "front",
   "textures": {
-    "particle": "nst_revrecoiled:item/cobblestone_revolver_item"
+    "particle": "nst_revrecoiled:item/iron_revolver_item"
   },
   "texture_size": [
     32,

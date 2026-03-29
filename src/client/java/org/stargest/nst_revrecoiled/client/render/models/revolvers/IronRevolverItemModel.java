@@ -4,7 +4,6 @@ import net.minecraft.util.Identifier;
 import org.stargest.nst_revrecoiled.Items.Revolvers.IronRevolverItem;
 import org.stargest.nst_revrecoiled.Main;
 import software.bernie.geckolib.model.GeoModel;
-import software.bernie.geckolib.renderer.GeoRenderer;
 
 /**
  * GeckoLib model definition for the Iron Revolver.
@@ -13,12 +12,12 @@ import software.bernie.geckolib.renderer.GeoRenderer;
 public class IronRevolverItemModel extends GeoModel<IronRevolverItem> {
 
     @Override
-    public Identifier getModelResource(IronRevolverItem animatable, GeoRenderer<IronRevolverItem> renderer) {
+    public Identifier getModelResource(IronRevolverItem animatable) {
         return Identifier.of(Main.MOD_ID, "geo/cobblestone_revolver.geo.json");
     }
 
     @Override
-    public Identifier getTextureResource(IronRevolverItem animatable, GeoRenderer<IronRevolverItem> renderer) {
+    public Identifier getTextureResource(IronRevolverItem animatable) {
         return Identifier.of(Main.MOD_ID, "textures/item/iron_revolver.png");
     }
 

@@ -1,6 +1,7 @@
 package org.stargest.nst_revrecoiled.Structures;
 
 import com.mojang.datafixers.util.Pair;
+import net.minecraft.registry.Registry;
 import net.minecraft.registry.RegistryKey;
 import net.minecraft.registry.RegistryKeys;
 import net.minecraft.server.MinecraftServer;
@@ -41,7 +42,8 @@ public class ModStructures {
 
         int weight = config.worldGen.houseWeight;
 
-        var poolRegistry = server.getRegistryManager().getOrThrow(RegistryKeys.TEMPLATE_POOL);
+        Registry<StructurePool> poolRegistry = server.getRegistryManager()
+                .get(RegistryKeys.TEMPLATE_POOL);
 
         StructurePoolElement element = StructurePoolElement
                 .ofSingle(Main.MOD_ID + ":revolvermaker_house")
@@ -52,7 +54,9 @@ public class ModStructures {
                 RegistryKey<StructurePool> key =
                         RegistryKey.of(RegistryKeys.TEMPLATE_POOL, Identifier.of(poolId));
 
-                StructurePool pool = poolRegistry.get(key);
+                StructurePool pool = poolRegistry
+                        .getOrEmpty(Identifier.of(poolId))
+                        .orElse(null);
                 if (pool == null) {
                     Main.LOGGER.warn("Template pool {} not found! Skipping injection.", poolId);
                     continue;
@@ -78,7 +82,8 @@ public class ModStructures {
     }
 
     public static void clearInjectedPools(MinecraftServer server) {
-        var poolRegistry = server.getRegistryManager().getOrThrow(RegistryKeys.TEMPLATE_POOL);
+        Registry<StructurePool> poolRegistry = server.getRegistryManager()
+                .get(RegistryKeys.TEMPLATE_POOL);
         String targetId = Main.MOD_ID + ":revolvermaker_house";
 
         for (String poolId : VILLAGE_POOLS) {
@@ -86,7 +91,9 @@ public class ModStructures {
                 RegistryKey<StructurePool> key =
                         RegistryKey.of(RegistryKeys.TEMPLATE_POOL, Identifier.of(poolId));
 
-                StructurePool pool = poolRegistry.get(key);
+                StructurePool pool = poolRegistry
+                        .getOrEmpty(Identifier.of(poolId))
+                        .orElse(null);
                 if (pool == null) continue;
 
                 StructurePoolAccessor accessor = (StructurePoolAccessor) pool;

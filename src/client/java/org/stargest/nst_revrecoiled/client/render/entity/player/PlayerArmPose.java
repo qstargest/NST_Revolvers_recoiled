@@ -1,9 +1,8 @@
 package org.stargest.nst_revrecoiled.client.render.entity.player;
 
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.network.AbstractClientPlayerEntity;
 import net.minecraft.client.render.entity.model.BipedEntityModel;
-import net.minecraft.client.render.entity.state.PlayerEntityRenderState;
-import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
@@ -101,28 +100,26 @@ public class PlayerArmPose {
      * Called from PlayerEntityModelMixin injecting into setAngles().
      *
      * @param model       The biped entity model to modify
-     * @param renderState The player's current render state
+     * @param player The player's current render state
      */
-    public static void applyRevolverPose(BipedEntityModel<PlayerEntityRenderState> model,
-                                         PlayerEntityRenderState renderState) {
+    public static void applyRevolverPose(BipedEntityModel<AbstractClientPlayerEntity> model,
+                                         AbstractClientPlayerEntity player) {
         MinecraftClient client = MinecraftClient.getInstance();
         if (client.world == null) return;
 
         double renderTime = client.world.getTime() + client.getRenderTickCounter().getTickDelta(false);
-        Entity entity = client.world.getEntityById(renderState.id);
-        if (!(entity instanceof PlayerEntity player)) return;
 
         ItemStack stack = player.getStackInHand(player.getActiveHand());
         if (!(stack.getItem() instanceof RevolverArmPoseItem)) {
             // Not holding revolver - remove cached state
-            playerStates.remove(renderState.id);
+            playerStates.remove(player.getId());
             return;
         }
 
         RevolverArmConfig cfg = ARM_CONFIGS.getOrDefault(stack.getItem(), RevolverArmConfig.DEFAULT);
 
         // Get or create player state
-        PlayerRevolverState state = playerStates.computeIfAbsent(renderState.id,
+        PlayerRevolverState state = playerStates.computeIfAbsent(player.getId(),
                 id -> new PlayerRevolverState());
 
         // Track item identity to detect item switches
@@ -154,7 +151,8 @@ public class PlayerArmPose {
         float headPitch = model.head.pitch;
         float headYaw   = model.head.yaw;
 
-        float sideSign = (renderState.mainArm == Arm.RIGHT) ? -1.0f : 1.0f;
+        Arm mainArm = player.getMainArm();
+        float sideSign = (mainArm == Arm.RIGHT) ? -1.0f : 1.0f;
         float basePitch = cfg.baseAimPitch;
         float baseYaw   = sideSign * cfg.baseAimYawOffset;
 
@@ -233,7 +231,7 @@ public class PlayerArmPose {
         float shakeFreq = player.isSprinting() ? cfg.shakeFreqSprint : cfg.shakeFreqWalk;
 
         if (shakeAmp > 0f) {
-            float timeSeed = (float) ((renderTime + renderState.id * 7) * shakeFreq * 0.5);
+            float timeSeed = (float) ((renderTime + player.getId() * 7) * shakeFreq * 0.5);
             float shake = (float) (Math.sin(timeSeed) * shakeAmp
                     + Math.sin(timeSeed * cfg.shakeSecondaryFreqMult) * (shakeAmp * cfg.shakeSecondaryAmpMult));
             targetRP += shake * cfg.shakePitchFactor;
@@ -241,7 +239,7 @@ public class PlayerArmPose {
             targetRY += shake * cfg.shakeYawFactor;
         }
 
-        applyToModel(model, renderState, state, targetRP, targetRY, targetRR, targetLP, targetLY, targetLR,
+        applyToModel(model, player, state, targetRP, targetRY, targetRR, targetLP, targetLY, targetLR,
                 drawProgress, (float) timeSinceShot, cfg);
     }
 
@@ -253,8 +251,8 @@ public class PlayerArmPose {
      * Applies interpolated arm rotations to the model with smooth transitions.
      * Uses different lerp speeds for recoil vs normal movement.
      */
-    private static void applyToModel(BipedEntityModel<PlayerEntityRenderState> model,
-                                     PlayerEntityRenderState renderState,
+    private static void applyToModel(BipedEntityModel<AbstractClientPlayerEntity> model,
+                                     AbstractClientPlayerEntity player,
                                      PlayerRevolverState state,
                                      float rp, float ry, float rr,
                                      float lp, float ly, float lr,
@@ -290,7 +288,7 @@ public class PlayerArmPose {
 
         // Adjust arm pivot points for better visual positioning
         model.rightArm.pivotX = -5.0f;
-        model.rightArm.pivotY = MathHelper.lerp(drawProgress, 4.0f, 2.0f) + (renderState.sneaking ? 2.0f : 0.0f);
+        model.rightArm.pivotY = MathHelper.lerp(drawProgress, 4.0f, 2.0f) + (player.isSneaking() ? 2.0f : 0.0f);
         model.rightArm.pivotZ = MathHelper.lerp(drawProgress, 2.0f, 0.0f);
     }
 

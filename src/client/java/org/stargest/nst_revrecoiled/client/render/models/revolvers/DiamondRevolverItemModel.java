@@ -4,7 +4,6 @@ import net.minecraft.util.Identifier;
 import org.stargest.nst_revrecoiled.Items.Revolvers.DiamondRevolverItem;
 import org.stargest.nst_revrecoiled.Main;
 import software.bernie.geckolib.model.GeoModel;
-import software.bernie.geckolib.renderer.GeoRenderer;
 
 /**
  * GeckoLib model definition for the Diamond Revolver.
@@ -13,12 +12,12 @@ import software.bernie.geckolib.renderer.GeoRenderer;
 public class DiamondRevolverItemModel extends GeoModel<DiamondRevolverItem> {
 
     @Override
-    public Identifier getModelResource(DiamondRevolverItem animatable, GeoRenderer<DiamondRevolverItem> renderer) {
+    public Identifier getModelResource(DiamondRevolverItem animatable) {
         return Identifier.of(Main.MOD_ID, "geo/cobblestone_revolver.geo.json");
     }
 
     @Override
-    public Identifier getTextureResource(DiamondRevolverItem animatable, GeoRenderer<DiamondRevolverItem> renderer) {
+    public Identifier getTextureResource(DiamondRevolverItem animatable) {
         return Identifier.of(Main.MOD_ID, "textures/item/diamond_revolver.png");
     }
 

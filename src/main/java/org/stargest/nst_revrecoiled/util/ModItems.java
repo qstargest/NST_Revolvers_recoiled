@@ -1,10 +1,8 @@
 package org.stargest.nst_revrecoiled.util;
 
 import net.fabricmc.fabric.api.itemgroup.v1.FabricItemGroup;
-import net.fabricmc.fabric.api.itemgroup.v1.ItemGroupEvents;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemGroup;
-import net.minecraft.item.ItemGroups;
 import net.minecraft.item.ItemStack;
 import net.minecraft.registry.Registries;
 import net.minecraft.registry.Registry;
@@ -80,6 +78,18 @@ public class ModItems {
             new Item.Settings().maxCount(1)
     );
 
+    // Internal items for 2D GUI icon baking - these ensure [item]_revolver_item.json models are baked.
+    // They are not added to creative tabs and remain hidden from players.
+    // Uses the registerIcon helper for consistent naming and settings.
+    static final Item COBBLESTONE_REVOLVER_ICON = registerIcon("cobblestone_revolver");
+    static final Item IRON_REVOLVER_ICON        = registerIcon("iron_revolver");
+    static final Item GOLDEN_REVOLVER_ICON      = registerIcon("golden_revolver");
+    static final Item DIAMOND_REVOLVER_ICON     = registerIcon("diamond_revolver");
+
+    private static Item registerIcon(String baseName) {
+        return register(baseName + "_item", Item::new, new Item.Settings());
+    }
+
     // Creative Tab
     public static final RegistryKey<ItemGroup> MOD_GROUP_KEY = RegistryKey.of(
             Registries.ITEM_GROUP.getKey(),
@@ -101,7 +111,7 @@ public class ModItems {
                 RegistryKeys.ITEM,
                 Identifier.of(Main.MOD_ID, name)
         );
-        Item item = factory.apply(settings.registryKey(key));
+        Item item = factory.apply(settings);
         Registry.register(Registries.ITEM, key, item);
         return item;
     }

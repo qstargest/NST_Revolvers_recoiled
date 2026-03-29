@@ -17,11 +17,11 @@ import java.util.List;
 public interface StructurePoolAccessor {
 
     /** Weighted list of (element, weight) pairs — drives piece selection display/serialisation. */
-    @Accessor("elementWeights")
+    @Accessor("elementCounts")
     List<Pair<StructurePoolElement, Integer>> getElementWeights();
 
     @org.spongepowered.asm.mixin.Mutable
-    @Accessor("elementWeights")
+    @Accessor("elementCounts")
     void setElementWeights(List<Pair<StructurePoolElement, Integer>> elementWeights);
 
     /** Flat list with each element repeated by its weight — used for random selection. */

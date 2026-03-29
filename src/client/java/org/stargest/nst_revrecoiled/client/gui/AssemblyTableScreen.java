@@ -15,7 +15,7 @@ import net.minecraft.client.sound.PositionedSoundInstance;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
-import net.minecraft.item.ModelTransformationMode;
+import net.minecraft.client.render.model.json.ModelTransformationMode;
 import net.minecraft.sound.SoundEvents;
 import net.minecraft.text.Text;
 import net.minecraft.util.math.RotationAxis;
@@ -28,7 +28,6 @@ import org.stargest.nst_revrecoiled.recipe.AssemblyRecipe;
 import org.stargest.nst_revrecoiled.recipe.AssemblyRecipes;
 import org.stargest.nst_revrecoiled.recipe.BulletAssemblyRecipe;
 import software.bernie.geckolib.animatable.client.GeoRenderProvider;
-import software.bernie.geckolib.renderer.GeckolibSpecialRenderer;
 import software.bernie.geckolib.renderer.GeoItemRenderer;
 
 import java.util.ArrayList;
@@ -973,7 +972,7 @@ public class AssemblyTableScreen extends HandledScreen<AssemblyTableScreenHandle
      */
     @SuppressWarnings({"unchecked", "rawtypes"})
     protected void renderGeckoModel(DrawContext ctx, ItemStack stack, int centerX, int centerY,
-                                  float scale, float yawDeg, float pitchDeg) {
+                                    float scale, float yawDeg, float pitchDeg) {
         if (!(stack.getItem() instanceof BaseRevolverItem revolver)) {
             ctx.drawItem(stack, centerX - 8, centerY - 8); return;
         }
@@ -984,22 +983,26 @@ public class AssemblyTableScreen extends HandledScreen<AssemblyTableScreenHandle
 
         MinecraftClient client = MinecraftClient.getInstance();
         VertexConsumerProvider.Immediate buffers = client.getBufferBuilders().getEntityVertexConsumers();
+
         ctx.enableScissor(centerX - MODEL_SIZE / 2, centerY - MODEL_SIZE / 2,
                 centerX - MODEL_SIZE / 2 + MODEL_W, centerY - MODEL_SIZE / 2 + MODEL_SIZE);
 
         var m = ctx.getMatrices(); m.push();
         try {
             m.translate(centerX, centerY, 200.0);
-            m.scale(scale, -scale, scale); // Y-flip to match GUI coordinate system
+            m.scale(scale, -scale, scale);
             m.multiply(RotationAxis.POSITIVE_X.rotationDegrees(pitchDeg));
             m.multiply(RotationAxis.POSITIVE_Y.rotationDegrees(yawDeg));
             m.translate(-MODEL_PIVOT_X, -MODEL_PIVOT_Y, -MODEL_PIVOT_Z);
 
-            DiffuseLighting.disableGuiDepthLighting();
             renderer.render(
-                    new GeckolibSpecialRenderer.RenderData(stack.getItem(), stack),
-                    ModelTransformationMode.NONE, m, buffers,
-                    LightmapTextureManager.MAX_LIGHT_COORDINATE, OverlayTexture.DEFAULT_UV, false);
+                    stack,
+                    ModelTransformationMode.NONE,
+                    m,
+                    buffers,
+                    LightmapTextureManager.MAX_LIGHT_COORDINATE,
+                    OverlayTexture.DEFAULT_UV
+            );
             buffers.draw();
             DiffuseLighting.enableGuiDepthLighting();
         } finally {

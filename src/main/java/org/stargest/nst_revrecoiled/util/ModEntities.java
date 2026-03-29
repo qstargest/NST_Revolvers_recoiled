@@ -40,7 +40,7 @@ public class ModEntities {
                         .dimensions(0.25f, 0.25f)
                         .maxTrackingRange(8)          // Track up to 8 blocks away
                         .trackingTickInterval(1)      // Update every tick for smooth movement
-                        .build(bulletKey)
+                        .build()
         );
     }
 }

@@ -2,6 +2,7 @@ package org.stargest.nst_revrecoiled.Items;
 
 import net.fabricmc.fabric.api.networking.v1.PlayerLookup;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
+import net.minecraft.client.render.model.json.ModelTransformationMode;
 import net.minecraft.component.DataComponentTypes;
 import net.minecraft.component.type.ChargedProjectilesComponent;
 import net.minecraft.component.type.NbtComponent;
@@ -10,16 +11,16 @@ import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.projectile.ProjectileEntity;
 import net.minecraft.item.*;
-import net.minecraft.item.consume.UseAction;
+import net.minecraft.util.UseAction;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.registry.Registries;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.sound.SoundCategory;
 import net.minecraft.sound.SoundEvents;
-import net.minecraft.util.ActionResult;
 import net.minecraft.util.Hand;
 import net.minecraft.util.Identifier;
+import net.minecraft.util.TypedActionResult;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 import org.apache.commons.lang3.mutable.MutableObject;
@@ -331,7 +332,7 @@ public abstract class BaseRevolverItem extends RangedWeaponItem implements GeoIt
      * - Returns CONSUME to prevent other interactions from firing.
      */
     @Override
-    public ActionResult use(World world, PlayerEntity user, Hand hand) {
+    public TypedActionResult<ItemStack> use(World world, PlayerEntity user, Hand hand) {
         ItemStack stack = user.getStackInHand(hand);
 
         if (isCharged(stack)) {
@@ -363,12 +364,12 @@ public abstract class BaseRevolverItem extends RangedWeaponItem implements GeoIt
             }
 
             // PASS prevents vanilla hand swing animation
-            return ActionResult.PASS;
+            return TypedActionResult.pass(stack);
         }
 
         ItemStack ammo = user.getProjectileType(stack);
         if (!user.getAbilities().creativeMode && ammo.isEmpty()) {
-            return ActionResult.FAIL;
+            return TypedActionResult.fail(stack);
         }
 
         // Trigger reload animation when starting to charge
@@ -378,7 +379,7 @@ public abstract class BaseRevolverItem extends RangedWeaponItem implements GeoIt
         }
 
         user.setCurrentHand(hand);
-        return ActionResult.CONSUME;
+        return TypedActionResult.consume(stack);
     }
 
     /**
@@ -387,7 +388,7 @@ public abstract class BaseRevolverItem extends RangedWeaponItem implements GeoIt
      * Stops reload animation if player releases early.
      */
     @Override
-    public boolean onStoppedUsing(ItemStack stack, World world, LivingEntity user, int remainingUseTicks) {
+    public void onStoppedUsing(ItemStack stack, World world, LivingEntity user, int remainingUseTicks) {
         int chargeTimerMax = getChargeTimeTicks();
         int chargedTicks = chargeTimerMax - remainingUseTicks;
         float chargeProgress = (float) chargedTicks / chargeTimerMax;
@@ -410,7 +411,7 @@ public abstract class BaseRevolverItem extends RangedWeaponItem implements GeoIt
             }
         }
 
-        return false;
+        //return false;
     }
 
     /**
