@@ -3,13 +3,10 @@ package org.stargest.nst_revrecoiled.Items;
 import net.fabricmc.fabric.api.networking.v1.PlayerLookup;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.client.render.model.json.ModelTransformationMode;
-import net.minecraft.component.DataComponentTypes;
-import net.minecraft.component.type.ChargedProjectilesComponent;
-import net.minecraft.component.type.NbtComponent;
 import net.minecraft.entity.Entity;
+import net.minecraft.entity.EquipmentSlot;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.entity.projectile.ProjectileEntity;
 import net.minecraft.item.*;
 import net.minecraft.util.UseAction;
 import net.minecraft.nbt.NbtCompound;
@@ -23,8 +20,6 @@ import net.minecraft.util.Identifier;
 import net.minecraft.util.TypedActionResult;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
-import org.apache.commons.lang3.mutable.MutableObject;
-import org.jetbrains.annotations.Nullable;
 import org.stargest.nst_revrecoiled.Entities.BulletProjectileEntity;
 import org.stargest.nst_revrecoiled.network.RevolverFireParticlePacket;
 import org.stargest.nst_revrecoiled.network.RevolverReloadParticlePacket;
@@ -32,21 +27,22 @@ import org.stargest.nst_revrecoiled.util.ModItems;
 import org.stargest.nst_revrecoiled.util.ModConfig;
 import software.bernie.geckolib.animatable.GeoItem;
 import software.bernie.geckolib.animatable.SingletonGeoAnimatable;
-import software.bernie.geckolib.animatable.client.GeoRenderProvider;
-import software.bernie.geckolib.animatable.instance.AnimatableInstanceCache;
-import software.bernie.geckolib.animation.AnimatableManager;
-import software.bernie.geckolib.animation.AnimationController;
-import software.bernie.geckolib.animation.PlayState;
-import software.bernie.geckolib.animation.RawAnimation;
+import software.bernie.geckolib.animatable.client.RenderProvider;
+import software.bernie.geckolib.core.animatable.instance.AnimatableInstanceCache;
+import software.bernie.geckolib.core.animation.AnimatableManager;
+import software.bernie.geckolib.core.animation.AnimationController;
+
+import software.bernie.geckolib.core.animation.RawAnimation;
 import software.bernie.geckolib.constant.DataTickets;
+import software.bernie.geckolib.core.object.PlayState;
+import software.bernie.geckolib.renderer.GeoItemRenderer;
 import software.bernie.geckolib.util.GeckoLibUtil;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
 
 /**
  * Base class for all revolver weapons.
@@ -95,14 +91,18 @@ public abstract class BaseRevolverItem extends RangedWeaponItem implements GeoIt
     // GeckoLib — one cache per concrete item type
     private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
 
+    private Supplier<GeoItemRenderer<?>> rendererFactory = null;
+
     /**
      * Client-only renderer container. Populated during client initialization.
      * Accessed by ModItemRenderers to bind the GeckoLib renderer for this item.
      */
-    public final MutableObject<GeoRenderProvider> renderProvider = new MutableObject<>();
+    private final Supplier<Object> renderProvider = GeoItem.makeRenderer(this);
 
     private final float fallbackDamage;
     private final int fallbackDurability;
+
+    private static final String CHARGED_KEY = "ChargedBullet";
 
     // -------------------------------------------------------------------------
     // Config properties for dynamic behavior
@@ -205,26 +205,35 @@ public abstract class BaseRevolverItem extends RangedWeaponItem implements GeoIt
     // GeoItem — renderer binding
     // -------------------------------------------------------------------------
 
+    public void setRendererFactory(Supplier<GeoItemRenderer<?>> factory) {
+        this.rendererFactory = factory;
+    }
+
     /**
      * GeckoLib calls this on both client and server.
      * Only the client-side renderer is set, so server-side this is a no-op.
      */
     @Override
-    public void createGeoRenderer(Consumer<GeoRenderProvider> consumer) {
-        GeoRenderProvider provider = renderProvider.getValue();
-        if (provider != null) {
-            consumer.accept(provider);
-        }
+    public void createRenderer(Consumer<Object> consumer) {
+        if (rendererFactory == null) return;
+
+        Supplier<GeoItemRenderer<?>> factory = rendererFactory;
+        consumer.accept(new RenderProvider() {
+            private GeoItemRenderer<?> renderer;
+
+            @Override
+            public GeoItemRenderer<?> getCustomRenderer() {
+                if (renderer == null) {
+                    renderer = factory.get();
+                }
+                return renderer;
+            }
+        });
     }
 
-    // -------------------------------------------------------------------------
-    // RangedWeaponItem — required abstract method (unused; logic is in performShoot())
-    // -------------------------------------------------------------------------
-
     @Override
-    protected void shoot(LivingEntity shooter, ProjectileEntity projectile, int index,
-                         float speed, float divergence, float yaw, @Nullable LivingEntity target) {
-        // Not used — custom shooting logic is in the protected performShoot() method below
+    public Supplier<Object> getRenderProvider() {
+        return renderProvider;
     }
 
     // -------------------------------------------------------------------------
@@ -238,8 +247,7 @@ public abstract class BaseRevolverItem extends RangedWeaponItem implements GeoIt
     }
 
     @Override
-    public boolean allowComponentsUpdateAnimation(PlayerEntity player, Hand hand, ItemStack oldStack, ItemStack newStack) {
-        // Prevents item switch animation when only charge state changes
+    public boolean allowNbtUpdateAnimation(PlayerEntity player, Hand hand, ItemStack oldStack, ItemStack newStack) {
         return false;
     }
 
@@ -261,7 +269,7 @@ public abstract class BaseRevolverItem extends RangedWeaponItem implements GeoIt
     }
 
     @Override
-    public int getMaxUseTime(ItemStack stack, LivingEntity user) {
+    public int getMaxUseTime(ItemStack stack) {
         return getChargeTimeTicks();
     }
 
@@ -446,9 +454,8 @@ public abstract class BaseRevolverItem extends RangedWeaponItem implements GeoIt
      * Protected to allow subclasses to override draw animation tracking behavior.
      */
     protected boolean hasDrawAnimationPlayed(ItemStack stack) {
-        return stack.getOrDefault(DataComponentTypes.CUSTOM_DATA, NbtComponent.DEFAULT)
-                .copyNbt()
-                .getBoolean(DRAW_PLAYED_KEY);
+        NbtCompound nbt = stack.getNbt();
+        return nbt != null && nbt.getBoolean(DRAW_PLAYED_KEY);
     }
 
     /**
@@ -456,11 +463,7 @@ public abstract class BaseRevolverItem extends RangedWeaponItem implements GeoIt
      * Protected to allow subclasses to override draw animation tracking behavior.
      */
     protected void markDrawAnimationPlayed(ItemStack stack) {
-        stack.apply(DataComponentTypes.CUSTOM_DATA, NbtComponent.DEFAULT, nbt -> {
-            NbtCompound compound = nbt.copyNbt();
-            compound.putBoolean(DRAW_PLAYED_KEY, true);
-            return NbtComponent.of(compound);
-        });
+        stack.getOrCreateNbt().putBoolean(DRAW_PLAYED_KEY, true);
     }
 
     /**
@@ -468,11 +471,8 @@ public abstract class BaseRevolverItem extends RangedWeaponItem implements GeoIt
      * Protected to allow subclasses to override draw animation tracking behavior.
      */
     protected void clearDrawAnimationFlag(ItemStack stack) {
-        stack.apply(DataComponentTypes.CUSTOM_DATA, NbtComponent.DEFAULT, nbt -> {
-            NbtCompound compound = nbt.copyNbt();
-            compound.remove(DRAW_PLAYED_KEY);
-            return NbtComponent.of(compound);
-        });
+        NbtCompound nbt = stack.getNbt();
+        if (nbt != null) nbt.remove(DRAW_PLAYED_KEY);
     }
 
     // -------------------------------------------------------------------------
@@ -486,27 +486,21 @@ public abstract class BaseRevolverItem extends RangedWeaponItem implements GeoIt
      */
     protected boolean loadBullet(LivingEntity shooter, ItemStack revolver) {
         ItemStack ammo = shooter.getProjectileType(revolver);
-
         if (ammo.isEmpty() && !(shooter instanceof PlayerEntity p && p.getAbilities().creativeMode)) {
             return false;
         }
 
-        List<ItemStack> projectiles = new ArrayList<>();
+        ItemStack bullet = ammo.isEmpty()
+                ? new ItemStack(ModItems.STONE_BULLET)
+                : ammo.copy();
+        bullet.setCount(1);
 
-        if (!ammo.isEmpty()) {
-            ItemStack bulletCopy = ammo.copy();
-            bulletCopy.setCount(1);
-            projectiles.add(bulletCopy);
-
-            if (shooter instanceof PlayerEntity player && !player.getAbilities().creativeMode) {
-                ammo.decrement(1);
-            }
-        } else {
-            // Creative mode fallback
-            projectiles.add(new ItemStack(ModItems.STONE_BULLET));
+        if (!ammo.isEmpty() && shooter instanceof PlayerEntity player
+                && !player.getAbilities().creativeMode) {
+            ammo.decrement(1);
         }
 
-        revolver.set(DataComponentTypes.CHARGED_PROJECTILES, ChargedProjectilesComponent.of(projectiles));
+        revolver.getOrCreateNbt().put(CHARGED_KEY, bullet.writeNbt(new NbtCompound()));
         return true;
     }
 
@@ -557,12 +551,10 @@ public abstract class BaseRevolverItem extends RangedWeaponItem implements GeoIt
             return;
         }
 
-        ChargedProjectilesComponent component = stack.get(DataComponentTypes.CHARGED_PROJECTILES);
-        if (component == null || component.isEmpty()) {
-            return;
-        }
+        NbtCompound nbt = stack.getNbt();
+        if (nbt == null || !nbt.contains(CHARGED_KEY)) return;
 
-        ItemStack bulletStack = component.getProjectiles().get(0);
+        ItemStack bulletStack = ItemStack.fromNbt(nbt.getCompound(CHARGED_KEY));
 
         float bulletDamage = 0.0f;
         if (bulletStack.getItem() instanceof BaseBulletItem bulletItem) {
@@ -592,12 +584,12 @@ public abstract class BaseRevolverItem extends RangedWeaponItem implements GeoIt
 
         world.spawnEntity(projectile);
 
-        stack.damage(1, shooter, LivingEntity.getSlotForHand(hand));
+        stack.damage(1, shooter, e -> e.sendEquipmentBreakStatus(EquipmentSlot.MAINHAND));
 
         world.playSound(
                 null,
                 shooter.getX(), shooter.getY(), shooter.getZ(),
-                SoundEvents.ENTITY_GENERIC_EXPLODE.value(),
+                SoundEvents.ENTITY_GENERIC_EXPLODE,
                 SoundCategory.PLAYERS,
                 0.35f,
                 1.5f / (world.getRandom().nextFloat() * 0.4f + 0.8f)
@@ -609,7 +601,7 @@ public abstract class BaseRevolverItem extends RangedWeaponItem implements GeoIt
             triggerAnim(player, instanceId, "controller", "animation.model.fireright");
         }
 
-        stack.set(DataComponentTypes.CHARGED_PROJECTILES, ChargedProjectilesComponent.DEFAULT);
+        stack.getOrCreateNbt().remove(CHARGED_KEY);
     }
 
     // -------------------------------------------------------------------------
@@ -620,8 +612,8 @@ public abstract class BaseRevolverItem extends RangedWeaponItem implements GeoIt
      * Checks if the revolver currently has a loaded bullet.
      */
     public static boolean isCharged(ItemStack stack) {
-        ChargedProjectilesComponent component = stack.get(DataComponentTypes.CHARGED_PROJECTILES);
-        return component != null && !component.isEmpty();
+        NbtCompound nbt = stack.getNbt();
+        return nbt != null && nbt.contains(CHARGED_KEY);
     }
 
     // -------------------------------------------------------------------------
@@ -644,25 +636,24 @@ public abstract class BaseRevolverItem extends RangedWeaponItem implements GeoIt
 
             AnimationController<?> ctrl = state.getController();
 
-            // In third-person: suppress draw animation by replacing with idle
-            if (!isFirstPerson) {
-                RawAnimation triggered = ctrl.getTriggeredAnimation();
+            // In third-person: suppress draw animation by stopping it
 
-                if (triggered != null && DRAW_ANIM.equals(triggered)) {
-                    ctrl.setAnimation(IDLE_ANIM);
-                    return PlayState.CONTINUE;
+            if (!isFirstPerson) {
+                RawAnimation current = ctrl.getCurrentRawAnimation();
+                if (DRAW_ANIM.equals(current)) {
+                    ctrl.stop();
+                    return PlayState.STOP;
                 }
             }
 
             // Update animation speed ONLY when a new animation is triggered.
             // This ensures the speed remains stable for the duration of the animation
             // and doesn't reset to 1.0f prematurely once the trigger is processed.
-            RawAnimation triggered = ctrl.getTriggeredAnimation();
-            if (triggered != null) {
-                if (RELOAD_ANIM.equals(triggered)) {
-                    ctrl.setAnimationSpeed(50.0f / config.revolvers.chargeTimeTicks);
+            if (ctrl.getCurrentRawAnimation() != null) {
+                if (RELOAD_ANIM.equals(ctrl.getCurrentRawAnimation())) {
+                    ctrl.setAnimationSpeed(50.0 / config.revolvers.chargeTimeTicks);
                 } else {
-                    ctrl.setAnimationSpeed(1.0f);
+                    ctrl.setAnimationSpeed(1.0);
                 }
             }
 

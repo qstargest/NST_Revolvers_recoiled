@@ -3,6 +3,7 @@ package org.stargest.nst_revrecoiled.recipe;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
+import net.minecraft.registry.Registries;
 import net.minecraft.util.Identifier;
 
 import java.util.List;
@@ -69,7 +70,7 @@ public class AssemblyRecipe {
         if (configIngs != null) {
             return configIngs.stream()
                 .map(ci -> new Ingredient(
-                    net.minecraft.registry.Registries.ITEM.get(net.minecraft.util.Identifier.of(ci.item)),
+                    Registries.ITEM.get(new Identifier(ci.item)),
                     ci.count
                 )).toList();
         }

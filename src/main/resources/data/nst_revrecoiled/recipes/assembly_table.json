@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "show_notification": true,
+  "category": "misc",
+  "pattern": [
+    " &%",
+    "$#$"
+  ],
+  "key": {
+    "#": {
+      "item": "minecraft:spruce_planks"
+    },
+    "&": {
+      "item": "minecraft:paper"
+    },
+    "%": {
+      "item": "minecraft:lapis_lazuli"
+    },
+    "$": {
+      "item": "minecraft:iron_ingot"
+    }
+  },
+  "result": {
+    "item": "nst_revrecoiled:assembly_table",
+    "count": 1
+  }
+}

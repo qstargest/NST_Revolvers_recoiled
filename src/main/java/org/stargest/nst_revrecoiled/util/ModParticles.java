@@ -1,7 +1,7 @@
 package org.stargest.nst_revrecoiled.util;
 
 import net.fabricmc.fabric.api.particle.v1.FabricParticleTypes;
-import net.minecraft.particle.SimpleParticleType;
+import net.minecraft.particle.DefaultParticleType;
 import net.minecraft.registry.Registries;
 import net.minecraft.registry.Registry;
 import net.minecraft.util.Identifier;
@@ -16,8 +16,8 @@ import org.stargest.nst_revrecoiled.Main;
  */
 public class ModParticles {
 
-    public static SimpleParticleType REVOLVER_FIRE;
-    public static SimpleParticleType REVOLVER_RELOAD;
+    public static DefaultParticleType REVOLVER_FIRE;
+    public static DefaultParticleType REVOLVER_RELOAD;
 
     /**
      * Registers all custom particle types.

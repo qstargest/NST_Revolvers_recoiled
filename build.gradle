@@ -11,12 +11,12 @@ base {
 }
 
 loom {
-    splitEnvironmentSourceSets()
+    //splitEnvironmentSourceSets()
 
     mods {
         "nst_revolvers_recoiled" {
             sourceSet sourceSets.main
-            sourceSet sourceSets.client
+            //sourceSet sourceSets.client
         }
     }
 }
@@ -38,6 +38,7 @@ repositories {
         url 'https://dl.cloudsmith.io/public/geckolib3/geckolib/maven/'
         content {
             includeGroup("software.bernie.geckolib")
+            includeGroup "com.eliotlash.mclib"
         }
     }
 }
@@ -65,7 +66,7 @@ processResources {
     }
 }
 
-def targetJavaVersion = 21
+def targetJavaVersion = 17
 tasks.withType(JavaCompile).configureEach {
     // ensure that the encoding is set to UTF-8, no matter what the system default is
     // this fixes some edge cases with special characters not displaying correctly

@@ -2,14 +2,12 @@ package org.stargest.nst_revrecoiled;
 
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
-import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
+import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stargest.nst_revrecoiled.Villager.ModVillagers;
 import org.stargest.nst_revrecoiled.network.AssemblyCraftC2SPacket;
-import org.stargest.nst_revrecoiled.network.RevolverFireParticlePacket;
-import org.stargest.nst_revrecoiled.network.RevolverReloadParticlePacket;
 import org.stargest.nst_revrecoiled.network.SyncConfigS2CPacket;
 import org.stargest.nst_revrecoiled.recipe.AssemblyRecipes;
 import org.stargest.nst_revrecoiled.util.*;
@@ -29,18 +27,6 @@ public class Main implements ModInitializer {
         LOGGER.info("Initializing {}", MOD_ID);
 
         // Register networking payloads FIRST to avoid client sync crashes
-        PayloadTypeRegistry.playS2C().register(
-                RevolverReloadParticlePacket.ID,
-                RevolverReloadParticlePacket.CODEC
-        );
-        PayloadTypeRegistry.playS2C().register(
-                RevolverFireParticlePacket.ID,
-                RevolverFireParticlePacket.CODEC
-        );
-        PayloadTypeRegistry.playS2C().register(
-                SyncConfigS2CPacket.ID,
-                SyncConfigS2CPacket.CODEC
-        );
         AssemblyCraftC2SPacket.register();
 
         // Load configuration
@@ -74,6 +60,7 @@ public class Main implements ModInitializer {
         );
 
         // Sync config on join
-        ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> sender.sendPacket(new SyncConfigS2CPacket(ConfigLoader.toJson())));
+        ServerPlayConnectionEvents.JOIN.register((handler, sender, server) ->
+                ServerPlayNetworking.send(handler.player, new SyncConfigS2CPacket(ConfigLoader.toJson())));
     }
 }

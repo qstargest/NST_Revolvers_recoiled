@@ -1,9 +1,8 @@
 package org.stargest.nst_revrecoiled.network;
 
+import net.fabricmc.fabric.api.networking.v1.FabricPacket;
+import net.fabricmc.fabric.api.networking.v1.PacketType;
 import net.minecraft.network.PacketByteBuf;
-import net.minecraft.network.codec.PacketCodec;
-import net.minecraft.network.codec.PacketCodecs;
-import net.minecraft.network.packet.CustomPayload;
 import net.minecraft.util.Identifier;
 import org.stargest.nst_revrecoiled.Main;
 
@@ -19,26 +18,19 @@ import org.stargest.nst_revrecoiled.Main;
  * This ensures all players see muzzle flash particles, not just the shooter.
  * The local player is handled separately via clientFireCallback to avoid duplication.
  */
-public record RevolverFireParticlePacket(int entityId) implements CustomPayload {
+public record RevolverFireParticlePacket(int entityId) implements FabricPacket {
 
-    /**
-     * Unique packet identifier for Fabric networking.
-     */
-    public static final Id<RevolverFireParticlePacket> ID =
-            new Id<>(Identifier.of(Main.MOD_ID, "revolver_fire_particle"));
-
-    /**
-     * Packet codec for serialization/deserialization.
-     * Uses integer codec for entity ID.
-     */
-    public static final PacketCodec<PacketByteBuf, RevolverFireParticlePacket> CODEC =
-            PacketCodec.tuple(
-                    PacketCodecs.INTEGER, RevolverFireParticlePacket::entityId,
-                    RevolverFireParticlePacket::new
+    public static final PacketType<RevolverFireParticlePacket> TYPE =
+            PacketType.create(
+                    new Identifier(Main.MOD_ID, "revolver_fire_particle"),
+                    buf -> new RevolverFireParticlePacket(buf.readInt())
             );
 
     @Override
-    public Id<? extends CustomPayload> getId() {
-        return ID;
+    public void write(PacketByteBuf buf) {
+        buf.writeInt(entityId);
     }
+
+    @Override
+    public PacketType<?> getType() { return TYPE; }
 }

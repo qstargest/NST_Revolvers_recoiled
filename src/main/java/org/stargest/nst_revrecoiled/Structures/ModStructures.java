@@ -52,10 +52,10 @@ public class ModStructures {
         for (String poolId : VILLAGE_POOLS) {
             try {
                 RegistryKey<StructurePool> key =
-                        RegistryKey.of(RegistryKeys.TEMPLATE_POOL, Identifier.of(poolId));
+                        RegistryKey.of(RegistryKeys.TEMPLATE_POOL, new Identifier(poolId));
 
                 StructurePool pool = poolRegistry
-                        .getOrEmpty(Identifier.of(poolId))
+                        .getOrEmpty(new Identifier(poolId))
                         .orElse(null);
                 if (pool == null) {
                     Main.LOGGER.warn("Template pool {} not found! Skipping injection.", poolId);
@@ -89,10 +89,10 @@ public class ModStructures {
         for (String poolId : VILLAGE_POOLS) {
             try {
                 RegistryKey<StructurePool> key =
-                        RegistryKey.of(RegistryKeys.TEMPLATE_POOL, Identifier.of(poolId));
+                        RegistryKey.of(RegistryKeys.TEMPLATE_POOL, new Identifier(poolId));
 
                 StructurePool pool = poolRegistry
-                        .getOrEmpty(Identifier.of(poolId))
+                        .getOrEmpty(new Identifier(poolId))
                         .orElse(null);
                 if (pool == null) continue;
 

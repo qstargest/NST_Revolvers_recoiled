@@ -37,7 +37,7 @@ public class ModEntities {
                                 BulletProjectileEntity::new,
                                 SpawnGroup.MISC
                         )
-                        .dimensions(0.25f, 0.25f)
+                        .setDimensions(0.25f, 0.25f)
                         .maxTrackingRange(8)          // Track up to 8 blocks away
                         .trackingTickInterval(1)      // Update every tick for smooth movement
                         .build()

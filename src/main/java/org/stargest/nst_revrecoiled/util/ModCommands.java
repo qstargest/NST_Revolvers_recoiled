@@ -49,7 +49,7 @@ public class ModCommands {
             source.sendFeedback(() -> Text.literal("§a[NST Revolvers recoiled] Configuration reloaded and synced successfully!"), true);
             return 1;
         } catch (Exception e) {
-            source.sendError(Text.literal("§c[NST Revolvers] Failed to reload configuration: " + e.getMessage()));
+            source.sendError(Text.literal("§c[NST Revolvers recoiled] Failed to reload configuration: " + e.getMessage()));
             return 0;
         }
     }

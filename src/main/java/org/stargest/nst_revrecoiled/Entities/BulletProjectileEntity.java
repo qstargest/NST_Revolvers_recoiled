@@ -11,10 +11,8 @@ import net.minecraft.entity.projectile.PersistentProjectileEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtElement;
-import net.minecraft.nbt.NbtOps;
 import net.minecraft.particle.ItemStackParticleEffect;
 import net.minecraft.particle.ParticleTypes;
-import net.minecraft.registry.RegistryWrapper;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.sound.SoundEvents;
 import net.minecraft.util.hit.BlockHitResult;
@@ -22,10 +20,8 @@ import net.minecraft.util.hit.EntityHitResult;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 import org.stargest.nst_revrecoiled.util.ModEntities;
-import org.stargest.nst_revrecoiled.util.ModItems;
 import org.stargest.nst_revrecoiled.util.ModConfig;
-
-import java.util.Optional;
+import org.stargest.nst_revrecoiled.util.ModItems;
 
 /**
  * Custom bullet projectile entity with ballistic physics.
@@ -55,7 +51,8 @@ public class BulletProjectileEntity extends PersistentProjectileEntity implement
      * Constructor for deserialization (called by Minecraft on client side).
      */
     public BulletProjectileEntity(EntityType<? extends BulletProjectileEntity> entityType, World world) {
-        super(entityType, world);
+        super(entityType, world,
+                new ItemStack(ModItems.STONE_BULLET));
     }
 
     /**
@@ -67,42 +64,24 @@ public class BulletProjectileEntity extends PersistentProjectileEntity implement
      * @param damage Total damage (revolver base + bullet damage)
      */
     public BulletProjectileEntity(World world, LivingEntity owner, ItemStack bulletStack, float damage) {
-        super(ModEntities.BULLET_PROJECTILE, owner, world, bulletStack, null);
-        this.bulletStack = (bulletStack != null) ? bulletStack.copy() : ItemStack.EMPTY;
+        super(ModEntities.BULLET_PROJECTILE,
+                owner, world,
+                bulletStack != null ? bulletStack : new ItemStack(ModItems.STONE_BULLET));
+        this.bulletStack = bulletStack != null ? bulletStack.copy() : ItemStack.EMPTY;
         this.fixedDamage = damage;
-
-        // Prevent vanilla damage calculation
         this.setDamage(0.0);
-
-        // Set tracked data so spawn packet contains it
         this.dataTracker.set(DATA_BULLET_STACK, this.bulletStack.copy());
         this.dataTracker.set(DATA_FIXED_DAMAGE, this.fixedDamage);
     }
 
     /**
-     * Gravity applied per tick for ballistic trajectory.
-     * 0.15 gives ~30 blocks effective range on horizontal shots.
-     * Angled shots naturally travel farther due to ballistic arc.
-     */
-    @Override
-    protected double getGravity() {
-        return ModConfig.get().bullets.gravity;
-    }
-
-    /**
      * Initializes data tracker with custom fields.
-     * Uses Builder pattern from Minecraft 1.21.
      */
     @Override
-    protected void initDataTracker(DataTracker.Builder builder) {
-        super.initDataTracker(builder);
-        builder.add(DATA_BULLET_STACK, ItemStack.EMPTY);
-        builder.add(DATA_FIXED_DAMAGE, 0.0f);
-    }
-
-    @Override
-    protected ItemStack getDefaultItemStack() {
-        return new ItemStack(ModItems.STONE_BULLET);
+    protected void initDataTracker() {
+        super.initDataTracker();
+        this.dataTracker.startTracking(DATA_BULLET_STACK, ItemStack.EMPTY);
+        this.dataTracker.startTracking(DATA_FIXED_DAMAGE, 0.0f);
     }
 
     /**
@@ -121,7 +100,7 @@ public class BulletProjectileEntity extends PersistentProjectileEntity implement
             return this.bulletStack;
         }
 
-        return this.getDefaultItemStack();
+        return new ItemStack(ModItems.STONE_BULLET);
     }
 
     /**
@@ -190,42 +169,27 @@ public class BulletProjectileEntity extends PersistentProjectileEntity implement
 
     /**
      * Writes bullet ItemStack to NBT for world saving.
-     * Uses NbtElement because ItemStack.toNbt returns NbtElement in 1.21.
      */
     @Override
     public void writeCustomDataToNbt(NbtCompound nbt) {
         super.writeCustomDataToNbt(nbt);
-
-        if (this.bulletStack != null && !this.bulletStack.isEmpty()) {
-            RegistryWrapper.WrapperLookup lookup = this.getWorld().getRegistryManager();
-            ItemStack.CODEC
-                    .encodeStart(lookup.getOps(NbtOps.INSTANCE), this.bulletStack)
-                    .ifSuccess(element -> nbt.put("BulletItem", element));
+        if (!this.bulletStack.isEmpty()) {
+            nbt.put("BulletItem", this.bulletStack.writeNbt(new NbtCompound()));
         }
-
         nbt.putFloat("FixedDamage", this.fixedDamage);
     }
 
     /**
      * Reads bullet ItemStack from NBT when loading from world.
-     * Uses ItemStack.fromNbt which returns Optional<ItemStack> in 1.21.
      */
     @Override
     public void readCustomDataFromNbt(NbtCompound nbt) {
         super.readCustomDataFromNbt(nbt);
-
-        if (nbt.contains("BulletItem")) {
-            RegistryWrapper.WrapperLookup lookup = this.getWorld().getRegistryManager();
-            NbtElement element = nbt.get("BulletItem");
-
-            Optional<ItemStack> maybe = ItemStack.fromNbt(lookup, element);
-            this.bulletStack = maybe.orElse(ItemStack.EMPTY);
-
-            // Sync tracked data
+        if (nbt.contains("BulletItem", NbtElement.COMPOUND_TYPE)) {
+            this.bulletStack = ItemStack.fromNbt(nbt.getCompound("BulletItem"));
             this.dataTracker.set(DATA_BULLET_STACK,
                     this.bulletStack.isEmpty() ? ItemStack.EMPTY : this.bulletStack.copy());
         }
-
         if (nbt.contains("FixedDamage")) {
             this.fixedDamage = nbt.getFloat("FixedDamage");
             this.dataTracker.set(DATA_FIXED_DAMAGE, this.fixedDamage);
@@ -257,6 +221,11 @@ public class BulletProjectileEntity extends PersistentProjectileEntity implement
             // Server-side: full physics simulation
             super.tick();
 
+            float targetGravity = ModConfig.get().bullets.gravity;
+            float defaultGravity = 0.05f;
+            this.setVelocity(
+                    this.getVelocity().add(0, defaultGravity - targetGravity, 0)
+            );
             // Auto-despawn after max age
             if (this.age >= ModConfig.get().bullets.maxAgeTicks) {
                 this.discard();

@@ -1,9 +1,8 @@
 package org.stargest.nst_revrecoiled.network;
 
+import net.fabricmc.fabric.api.networking.v1.FabricPacket;
+import net.fabricmc.fabric.api.networking.v1.PacketType;
 import net.minecraft.network.PacketByteBuf;
-import net.minecraft.network.codec.PacketCodec;
-import net.minecraft.network.codec.PacketCodecs;
-import net.minecraft.network.packet.CustomPayload;
 import net.minecraft.util.Identifier;
 import org.stargest.nst_revrecoiled.Main;
 
@@ -21,19 +20,19 @@ import org.stargest.nst_revrecoiled.Main;
  * reload particles are sent to all players including the shooter, since there is no
  * client-side callback that would otherwise cause duplication for the local player.
  */
-public record RevolverReloadParticlePacket(int entityId) implements CustomPayload {
+public record RevolverReloadParticlePacket(int entityId) implements FabricPacket {
 
-    /** Unique packet identifier for Fabric networking. */
-    public static final Id<RevolverReloadParticlePacket> ID =
-            new Id<>(Identifier.of(Main.MOD_ID, "revolver_reload_particle"));
-
-    /** Packet codec for serialization/deserialization. Uses integer codec for entity ID. */
-    public static final PacketCodec<PacketByteBuf, RevolverReloadParticlePacket> CODEC =
-            PacketCodec.tuple(
-                    PacketCodecs.INTEGER, RevolverReloadParticlePacket::entityId,
-                    RevolverReloadParticlePacket::new
+    public static final PacketType<RevolverReloadParticlePacket> TYPE =
+            PacketType.create(
+                    new Identifier(Main.MOD_ID, "revolver_reload_particle"),
+                    buf -> new RevolverReloadParticlePacket(buf.readInt())
             );
 
     @Override
-    public Id<? extends CustomPayload> getId() { return ID; }
+    public void write(PacketByteBuf buf) {
+        buf.writeInt(entityId);
+    }
+
+    @Override
+    public PacketType<?> getType() { return TYPE; }
 }

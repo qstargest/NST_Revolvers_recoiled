@@ -12,7 +12,6 @@ import net.minecraft.registry.RegistryKeys;
 import net.minecraft.sound.SoundEvents;
 import net.minecraft.util.Identifier;
 import net.minecraft.village.TradeOffer;
-import net.minecraft.village.TradedItem;
 import net.minecraft.village.VillagerProfession;
 import net.minecraft.world.poi.PointOfInterestType;
 import org.stargest.nst_revrecoiled.Main;
@@ -120,55 +119,55 @@ public class ModVillagers {
         // --- Level 1: Novice — basic materials and stone ammunition ---
         // Gunpowder buy-back: 32 gunpowder → 1 emerald (7 uses, 2 XP)
         TradeOfferHelper.registerVillagerOffers(REVOLVERMAKER, 1, factories -> factories.add((entity, random) ->
-                new TradeOffer(new TradedItem(Items.GUNPOWDER, 32),
+                new TradeOffer(new ItemStack(Items.GUNPOWDER, 32),
                         new ItemStack(Items.EMERALD, 1), 7, 2, 0.05f)));
         // Stone bullets: 1 emerald → 8 stone bullets (12 uses, 2 XP)
         TradeOfferHelper.registerVillagerOffers(REVOLVERMAKER, 1, factories -> factories.add((entity, random) ->
-                new TradeOffer(new TradedItem(Items.EMERALD, 1),
+                new TradeOffer(new ItemStack(Items.EMERALD, 1),
                         new ItemStack(ModItems.STONE_BULLET, 8), 12, 2, 0.05f)));
 
         // --- Level 2: Apprentice — entry-level revolver ---
         // Cobblestone revolver: 7 emeralds → 1 cobblestone revolver (7 uses, 5 XP)
         TradeOfferHelper.registerVillagerOffers(REVOLVERMAKER, 2, factories -> factories.add((entity, random) ->
-                new TradeOffer(new TradedItem(Items.EMERALD, 7),
+                new TradeOffer(new ItemStack(Items.EMERALD, 7),
                         new ItemStack(ModItems.COBBLESTONE_REVOLVER, 1), 7, 5, 0.05f)));
 
         // --- Level 3: Journeyman — iron tier revolver and ammunition ---
         // Iron revolver: 12 emeralds → 1 iron revolver (7 uses, 10 XP)
         TradeOfferHelper.registerVillagerOffers(REVOLVERMAKER, 3, factories -> factories.add((entity, random) ->
-                new TradeOffer(new TradedItem(Items.EMERALD, 12),
+                new TradeOffer(new ItemStack(Items.EMERALD, 12),
                         new ItemStack(ModItems.IRON_REVOLVER, 1), 7, 10, 0.05f)));
         // Lapis buy-back: 25 lapis lazuli → 1 emerald (7 uses, 2 XP)
         TradeOfferHelper.registerVillagerOffers(REVOLVERMAKER, 3, factories -> factories.add((entity, random) ->
-                new TradeOffer(new TradedItem(Items.LAPIS_LAZULI, 25),
+                new TradeOffer(new ItemStack(Items.LAPIS_LAZULI, 25),
                         new ItemStack(Items.EMERALD, 1), 7, 2, 0.04f)));
         // Iron bullets: 3 emeralds → 6 iron bullets (12 uses, 5 XP)
         TradeOfferHelper.registerVillagerOffers(REVOLVERMAKER, 3, factories -> factories.add((entity, random) ->
-                new TradeOffer(new TradedItem(Items.EMERALD, 3),
+                new TradeOffer(new ItemStack(Items.EMERALD, 3),
                         new ItemStack(ModItems.IRON_BULLET, 6), 12, 5, 0.05f)));
 
         // --- Level 4: Expert — golden tier revolver and ammunition ---
         // Golden revolver: 20 emeralds → 1 golden revolver (5 uses, 15 XP)
         TradeOfferHelper.registerVillagerOffers(REVOLVERMAKER, 4, factories -> factories.add((entity, random) ->
-                new TradeOffer(new TradedItem(Items.EMERALD, 20),
+                new TradeOffer(new ItemStack(Items.EMERALD, 20),
                         new ItemStack(ModItems.GOLDEN_REVOLVER, 1), 5, 15, 0.05f)));
         // Golden bullets: 4 emeralds → 4 golden bullets (8 uses, 10 XP)
         TradeOfferHelper.registerVillagerOffers(REVOLVERMAKER, 4, factories -> factories.add((entity, random) ->
-                new TradeOffer(new TradedItem(Items.EMERALD, 4),
+                new TradeOffer(new ItemStack(Items.EMERALD, 4),
                         new ItemStack(ModItems.GOLDEN_BULLET, 4), 8, 10, 0.05f)));
 
         // --- Level 5: Master — diamond tier revolver and ammunition ---
         // Diamond buy-back: 6 diamonds → 1 emerald (7 uses, 2 XP, high price multiplier)
         TradeOfferHelper.registerVillagerOffers(REVOLVERMAKER, 5, factories -> factories.add((entity, random) ->
-                new TradeOffer(new TradedItem(Items.DIAMOND, 6),
+                new TradeOffer(new ItemStack(Items.DIAMOND, 6),
                         new ItemStack(Items.EMERALD, 1), 7, 2, 0.4f)));
         // Diamond revolver: 40 emeralds → 1 diamond revolver (3 uses, 25 XP)
         TradeOfferHelper.registerVillagerOffers(REVOLVERMAKER, 5, factories -> factories.add((entity, random) ->
-                new TradeOffer(new TradedItem(Items.EMERALD, 40),
+                new TradeOffer(new ItemStack(Items.EMERALD, 40),
                         new ItemStack(ModItems.DIAMOND_REVOLVER, 1), 3, 25, 0.05f)));
         // Diamond bullets: 12 emeralds → 6 diamond bullets (5 uses, 20 XP)
         TradeOfferHelper.registerVillagerOffers(REVOLVERMAKER, 5, factories -> factories.add((entity, random) ->
-                new TradeOffer(new TradedItem(Items.EMERALD, 12),
+                new TradeOffer(new ItemStack(Items.EMERALD, 12),
                         new ItemStack(ModItems.DIAMOND_BULLET, 6), 5, 20, 0.05f)));
     }
 }
