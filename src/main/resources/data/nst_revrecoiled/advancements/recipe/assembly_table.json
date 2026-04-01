@@ -39,11 +39,9 @@
     }
   },
   "requirements": [
-    [
-      "has_spruce_planks",
-      "has_paper",
-      "has_lapis_lazuli"
-    ]
+    ["has_spruce_planks"],
+    ["has_paper"],
+    ["has_lapis_lazuli"]
   ],
   "rewards": {
     "recipes": [

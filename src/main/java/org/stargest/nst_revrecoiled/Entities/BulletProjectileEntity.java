@@ -51,8 +51,7 @@ public class BulletProjectileEntity extends PersistentProjectileEntity implement
      * Constructor for deserialization (called by Minecraft on client side).
      */
     public BulletProjectileEntity(EntityType<? extends BulletProjectileEntity> entityType, World world) {
-        super(entityType, world,
-                new ItemStack(ModItems.STONE_BULLET));
+        super(entityType, world);
     }
 
     /**
@@ -64,9 +63,7 @@ public class BulletProjectileEntity extends PersistentProjectileEntity implement
      * @param damage Total damage (revolver base + bullet damage)
      */
     public BulletProjectileEntity(World world, LivingEntity owner, ItemStack bulletStack, float damage) {
-        super(ModEntities.BULLET_PROJECTILE,
-                owner, world,
-                bulletStack != null ? bulletStack : new ItemStack(ModItems.STONE_BULLET));
+        super(ModEntities.BULLET_PROJECTILE, owner, world);
         this.bulletStack = bulletStack != null ? bulletStack.copy() : ItemStack.EMPTY;
         this.fixedDamage = damage;
         this.setDamage(0.0);
@@ -82,6 +79,11 @@ public class BulletProjectileEntity extends PersistentProjectileEntity implement
         super.initDataTracker();
         this.dataTracker.startTracking(DATA_BULLET_STACK, ItemStack.EMPTY);
         this.dataTracker.startTracking(DATA_FIXED_DAMAGE, 0.0f);
+    }
+
+    @Override
+    public ItemStack asItemStack() {
+        return this.getStack();
     }
 
     /**

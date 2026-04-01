@@ -538,13 +538,13 @@ public class AssemblyTableScreen extends HandledScreen<AssemblyTableScreenHandle
 
     @Override
     public boolean mouseScrolled(double mouseX, double mouseY,
-                                 double horizontalAmount, double verticalAmount) {
+                                 double amount) {
         int rx = (int) mouseX - this.x;
         int ry = (int) mouseY - this.y;
 
         // Scroll recipe lists when hovering over the recipe zone
         if (ry >= BTN_Y_START && ry < RECIPE_ZONE_BOTTOM) {
-            int delta = verticalAmount > 0 ? -1 : 1;
+            int delta = amount > 0 ? -1 : 1;
             if (rx >= BTN_X && rx < REV_SCROLLBAR_X + SCROLLBAR_W && revolverCount > MAX_VISIBLE_BTNS) {
                 revolverScroll = clampScroll(revolverScroll + delta, revolverCount - MAX_VISIBLE_BTNS);
                 return true;
@@ -564,12 +564,12 @@ public class AssemblyTableScreen extends HandledScreen<AssemblyTableScreenHandle
                     && ry >= QTY_ROW_Y && ry < QTY_ROW_Y + QTY_MINUS_H;
             if (overQtyRow) {
                 bulletQuantity = Math.max(1, Math.min(BULLET_QTY_MAX,
-                        bulletQuantity + (verticalAmount > 0 ? 1 : -1)));
+                        bulletQuantity + (amount > 0 ? 1 : -1)));
                 return true;
             }
         }
 
-        return super.mouseScrolled(mouseX, mouseY, horizontalAmount, verticalAmount);
+        return super.mouseScrolled(mouseX, mouseY, amount);
     }
 
     // ── Scroll helpers ────────────────────────────────────────────────────────
@@ -595,7 +595,7 @@ public class AssemblyTableScreen extends HandledScreen<AssemblyTableScreenHandle
         frameTimeMs = System.currentTimeMillis();
         refreshInventoryCache();
 
-        renderBackground(ctx, mx, my, delta);
+        renderBackground(ctx);
         super.render(ctx, mx, my, delta);
         drawMouseoverTooltip(ctx, mx, my);
     }

@@ -1,6 +1,5 @@
 package org.stargest.nst_revrecoiled.Blocks;
 
-import com.mojang.serialization.MapCodec;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.entity.player.PlayerEntity;
@@ -26,17 +25,8 @@ import org.stargest.nst_revrecoiled.handlers.AssemblyTableScreenHandler;
  * validation and close the screen if the player moves too far away.
  */
 public class AssemblyTableBlock extends Block {
-
-    /** Codec used by Minecraft's block state serialisation system. */
-    public static final MapCodec<AssemblyTableBlock> CODEC = createCodec(AssemblyTableBlock::new);
-
     public AssemblyTableBlock(Settings settings) {
         super(settings);
-    }
-
-    @Override
-    protected MapCodec<? extends Block> getCodec() {
-        return CODEC;
     }
 
     /**
