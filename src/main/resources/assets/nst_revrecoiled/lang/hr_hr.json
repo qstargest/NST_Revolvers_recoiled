@@ -1,0 +1,20 @@
+{
+  "item.nst_revrecoiled.stone_bullet": "Kameni metak",
+  "item.nst_revrecoiled.iron_bullet": "Željezni metak",
+  "item.nst_revrecoiled.golden_bullet": "Zlatni metak",
+  "item.nst_revrecoiled.diamond_bullet": "Dijamantni metak",
+  "item.nst_revrecoiled.cobblestone_revolver": "Kaldrmni revolver",
+  "item.nst_revrecoiled.iron_revolver": "Željezni revolver",
+  "item.nst_revrecoiled.golden_revolver": "Zlatni revolver",
+  "item.nst_revrecoiled.diamond_revolver": "Dijamantni revolver",
+  "item.nst_revrecoiled.assembly_table": "Montažni stol",
+  "block.nst_revrecoiled.assembly_table": "Montažni stol",
+  "entity.minecraft.villager.nst_revrecoiled.revolvermaker": "Izradivač revolvera",
+  "itemGroup.nst_revrecoiled.main": "[NST] Revolvers recoiled",
+  "gui.nst_revrecoiled.assemble": "Izradi",
+  "gui.nst_revrecoiled.damage": "Šteta: %s",
+  "gui.nst_revrecoiled.pickaxe_tier_any": "Potrebna je bilo koja pijuk",
+  "gui.nst_revrecoiled.pickaxe_tier_stone": "Potrebna je kamena pijuk+",
+  "gui.nst_revrecoiled.pickaxe_tier_iron": "Potrebna je željezna pijuk+",
+  "gui.nst_revrecoiled.pickaxe_durability": "Pijuk: %s/%s trj."
+}

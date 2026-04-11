@@ -1,0 +1,22 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "org.stargest.nst_revrecoiled.mixins",
+  "compatibilityLevel": "JAVA_21",
+  "mixins": [
+    "StructurePoolAccessor"
+  ],
+  "client": [
+    "client.MouseRecoilMixin",
+    "client.PlayerModelMixin",
+    "client.VillagerClothingFeatureRendererMixin",
+    "client.VillagerRenderStateMixin",
+    "client.ZombieVillagerRenderStateMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  },
+  "overwrites": {
+    "requireAnnotations": true
+  }
+}

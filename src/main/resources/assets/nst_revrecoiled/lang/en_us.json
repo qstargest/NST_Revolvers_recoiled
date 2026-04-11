@@ -1,0 +1,20 @@
+{
+  "item.nst_revrecoiled.stone_bullet": "Stone Bullet",
+  "item.nst_revrecoiled.iron_bullet": "Iron Bullet",
+  "item.nst_revrecoiled.golden_bullet": "Golden Bullet",
+  "item.nst_revrecoiled.diamond_bullet": "Diamond Bullet",
+  "item.nst_revrecoiled.cobblestone_revolver": "Cobblestone Revolver",
+  "item.nst_revrecoiled.iron_revolver": "Iron Revolver",
+  "item.nst_revrecoiled.golden_revolver": "Golden Revolver",
+  "item.nst_revrecoiled.diamond_revolver": "Diamond Revolver",
+  "itemGroup.nst_revrecoiled.main": "[NST] Revolvers recoiled",
+  "item.nst_revrecoiled.assembly_table": "Assembly Table",
+  "block.nst_revrecoiled.assembly_table": "Assembly Table",
+  "entity.minecraft.villager.nst_revrecoiled.revolvermaker": "Revolvermaker",
+  "gui.nst_revrecoiled.assemble": "Craft",
+  "gui.nst_revrecoiled.damage": "Damage: %s",
+  "gui.nst_revrecoiled.pickaxe_tier_any":   "Requires any pickaxe",
+  "gui.nst_revrecoiled.pickaxe_tier_stone": "Requires stone pickaxe+",
+  "gui.nst_revrecoiled.pickaxe_tier_iron":  "Requires iron pickaxe+",
+  "gui.nst_revrecoiled.pickaxe_durability": "Pickaxe: %s/%s dur."
+}

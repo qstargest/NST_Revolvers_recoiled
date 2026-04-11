@@ -1,0 +1,20 @@
+{
+  "item.nst_revrecoiled.stone_bullet": "Kivikuul",
+  "item.nst_revrecoiled.iron_bullet": "Raudkuul",
+  "item.nst_revrecoiled.golden_bullet": "Kullakuul",
+  "item.nst_revrecoiled.diamond_bullet": "Teemandkuul",
+  "item.nst_revrecoiled.cobblestone_revolver": "Munakivisrevolver",
+  "item.nst_revrecoiled.iron_revolver": "Raudrevolver",
+  "item.nst_revrecoiled.golden_revolver": "Kullarevolver",
+  "item.nst_revrecoiled.diamond_revolver": "Teemandrevolver",
+  "item.nst_revrecoiled.assembly_table": "Kokkupaneku laud",
+  "block.nst_revrecoiled.assembly_table": "Kokkupaneku laud",
+  "entity.minecraft.villager.nst_revrecoiled.revolvermaker": "Revolvritegija",
+  "itemGroup.nst_revrecoiled.main": "[NST] Revolvers recoiled",
+  "gui.nst_revrecoiled.assemble": "Valmista",
+  "gui.nst_revrecoiled.damage": "Kahju: %s",
+  "gui.nst_revrecoiled.pickaxe_tier_any": "Vajab mingit kirvest",
+  "gui.nst_revrecoiled.pickaxe_tier_stone": "Vajab kivikirvest+",
+  "gui.nst_revrecoiled.pickaxe_tier_iron": "Vajab raudkirvest+",
+  "gui.nst_revrecoiled.pickaxe_durability": "Kirves: %s/%s tv."
+}
