@@ -3,10 +3,18 @@
   "show_notification": true,
   "category": "misc",
   "key": {
-    "&": "minecraft:paper",
-    "%": "minecraft:lapis_lazuli",
-    "#": "minecraft:spruce_planks",
-    "$": "minecraft:iron_ingot"
+    "#": {
+      "item": "minecraft:spruce_planks"
+    },
+    "&": {
+      "item": "minecraft:paper"
+    },
+    "%": {
+      "item": "minecraft:lapis_lazuli"
+    },
+    "$": {
+      "item": "minecraft:iron_ingot"
+    }
   },
   "pattern": [
     " &%",

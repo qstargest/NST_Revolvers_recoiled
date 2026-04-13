@@ -77,6 +77,18 @@ public class ModItems {
             new Item.Properties().stacksTo(1)
     );
 
+    // Internal items for 2D GUI icon baking - these ensure [item]_revolver_item.json models are baked.
+    // They are not added to creative tabs and remain hidden from players.
+    // Uses the registerIcon helper for consistent naming and settings.
+    static final DeferredItem<Item> COBBLESTONE_REVOLVER_ICON = registerIcon("cobblestone_revolver");
+    static final DeferredItem<Item> IRON_REVOLVER_ICON = registerIcon("iron_revolver");
+    static final DeferredItem<Item> GOLDEN_REVOLVER_ICON = registerIcon("golden_revolver");
+    static final DeferredItem<Item> DIAMOND_REVOLVER_ICON = registerIcon("diamond_revolver");
+
+    private static DeferredItem<Item> registerIcon(String baseName) {
+        return ITEMS.registerItem(baseName + "_item", Item::new, new Item.Properties());
+    }
+
     // --- Creative Tab ---
     public static final ResourceKey<CreativeModeTab> MOD_TAB_KEY = ResourceKey.create(
             Registries.CREATIVE_MODE_TAB,

@@ -8,7 +8,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
-import net.minecraft.world.InteractionResult;
+import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
@@ -193,8 +193,8 @@ public abstract class BaseRevolverItem extends ProjectileWeaponItem implements G
     }
 
     @Override
-    public @NotNull ItemUseAnimation getUseAnimation(@NotNull ItemStack stack) {
-        return ItemUseAnimation.NONE;
+    public @NotNull UseAnim getUseAnimation(@NotNull ItemStack stack) {
+        return UseAnim.NONE;
     }
 
     public boolean isPerspectiveAware() { return true; }
@@ -226,7 +226,8 @@ public abstract class BaseRevolverItem extends ProjectileWeaponItem implements G
     }
 
     @Override
-    public boolean shouldCauseReequipAnimation(@NotNull ItemStack oldStack, @NotNull ItemStack newStack, boolean slotChanged) {
+    public boolean shouldCauseReequipAnimation(
+            @NotNull ItemStack oldStack, @NotNull ItemStack newStack, boolean slotChanged) {
         if (slotChanged) return true;
         return false;
     }
@@ -278,28 +279,24 @@ public abstract class BaseRevolverItem extends ProjectileWeaponItem implements G
      * - Returns CONSUME to prevent other interactions from firing.
      */
     @Override
-    public @NotNull InteractionResult use(@NotNull Level level, @NotNull Player user, @NotNull InteractionHand hand) {
+    public @NotNull InteractionResultHolder<ItemStack> use(@NotNull Level level, @NotNull Player user, @NotNull InteractionHand hand) {
         ItemStack stack = user.getItemInHand(hand);
 
         if (isCharged(stack)) {
             if (!level.isClientSide) {
                 performShoot(level, user, hand, stack, getProjectileVelocity(), getProjectileDivergence());
-            }
-
-            if (level.isClientSide()) {
+                PacketDistributor.sendToPlayersTrackingEntity(user, new RevolverFireParticlePacket(user.getId()));
+            } else {
                 triggerClientCallbacks(user, stack);
             }
 
-            if (!level.isClientSide) {
-                PacketDistributor.sendToPlayersTrackingEntity(user, new RevolverFireParticlePacket(user.getId()));
-            }
 
-            return InteractionResult.PASS;
+            return InteractionResultHolder.fail(stack);
         }
 
         ItemStack ammo = user.getProjectile(stack);
         if (!user.getAbilities().instabuild && ammo.isEmpty()) {
-            return InteractionResult.FAIL;
+            return InteractionResultHolder.fail(stack);
         }
 
         if (!level.isClientSide) {
@@ -308,7 +305,9 @@ public abstract class BaseRevolverItem extends ProjectileWeaponItem implements G
         }
 
         user.startUsingItem(hand);
-        return InteractionResult.CONSUME;
+
+
+        return InteractionResultHolder.consume(stack);
     }
 
     @Override
@@ -322,7 +321,7 @@ public abstract class BaseRevolverItem extends ProjectileWeaponItem implements G
      * Stops reload animation if player releases early.
      */
     @Override
-    public boolean releaseUsing(@NotNull ItemStack stack, @NotNull Level level, @NotNull LivingEntity user, int remainingUseTicks) {
+    public void releaseUsing(@NotNull ItemStack stack, @NotNull Level level, @NotNull LivingEntity user, int remainingUseTicks) {
         int chargeTimerMax = getChargeTimeTicks();
         int chargedTicks = USE_DURATION - remainingUseTicks;
 
@@ -337,7 +336,7 @@ public abstract class BaseRevolverItem extends ProjectileWeaponItem implements G
                 triggerAnim(player, instanceId, "controller", "idle");
             }
         }
-        return false;
+        //return false;
     }
 
     /**

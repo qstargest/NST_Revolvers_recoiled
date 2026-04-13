@@ -7,11 +7,10 @@
     "StructurePoolAccessor"
   ],
   "client": [
+    "client.ItemRendererAccessor",
     "client.MouseRecoilMixin",
-    "client.PlayerModelMixin",
-    "client.VillagerClothingFeatureRendererMixin",
-    "client.VillagerRenderStateMixin",
-    "client.ZombieVillagerRenderStateMixin"
+    "client.PlayerEntityModelMixin",
+    "client.VillagerClothingFeatureRendererMixin"
   ],
   "injectors": {
     "defaultRequire": 1

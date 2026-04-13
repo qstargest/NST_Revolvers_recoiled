@@ -56,8 +56,8 @@ neoForge {
         }
 
         data {
-            clientData()
-
+            //clientData()
+            data()
             // example of overriding the workingDirectory set in configureEach above, uncomment if you want to use it
             // gameDirectory = project.file('run-data')
 
@@ -98,10 +98,10 @@ sourceSets.main.resources { srcDir 'src/generated/resources' }
 
 dependencies {
     // GeckoLib animated models
-    implementation "software.bernie.geckolib:geckolib-neoforge-1.21.4:4.8.5"
+    implementation "software.bernie.geckolib:geckolib-neoforge-1.21.1:4.8.4"
     
     // Fastutil for ModStructures
-    implementation "it.unimi.dsi:fastutil:8.5.15"
+    implementation "it.unimi.dsi:fastutil:8.5.12"
 }
 
 // This block of code expands all declared replace properties in the specified resource targets.

@@ -7,8 +7,9 @@ import net.minecraft.client.model.VillagerModel;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.entity.RenderLayerParent;
 import net.minecraft.client.renderer.entity.layers.CrossedArmsItemLayer;
-import net.minecraft.client.renderer.entity.state.VillagerRenderState;
 import net.minecraft.client.renderer.texture.OverlayTexture;
+import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.NotNull;
@@ -35,48 +36,28 @@ import org.stargest.nst_revrecoiled.Items.BaseRevolverItem;
  * the item renders at the entity origin and is invisible, which is the same
  * issue as missing applyTransforms() in the Fabric port.
 */
-public class ModVillagerHeldItemFeatureRenderer
-        extends CrossedArmsItemLayer<VillagerRenderState, VillagerModel> {
+public class ModVillagerHeldItemFeatureRenderer<T extends LivingEntity, M extends VillagerModel<T>>
+        extends CrossedArmsItemLayer<T, M> {
 
-    public ModVillagerHeldItemFeatureRenderer(
-            RenderLayerParent<VillagerRenderState, VillagerModel> context) {
-        super(context);
+    public ModVillagerHeldItemFeatureRenderer(RenderLayerParent<T, M> context) {
+        super(context, Minecraft.getInstance().getEntityRenderDispatcher().getItemInHandRenderer());
     }
 
-    /**
-     * Renders the item held by the villager.
-     *
-     * For revolvers: manually replicates CrossedArmsItemLayer's body transforms
-     * (equivalent to VillagerHeldItemFeatureRenderer.applyTransforms() in the
-     * Fabric port) and then renders with ItemDisplayContext.FIXED to obtain a
-     * 2D flat sprite, bypassing GeckoLib's 3D renderer.
-     *
-     * For all other items: delegates to super.render() unchanged, so vanilla
-     * and GeckoLib items not specifically handled here continue to work normally.
-     */
     @Override
     public void render(@NotNull PoseStack poseStack, @NotNull MultiBufferSource bufferSource,
-                       int light, @NotNull VillagerRenderState state,
-                       float limbAngle, float limbDistance) {
+                       int light, @NotNull T entity,
+                       float limbAngle, float limbDistance, float partialTick,
+                       float ageInTicks, float netHeadYaw, float headPitch) {
 
-        VillagerRenderStateAccess access = (VillagerRenderStateAccess) state;
-        ItemStack heldItem = access.nst$getHeldItem();
+        ItemStack heldItem = entity.getItemBySlot(EquipmentSlot.MAINHAND);
 
-        if (heldItem.isEmpty() || !(heldItem.getItem() instanceof BaseRevolverItem)) {
-            super.render(poseStack, bufferSource, light, state, limbAngle, limbDistance);
-            return;
-        }
+        if (!heldItem.isEmpty() && heldItem.getItem() instanceof BaseRevolverItem) {
+            poseStack.pushPose();
 
-        poseStack.pushPose();
-        try {
             this.getParentModel().root().getChild("body").translateAndRotate(poseStack);
 
-            poseStack.translate(0.0F, 0.35F, -0.45F);
-
-            poseStack.mulPose(Axis.ZP.rotationDegrees(180.0F));
-
-            poseStack.mulPose(Axis.YP.rotationDegrees(180.0F));
-
+            poseStack.translate(0.0f, 0.4f, -0.4f);
+            poseStack.mulPose(Axis.XP.rotationDegrees(180.0f));
             poseStack.scale(0.5f, 0.5f, 0.5f);
 
             Minecraft.getInstance().getItemRenderer().renderStatic(
@@ -86,11 +67,15 @@ public class ModVillagerHeldItemFeatureRenderer
                     OverlayTexture.NO_OVERLAY,
                     poseStack,
                     bufferSource,
-                    null,
-                    0
+                    entity.level(),
+                    entity.getId()
             );
-        } finally {
+
             poseStack.popPose();
+        } else {
+            super.render(poseStack, bufferSource, light, entity,
+                    limbAngle, limbDistance, partialTick,
+                    ageInTicks, netHeadYaw, headPitch);
         }
     }
 }

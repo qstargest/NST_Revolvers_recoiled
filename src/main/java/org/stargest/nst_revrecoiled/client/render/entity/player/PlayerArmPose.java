@@ -2,12 +2,11 @@ package org.stargest.nst_revrecoiled.client.render.entity.player;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.HumanoidModel;
-import net.minecraft.client.renderer.entity.state.PlayerRenderState;
+import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
-import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.HumanoidArm;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
@@ -40,12 +39,12 @@ import java.util.Map;
  * entities unload.
  */
 public class PlayerArmPose {
-
     private static final Int2ObjectMap<PlayerRevolverState> playerStates = new Int2ObjectOpenHashMap<>();
 
     private static class PlayerRevolverState {
         ArmState rightArm;
         ArmState leftArm;
+        float lastX = -5f, lastY = 2f, lastZ = 0f;
         boolean wasCharged = false;
         double lastShotTime = -100.0;
         double drawStartTime = 0.0;
@@ -72,29 +71,30 @@ public class PlayerArmPose {
         ARM_CONFIGS.put(item, config);
     }
 
-    public static void applyRevolverPose(HumanoidModel<PlayerRenderState> model,
-            PlayerRenderState renderState) {
+    public static void applyRevolverPose(HumanoidModel<AbstractClientPlayer> model,
+            AbstractClientPlayer renderState) {
         Minecraft client = Minecraft.getInstance();
         if (client.level == null)
             return;
 
         // Use renderTime with proper delta for smoothing
-        double renderTime = client.level.getGameTime() + client.getDeltaTracker().getGameTimeDeltaPartialTick(false);
-        Entity entity = client.level.getEntity(renderState.id);
-        if (!(entity instanceof Player player))
-            return;
+        float partialTick = client.getTimer().getGameTimeDeltaPartialTick(true);
+        double renderTime = client.level.getGameTime() + partialTick;
 
-        ItemStack stack = player.getItemInHand(InteractionHand.MAIN_HAND);
+        InteractionHand activeHand = InteractionHand.MAIN_HAND;
+        ItemStack stack = renderState.getItemInHand(InteractionHand.MAIN_HAND);
+
         if (!(stack.getItem() instanceof RevolverArmPoseItem)) {
-            stack = player.getItemInHand(InteractionHand.OFF_HAND);
+            stack = renderState.getItemInHand(InteractionHand.OFF_HAND);
+            activeHand = InteractionHand.OFF_HAND;
             if (!(stack.getItem() instanceof RevolverArmPoseItem)) {
-                playerStates.remove(renderState.id);
+                playerStates.remove(renderState.getId());
                 return;
             }
         }
 
         RevolverArmConfig cfg = ARM_CONFIGS.getOrDefault(stack.getItem(), RevolverArmConfig.DEFAULT);
-        PlayerRevolverState state = playerStates.computeIfAbsent(renderState.id, id -> new PlayerRevolverState());
+        PlayerRevolverState state = playerStates.computeIfAbsent(renderState.getId(), id -> new PlayerRevolverState());
 
         int currentItemHash = System.identityHashCode(stack.getItem());
         if (state.lastItemId != currentItemHash) {
@@ -113,13 +113,15 @@ public class PlayerArmPose {
                 (float) Math.pow(Mth.clamp((float) rawDrawProgress, 0f, 1f), cfg.drawEaseExponent),
                 0f, 1f);
 
-        boolean isCharging = player.isUsingItem();
+        boolean isCharging = renderState.isUsingItem();
         double timeSinceShot = renderTime - state.lastShotTime;
 
-        float headPitch = renderState.xRot * ((float) Math.PI / 180F);
-        float headYaw = renderState.yRot * ((float) Math.PI / 180F);
+        float headPitch = model.head.xRot;
+        float headYaw = model.head.yRot;
 
-        float sideSign = (renderState.mainArm == HumanoidArm.RIGHT) ? -1.0f : 1.0f;
+        HumanoidArm armSide = (activeHand == InteractionHand.MAIN_HAND) ? renderState.getMainArm() : renderState.getMainArm().getOpposite();
+
+        float sideSign = (renderState.getMainArm() == HumanoidArm.RIGHT) ? -1.0f : 1.0f;
         float basePitch = cfg.baseAimPitch;
         float baseYaw = sideSign * cfg.baseAimYawOffset;
 
@@ -147,7 +149,7 @@ public class PlayerArmPose {
         }
 
         if (isCharging) {
-            float chargeProgress = getProgress(player, stack);
+            float chargeProgress = getProgress(renderState, stack);
             float snap = (chargeProgress < cfg.reloadSnapEdge)
                     ? chargeProgress / cfg.reloadSnapEdge
                     : (chargeProgress > (1f - cfg.reloadSnapEdge)
@@ -175,13 +177,13 @@ public class PlayerArmPose {
         }
 
         // Bobbing/Shake logic
-        float horizontalSpeed = (float) player.getDeltaMovement().horizontalDistance();
-        float shakeAmp = player.isSprinting() ? cfg.shakeSprintAmp
+        float horizontalSpeed = (float) renderState.getDeltaMovement().horizontalDistance();
+        float shakeAmp = renderState.isSprinting() ? cfg.shakeSprintAmp
                 : (horizontalSpeed > cfg.shakeWalkMinSpeed ? cfg.shakeWalkAmp : 0f);
-        float shakeFreq = player.isSprinting() ? cfg.shakeFreqSprint : cfg.shakeFreqWalk;
+        float shakeFreq = renderState.isSprinting() ? cfg.shakeFreqSprint : cfg.shakeFreqWalk;
 
         if (shakeAmp > 0f) {
-            float timeSeed = (float) ((renderTime + renderState.id * 7) * shakeFreq * 0.5);
+            float timeSeed = (float) ((renderTime + renderState.getId() * 7) * shakeFreq * 0.5);
             float shake = (float) (Math.sin(timeSeed) * shakeAmp
                     + Math.sin(timeSeed * cfg.shakeSecondaryFreqMult) * (shakeAmp * cfg.shakeSecondaryAmpMult));
             targetRP += shake * cfg.shakePitchFactor;
@@ -190,15 +192,15 @@ public class PlayerArmPose {
         }
 
         applyToModel(model, renderState, state, targetRP, targetRY, targetRR, targetLP, targetLY, targetLR,
-                drawProgress, (float) timeSinceShot, cfg);
+                drawProgress, (float) timeSinceShot, cfg, armSide);
     }
 
-    private static void applyToModel(HumanoidModel<PlayerRenderState> model,
-            PlayerRenderState renderState,
+    private static void applyToModel(HumanoidModel<AbstractClientPlayer> model,
+            AbstractClientPlayer renderState,
             PlayerRevolverState state,
             float rp, float ry, float rr,
             float lp, float ly, float lr,
-            float drawProgress, float timeSinceShot, RevolverArmConfig cfg) {
+            float drawProgress, float timeSinceShot, RevolverArmConfig cfg, HumanoidArm armSide) {
 
         float speed = cfg.lerpSpeed; // Lowered defaults in config, or we can scale here
 
@@ -210,28 +212,31 @@ public class PlayerArmPose {
                 : speed;
 
         // Use exponential smoothing for maximum fluidity
-        float fRp = Mth.lerp(rightLerp, lastR.pitch, rp);
-        float fRy = Mth.lerp(speed, lastR.yaw, ry);
-        float fRr = Mth.lerp(rightLerp, lastR.roll, rr);
-        state.rightArm = new ArmState(fRp, fRy, fRr);
+        model.rightArm.xRot = Mth.lerp(rightLerp, lastR.pitch, rp);
+        model.rightArm.yRot = Mth.lerp(speed, lastR.yaw, ry);
+        model.rightArm.zRot = Mth.lerp(rightLerp, lastR.roll, rr);
+        state.rightArm = new ArmState(model.rightArm.xRot, model.rightArm.yRot, model.rightArm.zRot);
 
-        model.rightArm.xRot = fRp;
-        model.rightArm.yRot = fRy;
-        model.rightArm.zRot = fRr;
+        model.leftArm.xRot = Mth.lerp(speed, lastL.pitch, lp);
+        model.leftArm.yRot = Mth.lerp(speed, lastL.yaw, ly);
+        model.leftArm.zRot = Mth.lerp(speed, lastL.roll, lr);
+        state.leftArm = new ArmState(model.leftArm.xRot, model.leftArm.yRot, model.leftArm.zRot);
 
-        float fLp = Mth.lerp(speed, lastL.pitch, lp);
-        float fLy = Mth.lerp(speed, lastL.yaw, ly);
-        float fLr = Mth.lerp(speed, lastL.roll, lr);
-        state.leftArm = new ArmState(fLp, fLy, fLr);
+        boolean isRight = armSide == HumanoidArm.RIGHT;
+        var activeArm = isRight ? model.rightArm : model.leftArm;
 
-        model.leftArm.xRot = fLp;
-        model.leftArm.yRot = fLy;
-        model.leftArm.zRot = fLr;
+        float targetX = isRight ? -5.0f : 5.0f;
+        float targetY = Mth.lerp(drawProgress, 4.0f, 2.0f) + (renderState.isCrouching() ? 2.0f : 0.0f);
+        float targetZ = Mth.lerp(drawProgress, 2.0f, 0.0f);
 
         // Small adjustment for draw animation position
-        model.rightArm.x = -5.0f;
-        model.rightArm.y = Mth.lerp(drawProgress, 4.0f, 2.0f) + (renderState.isCrouching ? 2.0f : 0.0f);
-        model.rightArm.z = Mth.lerp(drawProgress, 2.0f, 0.0f);
+        activeArm.x = Mth.lerp(speed, state.lastX, targetX);
+        activeArm.y = Mth.lerp(speed, state.lastY, targetY);
+        activeArm.z = Mth.lerp(speed, state.lastZ, targetZ);
+
+        state.lastX = activeArm.x;
+        state.lastY = activeArm.y;
+        state.lastZ = activeArm.z;
     }
 
     private static float getProgress(Player player, ItemStack stack) {

@@ -3,10 +3,10 @@ package org.stargest.nst_revrecoiled.mixins.client;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.entity.layers.VillagerProfessionLayer;
-import net.minecraft.client.renderer.entity.state.LivingEntityRenderState;
-import net.minecraft.client.renderer.entity.state.VillagerRenderState;
-import net.minecraft.client.renderer.entity.state.ZombieVillagerRenderState;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.monster.ZombieVillager;
+import net.minecraft.world.entity.npc.Villager;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -37,24 +37,19 @@ public class VillagerClothingFeatureRendererMixin {
      * @param ci CallbackInfo used to cancel the render call
      */
     @Inject(
-            method = "render(Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;ILnet/minecraft/client/renderer/entity/state/LivingEntityRenderState;FF)V",
+            method = "render(Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;ILnet/minecraft/world/entity/Entity;FFFFFF)V",
             at = @At("HEAD"),
             cancellable = true
     )
-    private void onRender(PoseStack poseStack, MultiBufferSource bufferSource,
-                          int light, LivingEntityRenderState state,
-                          float limbAngle, float limbDistance, CallbackInfo ci) {
-        
-        if (state instanceof VillagerRenderState villagerState) {
-            if (villagerState.villagerData != null && 
-                BuiltInRegistries.VILLAGER_PROFESSION.getKey(villagerState.villagerData.getProfession()).equals(ModVillagers.REVOLVERMAKER_KEY.location())) {
-                ci.cancel();
-            }
-        } else if (state instanceof ZombieVillagerRenderState zombieState) {
-            if (zombieState.villagerData != null && 
-                BuiltInRegistries.VILLAGER_PROFESSION.getKey(zombieState.villagerData.getProfession()).equals(ModVillagers.REVOLVERMAKER_KEY.location())) {
-                ci.cancel();
-            }
+    private void onRender(PoseStack matrices, MultiBufferSource vertexConsumers, int light, Entity entity, float limbAngle, float limbDistance, float tickDelta, float animationProgress, float headYaw, float headPitch, CallbackInfo ci) {
+        if (entity instanceof Villager villager
+                && BuiltInRegistries.VILLAGER_PROFESSION.getKey(villager.getVillagerData().getProfession()).equals(ModVillagers.REVOLVERMAKER_KEY.location())) {
+            ci.cancel();
+            return;
+        }
+        if (entity instanceof ZombieVillager zombie
+                && BuiltInRegistries.VILLAGER_PROFESSION.getKey(zombie.getVillagerData().getProfession()).equals(ModVillagers.REVOLVERMAKER_KEY.location())) {
+            ci.cancel();
         }
     }
 }

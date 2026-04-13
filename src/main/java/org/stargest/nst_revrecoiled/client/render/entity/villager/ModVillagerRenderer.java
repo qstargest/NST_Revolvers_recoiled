@@ -1,15 +1,14 @@
 package org.stargest.nst_revrecoiled.client.render.entity.villager;
 
 import net.minecraft.client.renderer.entity.layers.CrossedArmsItemLayer;
-import net.minecraft.client.renderer.entity.state.VillagerRenderState;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.VillagerRenderer;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.ResourceLocation;
 import org.jetbrains.annotations.NotNull;
 import org.stargest.nst_revrecoiled.NstRevRecoiled;
-import org.stargest.nst_revrecoiled.Villager.ModVillagers;
 import net.minecraft.world.entity.npc.Villager;
+import org.stargest.nst_revrecoiled.Villager.ModVillagers;
 
 /**
  * Custom renderer for the revolvermaker villager profession.
@@ -40,29 +39,13 @@ public class ModVillagerRenderer extends VillagerRenderer {
 
     public ModVillagerRenderer(EntityRendererProvider.Context context) {
         super(context);
-        this.layers.removeIf(f -> f instanceof CrossedArmsItemLayer);
+        this.layers.removeIf((((f -> f instanceof CrossedArmsItemLayer))));
         this.addLayer(new ModVillagerHeldItemFeatureRenderer(this));
     }
 
-    /**
-     * Populates render state with the revolvermaker flag and current held item.
-     * Called once per frame before rendering; results are consumed by getTexture()
-     * and ModVillagerHeldItemFeatureRenderer to avoid repeated entity lookups
-     * during the render pass.
-     */
     @Override
-    public void extractRenderState(@NotNull Villager entity, @NotNull VillagerRenderState state, float partialTicks) {
-        super.extractRenderState(entity, state, partialTicks);
-        VillagerRenderStateAccess access = (VillagerRenderStateAccess) state;
-        access.nst$setIsRevolvermaker(
-                BuiltInRegistries.VILLAGER_PROFESSION.getKey(entity.getVillagerData().getProfession()).equals(ModVillagers.REVOLVERMAKER_KEY.location())
-        );
-        access.nst$setHeldItem(entity.getMainHandItem().copy());
-    }
-
-    @Override
-    public @NotNull ResourceLocation getTextureLocation(@NotNull VillagerRenderState state) {
-        if (((VillagerRenderStateAccess) state).nst$isRevolvermaker()) {
+    public @NotNull ResourceLocation getTextureLocation(@NotNull Villager state) {
+        if ((BuiltInRegistries.VILLAGER_PROFESSION.getKey(state.getVillagerData().getProfession()).equals(ModVillagers.REVOLVERMAKER_KEY.location()))) {
             return REVOLVERMAKER_TEXTURE;
         }
         return super.getTextureLocation(state);

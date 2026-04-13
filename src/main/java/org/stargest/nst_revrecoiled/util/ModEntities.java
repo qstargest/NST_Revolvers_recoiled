@@ -29,8 +29,6 @@ public class ModEntities {
                             .sized(0.25f, 0.25f)
                             .clientTrackingRange(8)
                             .updateInterval(1)
-                            .build(ResourceKey.create(
-                                    Registries.ENTITY_TYPE,
-                                    ResourceLocation.fromNamespaceAndPath(NstRevRecoiled.MOD_ID, "bullet_projectile")))
+                            .build("bullet_projectile")
             );
 }

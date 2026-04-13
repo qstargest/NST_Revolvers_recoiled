@@ -19,6 +19,16 @@ public class RevolverItemModel<T extends BaseRevolverItem> extends GeoModel<T> {
     }
 
     @Override
+    public ResourceLocation getModelResource(T animatable) {
+        return ResourceLocation.fromNamespaceAndPath(NstRevRecoiled.MOD_ID, "geo/cobblestone_revolver.geo.json");
+    }
+
+    @Override
+    public ResourceLocation getTextureResource(T animatable) {
+        return ResourceLocation.fromNamespaceAndPath(NstRevRecoiled.MOD_ID, "textures/item/" + textureName + ".png");
+    }
+
+    @Override
     public ResourceLocation getModelResource(T animatable, GeoRenderer<T> renderer) {
         return ResourceLocation.fromNamespaceAndPath(NstRevRecoiled.MOD_ID, "geo/cobblestone_revolver.geo.json");
     }

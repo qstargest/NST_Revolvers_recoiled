@@ -130,7 +130,7 @@ public class BulletProjectileEntity extends AbstractArrow implements ItemSupplie
         Level level = this.level();
 
         if (level instanceof ServerLevel serverLevel) {
-            if (target.hurtServer(serverLevel, this.damageSources().arrow(this, owner), this.fixedDamage)) {
+            if (target.hurt(this.damageSources().arrow(this, owner), this.fixedDamage)) {
                 if (target instanceof LivingEntity livingTarget) {
                     this.doPostHurtEffects(livingTarget); // equivalent of onHit
                 }

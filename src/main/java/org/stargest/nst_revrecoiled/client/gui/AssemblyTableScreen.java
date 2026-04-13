@@ -24,7 +24,6 @@ import org.stargest.nst_revrecoiled.recipe.AssemblyRecipes;
 import org.stargest.nst_revrecoiled.recipe.BulletAssemblyRecipe;
 import net.neoforged.neoforge.network.PacketDistributor;
 import software.bernie.geckolib.animatable.client.GeoRenderProvider;
-import software.bernie.geckolib.renderer.GeckolibSpecialRenderer;
 import software.bernie.geckolib.renderer.GeoItemRenderer;
 
 import java.util.ArrayList;
@@ -944,7 +943,7 @@ public class AssemblyTableScreen extends AbstractContainerScreen<AssemblyTableSc
         Object providerObj = revolver.getRenderProvider();
         if (!(providerObj instanceof GeoRenderProvider provider)) return;
 
-        GeoItemRenderer<?> renderer = provider.getGeoItemRenderer();
+        GeoItemRenderer<?> renderer = (GeoItemRenderer<?>) provider.getGeoItemRenderer();
         if (renderer == null) return;
 
         Minecraft client = Minecraft.getInstance();
@@ -966,10 +965,10 @@ public class AssemblyTableScreen extends AbstractContainerScreen<AssemblyTableSc
             m.translate(-MODEL_PIVOT_X, -MODEL_PIVOT_Y, -MODEL_PIVOT_Z);
 
             com.mojang.blaze3d.platform.Lighting.setupForEntityInInventory();
-            renderer.render(
-                    new GeckolibSpecialRenderer.RenderData(stack.getItem(), stack),
+            renderer.renderByItem(
+                    stack,
                     ItemDisplayContext.NONE, m, buffers,
-                    LightTexture.FULL_BRIGHT, OverlayTexture.NO_OVERLAY, false);
+                    LightTexture.FULL_BRIGHT, OverlayTexture.NO_OVERLAY);
             buffers.endBatch();
             com.mojang.blaze3d.platform.Lighting.setupFor3DItems();
         } finally {
