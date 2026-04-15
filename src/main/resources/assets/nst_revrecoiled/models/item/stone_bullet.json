@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "nst_revrecoiled:item/stone_bullet"
+  }
+}

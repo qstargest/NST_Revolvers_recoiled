@@ -1,0 +1,20 @@
+{
+  "item.nst_revrecoiled.stone_bullet": "Bala de piedra",
+  "item.nst_revrecoiled.iron_bullet": "Bala de hierro",
+  "item.nst_revrecoiled.golden_bullet": "Bala de oro",
+  "item.nst_revrecoiled.diamond_bullet": "Bala de diamante",
+  "item.nst_revrecoiled.cobblestone_revolver": "Revólver de adoquín",
+  "item.nst_revrecoiled.iron_revolver": "Revólver de hierro",
+  "item.nst_revrecoiled.golden_revolver": "Revólver de oro",
+  "item.nst_revrecoiled.diamond_revolver": "Revólver de diamante",
+  "item.nst_revrecoiled.assembly_table": "Mesa de ensamblaje",
+  "block.nst_revrecoiled.assembly_table": "Mesa de ensamblaje",
+  "entity.minecraft.villager.nst_revrecoiled.revolvermaker": "Fabricante de revólveres",
+  "itemGroup.nst_revrecoiled.main": "[NST] Revolvers recoiled",
+  "gui.nst_revrecoiled.assemble": "Fabricar",
+  "gui.nst_revrecoiled.damage": "Daño: %s",
+  "gui.nst_revrecoiled.pickaxe_tier_any": "Requiere cualquier pico",
+  "gui.nst_revrecoiled.pickaxe_tier_stone": "Requiere pico de piedra+",
+  "gui.nst_revrecoiled.pickaxe_tier_iron": "Requiere pico de hierro+",
+  "gui.nst_revrecoiled.pickaxe_durability": "Pico: %s/%s dur."
+}

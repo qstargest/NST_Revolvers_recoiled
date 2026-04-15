@@ -1,0 +1,20 @@
+{
+  "item.nst_revrecoiled.stone_bullet": "Кам'яна куля",
+  "item.nst_revrecoiled.iron_bullet": "Залізна куля",
+  "item.nst_revrecoiled.golden_bullet": "Золота куля",
+  "item.nst_revrecoiled.diamond_bullet": "Алмазна куля",
+  "item.nst_revrecoiled.cobblestone_revolver": "Бруківковий револьвер",
+  "item.nst_revrecoiled.iron_revolver": "Залізний револьвер",
+  "item.nst_revrecoiled.golden_revolver": "Золотий револьвер",
+  "item.nst_revrecoiled.diamond_revolver": "Алмазний револьвер",
+  "item.nst_revrecoiled.assembly_table": "Стіл збирання",
+  "block.nst_revrecoiled.assembly_table": "Стіл збирання",
+  "entity.minecraft.villager.nst_revrecoiled.revolvermaker": "Револьверник",
+  "itemGroup.nst_revrecoiled.main": "[NST] Revolvers recoiled",
+  "gui.nst_revrecoiled.assemble": "Створити",
+  "gui.nst_revrecoiled.damage": "Шкода: %s",
+  "gui.nst_revrecoiled.pickaxe_tier_any": "Потрібна будь-яка кирка",
+  "gui.nst_revrecoiled.pickaxe_tier_stone": "Потрібна кам'яна кирка+",
+  "gui.nst_revrecoiled.pickaxe_tier_iron": "Потрібна залізна кирка+",
+  "gui.nst_revrecoiled.pickaxe_durability": "Кирка: %s/%s од."
+}

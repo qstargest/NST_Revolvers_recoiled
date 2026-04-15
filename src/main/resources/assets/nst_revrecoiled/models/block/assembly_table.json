@@ -1,0 +1,12 @@
+{
+  "parent": "minecraft:block/cube",
+  "textures": {
+    "particle": "nst_revrecoiled:block/assembly_table_sides",
+    "down":     "nst_revrecoiled:block/assembly_table_down",
+    "up":       "nst_revrecoiled:block/assembly_table_up",
+    "north":    "nst_revrecoiled:block/assembly_table_sides",
+    "south":    "nst_revrecoiled:block/assembly_table_sides",
+    "east":     "nst_revrecoiled:block/assembly_table_sides",
+    "west":     "nst_revrecoiled:block/assembly_table_sides"
+  }
+}

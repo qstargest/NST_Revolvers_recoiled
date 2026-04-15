@@ -1,0 +1,20 @@
+{
+  "item.nst_revrecoiled.stone_bullet": "כדור אבן",
+  "item.nst_revrecoiled.iron_bullet": "כדור ברזל",
+  "item.nst_revrecoiled.golden_bullet": "כדור זהב",
+  "item.nst_revrecoiled.diamond_bullet": "כדור יהלום",
+  "item.nst_revrecoiled.cobblestone_revolver": "אקדח גלגל מאבני ריצוף",
+  "item.nst_revrecoiled.iron_revolver": "אקדח גלגל מברזל",
+  "item.nst_revrecoiled.golden_revolver": "אקדח גלגל מזהב",
+  "item.nst_revrecoiled.diamond_revolver": "אקדח גלגל מיהלום",
+  "item.nst_revrecoiled.assembly_table": "שולחן הרכבה",
+  "block.nst_revrecoiled.assembly_table": "שולחן הרכבה",
+  "entity.minecraft.villager.nst_revrecoiled.revolvermaker": "יצרן אקדחים",
+  "itemGroup.nst_revrecoiled.main": "[NST] Revolvers recoiled",
+  "gui.nst_revrecoiled.assemble": "יצור",
+  "gui.nst_revrecoiled.damage": "נזק: %s",
+  "gui.nst_revrecoiled.pickaxe_tier_any": "דורש כל מקוש",
+  "gui.nst_revrecoiled.pickaxe_tier_stone": "דורש מקוש אבן+",
+  "gui.nst_revrecoiled.pickaxe_tier_iron": "דורש מקוש ברזל+",
+  "gui.nst_revrecoiled.pickaxe_durability": "מקוש: %s/%s עמ."
+}

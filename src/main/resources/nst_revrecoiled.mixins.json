@@ -1,0 +1,22 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "org.stargest.nst_revrecoiled.mixins",
+  "compatibilityLevel": "JAVA_8",
+  "refmap": "nst_revrecoiled.refmap.json",
+  "mixins": [
+    "StructurePoolAccessor"
+  ],
+  "client": [
+    "client.ItemRendererAccessor",
+    "client.MouseRecoilMixin",
+    "client.PlayerEntityModelMixin",
+    "client.VillagerClothingFeatureRendererMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  },
+  "overwrites": {
+    "requireAnnotations": true
+  }
+}

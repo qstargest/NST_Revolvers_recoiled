@@ -1,0 +1,19 @@
+{
+  "item.nst_revrecoiled.stone_bullet": "Каменная пуля",
+  "item.nst_revrecoiled.iron_bullet": "Железная пуля",
+  "item.nst_revrecoiled.golden_bullet": "Золотая пуля",
+  "item.nst_revrecoiled.diamond_bullet": "Алмазная пуля",
+  "item.nst_revrecoiled.cobblestone_revolver": "Булыжниковый револьвер",
+  "item.nst_revrecoiled.iron_revolver": "Железный револьвер",
+  "item.nst_revrecoiled.golden_revolver": "Золотой револьвер",
+  "item.nst_revrecoiled.diamond_revolver": "Алмазный револьвер",
+  "item.nst_revrecoiled.assembly_table": "Стол сборки",
+  "block.nst_revrecoiled.assembly_table": "Стол сборки",
+  "entity.minecraft.villager.nst_revrecoiled.revolvermaker": "Револьверщик",
+  "gui.nst_revrecoiled.assemble": "Создать",
+  "gui.nst_revrecoiled.damage": "Урон: %s",
+  "gui.nst_revrecoiled.pickaxe_tier_any":   "Нужна любая кирка",
+  "gui.nst_revrecoiled.pickaxe_tier_stone": "Нужна каменная кирка+",
+  "gui.nst_revrecoiled.pickaxe_tier_iron":  "Нужна железная кирка+",
+  "gui.nst_revrecoiled.pickaxe_durability": "Кирка: %s/%s ед."
+}

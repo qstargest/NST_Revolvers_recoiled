@@ -1,0 +1,20 @@
+{
+  "item.nst_revrecoiled.stone_bullet": "Proiettile di pietra",
+  "item.nst_revrecoiled.iron_bullet": "Proiettile di ferro",
+  "item.nst_revrecoiled.golden_bullet": "Proiettile d'oro",
+  "item.nst_revrecoiled.diamond_bullet": "Proiettile di diamante",
+  "item.nst_revrecoiled.cobblestone_revolver": "Rivoltella di acciottolato",
+  "item.nst_revrecoiled.iron_revolver": "Rivoltella di ferro",
+  "item.nst_revrecoiled.golden_revolver": "Rivoltella d'oro",
+  "item.nst_revrecoiled.diamond_revolver": "Rivoltella di diamante",
+  "item.nst_revrecoiled.assembly_table": "Tavolo di assemblaggio",
+  "block.nst_revrecoiled.assembly_table": "Tavolo di assemblaggio",
+  "entity.minecraft.villager.nst_revrecoiled.revolvermaker": "Fabbricante di rivoltelle",
+  "itemGroup.nst_revrecoiled.main": "[NST] Revolvers recoiled",
+  "gui.nst_revrecoiled.assemble": "Crea",
+  "gui.nst_revrecoiled.damage": "Danno: %s",
+  "gui.nst_revrecoiled.pickaxe_tier_any": "Richiede un qualsiasi piccone",
+  "gui.nst_revrecoiled.pickaxe_tier_stone": "Richiede piccone di pietra+",
+  "gui.nst_revrecoiled.pickaxe_tier_iron": "Richiede piccone di ferro+",
+  "gui.nst_revrecoiled.pickaxe_durability": "Piccone: %s/%s dur."
+}
