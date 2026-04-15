@@ -35,7 +35,7 @@ public class ModVillagerRenderer extends VillagerRenderer {
      * Texture applied to all revolvermaker villagers regardless of biome variant.
      */
     private static final ResourceLocation REVOLVERMAKER_TEXTURE =
-            ResourceLocation.fromNamespaceAndPath(NstRevRecoiled.MOD_ID, "textures/entity/villager/revolvermaker.png");
+            new ResourceLocation(NstRevRecoiled.MOD_ID, "textures/entity/villager/revolvermaker.png");
 
     public ModVillagerRenderer(EntityRendererProvider.Context context) {
         super(context);

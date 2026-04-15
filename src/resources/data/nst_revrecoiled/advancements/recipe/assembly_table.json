@@ -5,7 +5,11 @@
       "trigger": "minecraft:inventory_changed",
       "conditions": {
         "items": [
-          { "items": "minecraft:spruce_planks" }
+          {
+            "items": [
+              "minecraft:spruce_planks"
+            ]
+          }
         ]
       }
     },
@@ -13,7 +17,11 @@
       "trigger": "minecraft:inventory_changed",
       "conditions": {
         "items": [
-          { "items": "minecraft:paper" }
+          {
+            "items": [
+              "minecraft:paper"
+            ]
+          }
         ]
       }
     },
@@ -21,20 +29,30 @@
       "trigger": "minecraft:inventory_changed",
       "conditions": {
         "items": [
-          { "items": "minecraft:lapis_lazuli" }
+          {
+            "items": [
+              "minecraft:lapis_lazuli"
+            ]
+          }
         ]
       }
     }
   },
   "requirements": [
-    ["has_spruce_planks"],
-    ["has_paper"],
-    ["has_lapis_lazuli"]
+    [
+      "has_spruce_planks"
+    ],
+    [
+      "has_paper"
+    ],
+    [
+      "has_lapis_lazuli"
+    ]
   ],
   "rewards": {
     "recipes": [
       "nst_revrecoiled:assembly_table"
     ]
   },
-  "sends_telemetry_data": false
+  "sends_telemetry_event": false
 }

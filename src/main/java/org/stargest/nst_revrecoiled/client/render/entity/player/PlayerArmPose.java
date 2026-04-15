@@ -78,7 +78,7 @@ public class PlayerArmPose {
             return;
 
         // Use renderTime with proper delta for smoothing
-        float partialTick = client.getTimer().getGameTimeDeltaPartialTick(true);
+        float partialTick = client.getFrameTime();
         double renderTime = client.level.getGameTime() + partialTick;
 
         InteractionHand activeHand = InteractionHand.MAIN_HAND;
@@ -243,7 +243,7 @@ public class PlayerArmPose {
         if (!(stack.getItem() instanceof BaseRevolverItem revolver))
             return 0;
         int chargeMax = revolver.getChargeTimeTicks();
-        int elapsed = revolver.getUseDuration(stack, player) - player.getUseItemRemainingTicks();
+        int elapsed = revolver.getUseDuration(stack) - player.getUseItemRemainingTicks();
         return chargeMax <= 0 ? 0 : Mth.clamp((float) elapsed / chargeMax, 0, 1);
     }
 

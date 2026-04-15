@@ -1,14 +1,11 @@
 package org.stargest.nst_revrecoiled;
 
 import com.google.common.collect.ImmutableSet;
-import com.google.gson.Gson;
 import net.minecraft.core.Holder;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.village.poi.PoiType;
 import net.minecraft.world.entity.npc.VillagerProfession;
 import net.minecraft.world.entity.player.Player;
@@ -16,7 +13,7 @@ import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.ModContainer;
-import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.fml.common.Mod.EventBusSubscriber;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.loading.FMLEnvironment;
 import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;
@@ -24,15 +21,15 @@ import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.RegisterCommandsEvent;
 import net.neoforged.neoforge.event.entity.EntityLeaveLevelEvent;
 import net.neoforged.neoforge.event.server.ServerStartingEvent;
-import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
+import net.neoforged.neoforge.network.event.RegisterPayloadHandlerEvent;
 import net.neoforged.neoforge.registries.RegisterEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stargest.nst_revrecoiled.Structures.ModStructures;
 import org.stargest.nst_revrecoiled.Villager.ModVillagers;
 import org.stargest.nst_revrecoiled.client.ClientEvents;
-import org.stargest.nst_revrecoiled.client.handlers.RevolverParticleHandler;
+import org.stargest.nst_revrecoiled.client.ClientPacketHandlers;
 import org.stargest.nst_revrecoiled.client.managers.CameraRecoilManager;
 import org.stargest.nst_revrecoiled.client.render.entity.player.PlayerArmPose;
 import org.stargest.nst_revrecoiled.network.AssemblyCraftC2SPacket;
@@ -106,48 +103,49 @@ public class NstRevRecoiled {
         )));
     }
 
-    private void registerPayloads(RegisterPayloadHandlersEvent event) {
-        var registrar = event.registrar("1");
+    private void registerPayloads(RegisterPayloadHandlerEvent event) {
+        var registrar = event.registrar(MOD_ID);
 
-        // S2C packets
-        registrar.playToClient(
-                RevolverFireParticlePacket.TYPE,
-                RevolverFireParticlePacket.STREAM_CODEC,
-                (payload, ctx) -> ctx.enqueueWork(() -> { 
-                   Entity e = ctx.player().level().getEntity(payload.entityId());
-                    if (e instanceof LivingEntity l && e != ctx.player())
-                        RevolverParticleHandler.spawnFireImmediate(l);
-                })
-        );
-        registrar.playToClient(
-                RevolverReloadParticlePacket.TYPE,
-                RevolverReloadParticlePacket.STREAM_CODEC,
-                (payload, ctx) -> ctx.enqueueWork(() -> { 
-                    Entity e = ctx.player().level().getEntity(payload.entityId());
-                    if (e instanceof LivingEntity l)
-                        RevolverParticleHandler.spawnReloadImmediate(l);
-                })
-        );
-        registrar.playToClient(
-                SyncConfigS2CPacket.TYPE,
-                SyncConfigS2CPacket.STREAM_CODEC,
-                (payload, ctx) -> ctx.enqueueWork(() -> { 
-                    Gson gson = new Gson();
-                    ModConfig config = gson.fromJson(payload.configJson(),ModConfig.class);
-                    if (config != null) ModConfig.set(config);
-                })
+        registrar.play(
+                RevolverFireParticlePacket.ID,
+                RevolverFireParticlePacket::new,
+                handler -> {
+                    if (FMLEnvironment.dist == Dist.CLIENT) {
+                        handler.client(ClientPacketHandlers::handleFire);
+                    }
+                }
         );
 
-        // C2S packets
-        registrar.playToServer(
-                AssemblyCraftC2SPacket.Payload.TYPE,
-                AssemblyCraftC2SPacket.Payload.STREAM_CODEC,
-                AssemblyCraftC2SPacket::handleRevolver
+        registrar.play(
+                RevolverReloadParticlePacket.ID,
+                RevolverReloadParticlePacket::new,
+                handler -> {
+                    if (FMLEnvironment.dist == Dist.CLIENT) {
+                        handler.client(ClientPacketHandlers::handleReload);
+                    }
+                }
         );
-        registrar.playToServer(
-                AssemblyCraftC2SPacket.BulletPayload.TYPE,
-                AssemblyCraftC2SPacket.BulletPayload.STREAM_CODEC,
-                AssemblyCraftC2SPacket::handleBullet
+
+        registrar.play(
+                SyncConfigS2CPacket.ID,
+                SyncConfigS2CPacket::new,
+                handler -> {
+                    if (FMLEnvironment.dist == Dist.CLIENT) {
+                        handler.client(ClientPacketHandlers::handleConfigSync);
+                    }
+                }
+        );
+
+        registrar.play(
+                AssemblyCraftC2SPacket.Payload.ID,
+                AssemblyCraftC2SPacket.Payload::new,
+                handler -> handler.server(AssemblyCraftC2SPacket.Payload::handle)
+        );
+
+        registrar.play(
+                AssemblyCraftC2SPacket.BulletPayload.ID,
+                AssemblyCraftC2SPacket.BulletPayload::new,
+                handler -> handler.server(AssemblyCraftC2SPacket.BulletPayload::handle)
         );
     }
 
@@ -177,7 +175,7 @@ public class NstRevRecoiled {
         public static void onPlayerLogin(PlayerEvent.PlayerLoggedInEvent event) {
             if (event.getEntity() instanceof ServerPlayer serverPlayer) {
                 String json = ConfigLoader.toJson();
-                PacketDistributor.sendToPlayer(serverPlayer, new SyncConfigS2CPacket(json));
+                PacketDistributor.PLAYER.with(serverPlayer).send(new SyncConfigS2CPacket(json));
             }
         }
     }

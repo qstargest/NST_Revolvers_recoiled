@@ -50,7 +50,7 @@ public class AssemblyRecipe {
         if (configIngs != null) {
             return configIngs.stream()
                 .map(ci -> new Ingredient(
-                    BuiltInRegistries.ITEM.get(ResourceLocation.parse(ci.item)),
+                    BuiltInRegistries.ITEM.get(ResourceLocation.tryParse(ci.item)),
                     ci.count
                 )).toList();
         }

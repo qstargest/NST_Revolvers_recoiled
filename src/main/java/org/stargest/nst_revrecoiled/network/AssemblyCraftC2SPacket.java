@@ -1,14 +1,11 @@
 package org.stargest.nst_revrecoiled.network;
 
-import io.netty.buffer.ByteBuf;
-import net.minecraft.network.codec.ByteBufCodecs;
-import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
-import net.minecraft.world.entity.player.Player;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 import org.jetbrains.annotations.NotNull;
 import org.stargest.nst_revrecoiled.NstRevRecoiled;
@@ -37,119 +34,97 @@ import java.util.Optional;
 public class AssemblyCraftC2SPacket {
 
     // -------------------------------------------------------------------------
-    // Revolver packet
+    // Revolver packet (C2S)
     // -------------------------------------------------------------------------
-
-    /**
-     * Payload for crafting a single revolver.
-     * Uses the recipe's string ResourceLocation so the server can look up the recipe
-     * via AssemblyRecipes.getById(), independent of declaration order.
-     *
-     * @param recipeId string form of the recipe's ResourceLocation
-     */
     public record Payload(String recipeId) implements CustomPacketPayload {
+        public static final ResourceLocation ID = new ResourceLocation(NstRevRecoiled.MOD_ID, "assembly_craft");
 
-        public static final Type<Payload> TYPE = new Type<>(
-                ResourceLocation.fromNamespaceAndPath(NstRevRecoiled.MOD_ID, "assembly_craft"));
-
-        public static final StreamCodec<ByteBuf, Payload> STREAM_CODEC =
-                StreamCodec.composite(
-                        ByteBufCodecs.STRING_UTF8, Payload::recipeId,
-                        Payload::new
-                );
+        public Payload(FriendlyByteBuf buf) {
+            this(buf.readUtf());
+        }
 
         @Override
-        public @NotNull Type<? extends CustomPacketPayload> type() { return TYPE; }
+        public void write(FriendlyByteBuf buf) {
+            buf.writeUtf(this.recipeId);
+        }
+
+        @Override
+        public @NotNull ResourceLocation id() {
+            return ID;
+        }
+
+        public static void handle(Payload payload, IPayloadContext context) {
+            context.workHandler().submitAsync(() -> {
+                // Извлекаем игрока из опционала (на сервере он всегда есть в контексте)
+                context.player().ifPresent(player -> {
+                    if (!(player instanceof ServerPlayer serverPlayer)) return;
+
+                    ResourceLocation recipeRes = new ResourceLocation(payload.recipeId());
+                    Optional<AssemblyRecipe> recipeOpt = AssemblyRecipes.getById(recipeRes);
+
+                    recipeOpt.ifPresent(recipe -> {
+                        if (recipe.canCraft(serverPlayer.getInventory())) {
+                            recipe.craft(serverPlayer.getInventory());
+
+                            serverPlayer.level().playSound(
+                                    null,
+                                    serverPlayer.getX(), serverPlayer.getY(), serverPlayer.getZ(),
+                                    SoundEvents.ANVIL_USE,
+                                    SoundSource.BLOCKS,
+                                    1.0f, 0.8f
+                            );
+                        }
+                    });
+                });
+            });
+        }
     }
 
     // -------------------------------------------------------------------------
-    // Bullet packet
+    // Bullet packet (C2S)
     // -------------------------------------------------------------------------
-
-    /**
-     * Payload for crafting bullets in a given quantity.
-     * Uses the recipe's string ResourceLocation to look up the recipe.
-     *
-     * @param recipeId string form of the recipe's ResourceLocation
-     * @param quantity number of bullets to craft (clamped to ≥1 server-side)
-     */
     public record BulletPayload(String recipeId, int quantity) implements CustomPacketPayload {
+        public static final ResourceLocation ID = new ResourceLocation(NstRevRecoiled.MOD_ID, "assembly_craft_bullet");
 
-        public static final Type<BulletPayload> TYPE = new Type<>(
-                ResourceLocation.fromNamespaceAndPath(NstRevRecoiled.MOD_ID, "assembly_craft_bullet"));
-
-        public static final StreamCodec<ByteBuf, BulletPayload> STREAM_CODEC =
-                StreamCodec.composite(
-                        ByteBufCodecs.STRING_UTF8, BulletPayload::recipeId,
-                        ByteBufCodecs.VAR_INT,     BulletPayload::quantity,
-                        BulletPayload::new
-                );
+        public BulletPayload(FriendlyByteBuf buf) {
+            this(buf.readUtf(), buf.readVarInt());
+        }
 
         @Override
-        public @NotNull Type<? extends CustomPacketPayload> type() { return TYPE; }
-    }
+        public void write(FriendlyByteBuf buf) {
+            buf.writeUtf(this.recipeId);
+            buf.writeVarInt(this.quantity);
+        }
 
-    // -------------------------------------------------------------------------
-    // Server-side handlers
-    // -------------------------------------------------------------------------
+        @Override
+        public @NotNull ResourceLocation id() {
+            return ID;
+        }
 
-    /**
-     * Handles revolver craft requests on the server.
-     * Resolves the recipe by ResourceLocation via AssemblyRecipes.getById(),
-     * silently ignoring unknown IDs to handle version mismatches gracefully.
-     * Validates ingredients, and executes craft.
-     */
-    public static void handleRevolver(Payload payload, IPayloadContext context) {
-        context.enqueueWork(() -> {
-            Player player = context.player();
-            if (!(player instanceof ServerPlayer)) return;
+        public static void handle(BulletPayload payload, IPayloadContext context) {
+            context.workHandler().submitAsync(() -> context.player().ifPresent(player -> {
+                if (!(player instanceof ServerPlayer serverPlayer)) return;
 
-            ResourceLocation id = ResourceLocation.parse(payload.recipeId());
-            Optional<AssemblyRecipe> recipeOpt = AssemblyRecipes.getById(id);
-            recipeOpt.ifPresent(recipe -> {
-                if (recipe.canCraft(player.getInventory())) {
-                    recipe.craft(player.getInventory());
+                ResourceLocation recipeRes = new ResourceLocation(payload.recipeId());
+                Optional<AssemblyRecipe> recipeOpt = AssemblyRecipes.getById(recipeRes);
 
-                    player.level().playSound(
-                            null,
-                            player.getX(), player.getY(), player.getZ(),
-                            SoundEvents.ANVIL_USE,
-                            SoundSource.BLOCKS,
-                            1.0f, 0.8f
-                    );
-                }
-            });
-        });
-    }
+                recipeOpt.ifPresent(recipe -> {
+                    if (!(recipe instanceof BulletAssemblyRecipe br)) return;
 
-    /**
-     * Handles bullet craft requests on the server.
-     * Resolves the recipe by ResourceLocation, validates ingredients, and crafts
-     * the requested quantity. Clamps quantity to a minimum of 1 to guard against 
-     * malformed or replayed packets.
-     */
-    public static void handleBullet(BulletPayload payload, IPayloadContext context) {
-        context.enqueueWork(() -> {
-            Player player = context.player();
-            if (!(player instanceof ServerPlayer)) return;
+                    int qty = Math.max(1, payload.quantity());
+                    if (br.canCraftBullets(serverPlayer.getInventory(), qty)) {
+                        br.craftBullets(serverPlayer.getInventory(), qty);
 
-            ResourceLocation id = ResourceLocation.parse(payload.recipeId());
-            Optional<AssemblyRecipe> recipeOpt = AssemblyRecipes.getById(id);
-            recipeOpt.ifPresent(recipe -> {
-                if (!(recipe instanceof BulletAssemblyRecipe br)) return;
-                int qty = Math.max(1, payload.quantity());
-                if (br.canCraftBullets(player.getInventory(), qty)) {
-                    br.craftBullets(player.getInventory(), qty);
-
-                    player.level().playSound(
-                            null,
-                            player.getX(), player.getY(), player.getZ(),
-                            SoundEvents.VILLAGER_WORK_TOOLSMITH,
-                            SoundSource.BLOCKS,
-                            1.0f, 1.0f
-                    );
-                }
-            });
-        });
+                        serverPlayer.level().playSound(
+                                null,
+                                serverPlayer.getX(), serverPlayer.getY(), serverPlayer.getZ(),
+                                SoundEvents.VILLAGER_WORK_TOOLSMITH,
+                                SoundSource.BLOCKS,
+                                1.0f, 1.0f
+                        );
+                    }
+                });
+            }));
+        }
     }
 }

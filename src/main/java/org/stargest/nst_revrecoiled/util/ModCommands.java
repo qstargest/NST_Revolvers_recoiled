@@ -4,7 +4,6 @@ import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.context.CommandContext;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
-import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.network.PacketDistributor;
@@ -43,10 +42,10 @@ public class ModCommands {
             source.getServer().getPlayerList().getPlayers().forEach(player -> {
                 for (ItemStack stack : player.getInventory().items) {
                     if (stack.getItem() instanceof BaseRevolverItem item) {
-                        int currentDamage = stack.getOrDefault(DataComponents.DAMAGE, 0);
+                        int currentDamage = stack.getDamageValue();
                         int newMax = item.getMaxDamage(stack);
                         if (currentDamage >= newMax) {
-                            stack.set(DataComponents.DAMAGE, newMax - 1);
+                            stack.setDamageValue(newMax - 1);
                         }
                     }
                 }
@@ -56,8 +55,7 @@ public class ModCommands {
 
             String json = ConfigLoader.toJson();
             source.getServer().getPlayerList().getPlayers().forEach(player ->
-                    PacketDistributor.sendToPlayer(player, new SyncConfigS2CPacket(json))
-            );
+                    PacketDistributor.PLAYER.with(player).send(new SyncConfigS2CPacket(json)));
 
             source.sendSuccess(() -> Component.literal(
                     "§a[NST Revolvers recoiled] Configuration reloaded and synced successfully!"), true);

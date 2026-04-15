@@ -1,8 +1,6 @@
 package org.stargest.nst_revrecoiled.network;
 
-import io.netty.buffer.ByteBuf;
-import net.minecraft.network.codec.ByteBufCodecs;
-import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
 import org.jetbrains.annotations.NotNull;
@@ -23,20 +21,19 @@ import org.stargest.nst_revrecoiled.NstRevRecoiled;
  * client-side callback that would otherwise cause duplication for the local player.
  */
 public record RevolverReloadParticlePacket(int entityId) implements CustomPacketPayload {
+    public static final ResourceLocation ID = new ResourceLocation(NstRevRecoiled.MOD_ID, "revolver_reload_particle");
 
-    /** Unique packet identifier for networking. */
-    public static final Type<RevolverReloadParticlePacket> TYPE = new Type<>(
-            ResourceLocation.fromNamespaceAndPath(NstRevRecoiled.MOD_ID, "revolver_reload_particle"));
-
-    /** Packet codec for serialization/deserialization. Uses integer codec for entity ID. */
-    public static final StreamCodec<ByteBuf, RevolverReloadParticlePacket> STREAM_CODEC =
-            StreamCodec.composite(
-                    ByteBufCodecs.INT, RevolverReloadParticlePacket::entityId,
-                    RevolverReloadParticlePacket::new
-            );
+    public RevolverReloadParticlePacket(FriendlyByteBuf buf) {
+        this(buf.readInt());
+    }
 
     @Override
-    public @NotNull Type<? extends CustomPacketPayload> type() {
-        return TYPE;
+    public void write(FriendlyByteBuf buf) {
+        buf.writeInt(this.entityId);
+    }
+
+    @Override
+    public @NotNull ResourceLocation id() {
+        return ID;
     }
 }

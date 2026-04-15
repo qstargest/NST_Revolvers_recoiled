@@ -4,7 +4,6 @@ import net.minecraft.resources.ResourceLocation;
 import org.stargest.nst_revrecoiled.Items.BaseRevolverItem;
 import org.stargest.nst_revrecoiled.NstRevRecoiled;
 import software.bernie.geckolib.model.GeoModel;
-import software.bernie.geckolib.renderer.GeoRenderer;
 
 /**
  * Unified GeckoLib model for all revolvers.
@@ -12,34 +11,21 @@ import software.bernie.geckolib.renderer.GeoRenderer;
  */
 public class RevolverItemModel<T extends BaseRevolverItem> extends GeoModel<T> {
 
-    private final String textureName;
-
-    public RevolverItemModel(String textureName) {
-        this.textureName = textureName;
+    public RevolverItemModel() {
     }
 
     @Override
     public ResourceLocation getModelResource(T animatable) {
-        return ResourceLocation.fromNamespaceAndPath(NstRevRecoiled.MOD_ID, "geo/cobblestone_revolver.geo.json");
+        return new ResourceLocation(NstRevRecoiled.MOD_ID, "geo/cobblestone_revolver.geo.json");
     }
 
     @Override
     public ResourceLocation getTextureResource(T animatable) {
-        return ResourceLocation.fromNamespaceAndPath(NstRevRecoiled.MOD_ID, "textures/item/" + textureName + ".png");
-    }
-
-    @Override
-    public ResourceLocation getModelResource(T animatable, GeoRenderer<T> renderer) {
-        return ResourceLocation.fromNamespaceAndPath(NstRevRecoiled.MOD_ID, "geo/cobblestone_revolver.geo.json");
-    }
-
-    @Override
-    public ResourceLocation getTextureResource(T animatable, GeoRenderer<T> renderer) {
-        return ResourceLocation.fromNamespaceAndPath(NstRevRecoiled.MOD_ID, "textures/item/" + textureName + ".png");
+        return new ResourceLocation(NstRevRecoiled.MOD_ID, "textures/item/" + animatable.getTextureName() + ".png");
     }
 
     @Override
     public ResourceLocation getAnimationResource(T animatable) {
-        return ResourceLocation.fromNamespaceAndPath(NstRevRecoiled.MOD_ID, "animations/cobblestone_revolver.animation.json");
+        return new ResourceLocation(NstRevRecoiled.MOD_ID, "animations/cobblestone_revolver.animation.json");
     }
 }

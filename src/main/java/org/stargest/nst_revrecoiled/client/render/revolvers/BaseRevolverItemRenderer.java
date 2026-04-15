@@ -22,7 +22,7 @@ import software.bernie.geckolib.renderer.GeoItemRenderer;
  * For GUI and FIXED contexts, it renders a high-quality 2D flat model using
  * the ItemRendererAccessor to bypass GeckoLib's default 3D rendering.
  */
-public abstract class BaseRevolverItemRenderer<T extends BaseRevolverItem> extends GeoItemRenderer<T> {
+public class BaseRevolverItemRenderer<T extends BaseRevolverItem> extends GeoItemRenderer<T> {
     public BaseRevolverItemRenderer(GeoModel<T> model) {
         super(model);
     }
@@ -35,9 +35,8 @@ public abstract class BaseRevolverItemRenderer<T extends BaseRevolverItem> exten
 
             Minecraft client = Minecraft.getInstance();
             ResourceLocation itemId = BuiltInRegistries.ITEM.getKey(stack.getItem());
-            ModelResourceLocation modelId = ModelResourceLocation.inventory(
-                    ResourceLocation.fromNamespaceAndPath(itemId.getNamespace(), itemId.getPath() + "_item")
-            );
+            ResourceLocation modelLocation = new ResourceLocation(itemId.getNamespace(), itemId.getPath() + "_item");
+            ModelResourceLocation modelId = new ModelResourceLocation(modelLocation, "inventory");
 
             BakedModel flatModel = client.getModelManager().getModel(modelId);
 

@@ -7,11 +7,10 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.ai.village.poi.PoiType;
 import net.minecraft.world.entity.npc.VillagerProfession;
 import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.fml.common.Mod.EventBusSubscriber;
 import net.neoforged.neoforge.event.village.VillagerTradesEvent;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
-import net.minecraft.world.item.trading.ItemCost;
 import net.minecraft.world.item.trading.MerchantOffer;
 import org.stargest.nst_revrecoiled.NstRevRecoiled;
 import org.stargest.nst_revrecoiled.util.ModItems;
@@ -42,14 +41,14 @@ public class ModVillagers {
      */
     public static final ResourceKey<PoiType> ASSEMBLY_TABLE_POI_KEY =
             ResourceKey.create(Registries.POINT_OF_INTEREST_TYPE,
-                    ResourceLocation.fromNamespaceAndPath(NstRevRecoiled.MOD_ID, "assembly_table_poi"));
+                    new ResourceLocation(NstRevRecoiled.MOD_ID, "assembly_table_poi"));
 
     /**
      * Registry key for the revolvermaker profession.
      */
     public static final ResourceKey<VillagerProfession> REVOLVERMAKER_KEY =
             ResourceKey.create(Registries.VILLAGER_PROFESSION,
-                    ResourceLocation.fromNamespaceAndPath(NstRevRecoiled.MOD_ID, "revolvermaker"));
+                    new ResourceLocation(NstRevRecoiled.MOD_ID, "revolvermaker"));
 
     /**
      * Registers all associated trade offers for the revolvermaker profession.
@@ -68,34 +67,34 @@ public class ModVillagers {
 
         // Level 1 — Novice
         trades.get(1).add((entity, rng) -> new MerchantOffer(
-                new ItemCost(Items.GUNPOWDER, 32), new ItemStack(Items.EMERALD, 1), 7, 2, 0.05f));
+                new ItemStack(Items.GUNPOWDER, 32), new ItemStack(Items.EMERALD, 1), 7, 2, 0.05f));
         trades.get(1).add((entity, rng) -> new MerchantOffer(
-                new ItemCost(Items.EMERALD, 1), new ItemStack(ModItems.STONE_BULLET.get(), 8), 12, 2, 0.05f));
+                new ItemStack(Items.EMERALD, 1), new ItemStack(ModItems.STONE_BULLET.get(), 8), 12, 2, 0.05f));
 
         // Level 2 — Apprentice
         trades.get(2).add((entity, rng) -> new MerchantOffer(
-                new ItemCost(Items.EMERALD, 7), new ItemStack(ModItems.COBBLESTONE_REVOLVER.get(), 1), 7, 5, 0.05f));
+                new ItemStack(Items.EMERALD, 7), new ItemStack(ModItems.COBBLESTONE_REVOLVER.get(), 1), 7, 5, 0.05f));
 
         // Level 3 — Journeyman
         trades.get(3).add((entity, rng) -> new MerchantOffer(
-                new ItemCost(Items.EMERALD, 12), new ItemStack(ModItems.IRON_REVOLVER.get(), 1), 7, 10, 0.05f));
+                new ItemStack(Items.EMERALD, 12), new ItemStack(ModItems.IRON_REVOLVER.get(), 1), 7, 10, 0.05f));
         trades.get(3).add((entity, rng) -> new MerchantOffer(
-                new ItemCost(Items.LAPIS_LAZULI, 25), new ItemStack(Items.EMERALD, 1), 7, 2, 0.04f));
+                new ItemStack(Items.LAPIS_LAZULI, 25), new ItemStack(Items.EMERALD, 1), 7, 2, 0.04f));
         trades.get(3).add((entity, rng) -> new MerchantOffer(
-                new ItemCost(Items.EMERALD, 3), new ItemStack(ModItems.IRON_BULLET.get(), 6), 12, 5, 0.05f));
+                new ItemStack(Items.EMERALD, 3), new ItemStack(ModItems.IRON_BULLET.get(), 6), 12, 5, 0.05f));
 
         // Level 4 — Expert
         trades.get(4).add((entity, rng) -> new MerchantOffer(
-                new ItemCost(Items.EMERALD, 20), new ItemStack(ModItems.GOLDEN_REVOLVER.get(), 1), 5, 15, 0.05f));
+                new ItemStack(Items.EMERALD, 20), new ItemStack(ModItems.GOLDEN_REVOLVER.get(), 1), 5, 15, 0.05f));
         trades.get(4).add((entity, rng) -> new MerchantOffer(
-                new ItemCost(Items.EMERALD, 4), new ItemStack(ModItems.GOLDEN_BULLET.get(), 4), 8, 10, 0.05f));
+                new ItemStack(Items.EMERALD, 4), new ItemStack(ModItems.GOLDEN_BULLET.get(), 4), 8, 10, 0.05f));
 
         // Level 5 — Master
         trades.get(5).add((entity, rng) -> new MerchantOffer(
-                new ItemCost(Items.DIAMOND, 6), new ItemStack(Items.EMERALD, 1), 7, 2, 0.4f));
+                new ItemStack(Items.DIAMOND, 6), new ItemStack(Items.EMERALD, 1), 7, 2, 0.4f));
         trades.get(5).add((entity, rng) -> new MerchantOffer(
-                new ItemCost(Items.EMERALD, 40), new ItemStack(ModItems.DIAMOND_REVOLVER.get(), 1), 3, 25, 0.05f));
+                new ItemStack(Items.EMERALD, 40), new ItemStack(ModItems.DIAMOND_REVOLVER.get(), 1), 3, 25, 0.05f));
         trades.get(5).add((entity, rng) -> new MerchantOffer(
-                new ItemCost(Items.EMERALD, 12), new ItemStack(ModItems.DIAMOND_BULLET.get(), 6), 5, 20, 0.05f));
+                new ItemStack(Items.EMERALD, 12), new ItemStack(ModItems.DIAMOND_BULLET.get(), 6), 5, 20, 0.05f));
     }
 }

@@ -9,6 +9,6 @@ import org.stargest.nst_revrecoiled.client.render.models.revolvers.RevolverItemM
  */
 public class CobblestoneRevolverItemRenderer extends BaseRevolverItemRenderer<CobblestoneRevolverItem> {
     public CobblestoneRevolverItemRenderer() {
-        super(new RevolverItemModel<>("cobblestone_revolver"));
+        super(new RevolverItemModel<>());
     }
 }

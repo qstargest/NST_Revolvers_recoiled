@@ -92,7 +92,7 @@ public class ModItems {
     // --- Creative Tab ---
     public static final ResourceKey<CreativeModeTab> MOD_TAB_KEY = ResourceKey.create(
             Registries.CREATIVE_MODE_TAB,
-            ResourceLocation.fromNamespaceAndPath(NstRevRecoiled.MOD_ID, "main")
+            new ResourceLocation(NstRevRecoiled.MOD_ID, "main")
     );
 
     static {

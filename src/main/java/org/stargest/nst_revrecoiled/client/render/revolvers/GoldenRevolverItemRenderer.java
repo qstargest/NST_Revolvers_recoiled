@@ -9,6 +9,6 @@ import org.stargest.nst_revrecoiled.client.render.models.revolvers.RevolverItemM
  */
 public class GoldenRevolverItemRenderer extends BaseRevolverItemRenderer<GoldenRevolverItem> {
     public GoldenRevolverItemRenderer() {
-        super(new RevolverItemModel<>("golden_revolver"));
+        super(new RevolverItemModel<>());
     }
 }

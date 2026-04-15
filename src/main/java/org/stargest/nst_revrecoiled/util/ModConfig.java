@@ -143,7 +143,7 @@ public class ModConfig {
 
     public static class WorldGenConfig {
         public boolean spawnHouse = true;
-        public int houseWeight = 5;
+        public int houseWeight = 8;
     }
 
     public static class IngredientConfig {

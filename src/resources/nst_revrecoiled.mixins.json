@@ -2,7 +2,7 @@
   "required": true,
   "minVersion": "0.8",
   "package": "org.stargest.nst_revrecoiled.mixins",
-  "compatibilityLevel": "JAVA_21",
+  "compatibilityLevel": "JAVA_17",
   "mixins": [
     "StructurePoolAccessor"
   ],

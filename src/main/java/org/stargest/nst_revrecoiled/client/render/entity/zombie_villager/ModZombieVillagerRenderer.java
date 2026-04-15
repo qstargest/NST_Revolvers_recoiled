@@ -25,7 +25,7 @@ public class ModZombieVillagerRenderer extends ZombieVillagerRenderer {
      * Reuses the same asset as the living revolvermaker villager.
     */
     private static final ResourceLocation REVOLVERMAKER_TEXTURE =
-            ResourceLocation.fromNamespaceAndPath(NstRevRecoiled.MOD_ID, "textures/entity/zombie_villager/profession/revolvermaker.png");
+            new ResourceLocation(NstRevRecoiled.MOD_ID, "textures/entity/zombie_villager/profession/revolvermaker.png");
 
     public ModZombieVillagerRenderer(EntityRendererProvider.Context context) {
         super(context);

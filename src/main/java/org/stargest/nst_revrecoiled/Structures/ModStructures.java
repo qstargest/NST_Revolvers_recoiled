@@ -31,10 +31,10 @@ public class ModStructures {
     /** Village house pools to inject into. Add/remove biomes as needed. */
     private static final ResourceKey<StructureTemplatePool> TAIGA_VILLAGE_HOUSES =
             ResourceKey.create(Registries.TEMPLATE_POOL,
-                    ResourceLocation.withDefaultNamespace("village/taiga/houses"));
+                    new ResourceLocation("village/taiga/houses"));
 
     private static final ResourceLocation REVOLVERMAKER_HOUSE_ELEM =
-            ResourceLocation.fromNamespaceAndPath(NstRevRecoiled.MOD_ID, "revolvermaker_house");
+            new ResourceLocation(NstRevRecoiled.MOD_ID, "revolvermaker_house");
 
     /**
      * Clears and re-injects the structures based on the current configuration.

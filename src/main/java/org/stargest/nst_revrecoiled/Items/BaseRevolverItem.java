@@ -1,7 +1,9 @@
 package org.stargest.nst_revrecoiled.Items;
 
-import net.minecraft.core.component.DataComponents;
+import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -12,28 +14,26 @@ import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.world.item.*;
-import net.minecraft.world.item.component.ChargedProjectiles;
-import net.minecraft.world.item.component.CustomData;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
+import net.neoforged.neoforge.client.extensions.common.IClientItemExtensions;
 import net.neoforged.neoforge.network.PacketDistributor;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.stargest.nst_revrecoiled.Entities.BulletProjectileEntity;
+import org.stargest.nst_revrecoiled.client.render.models.revolvers.RevolverItemModel;
+import org.stargest.nst_revrecoiled.client.render.revolvers.BaseRevolverItemRenderer;
 import org.stargest.nst_revrecoiled.network.RevolverFireParticlePacket;
 import org.stargest.nst_revrecoiled.network.RevolverReloadParticlePacket;
 import org.stargest.nst_revrecoiled.util.ModConfig;
 import org.stargest.nst_revrecoiled.util.ModItems;
 import software.bernie.geckolib.animatable.GeoItem;
 import software.bernie.geckolib.animatable.SingletonGeoAnimatable;
-import software.bernie.geckolib.animatable.client.GeoRenderProvider;
-import software.bernie.geckolib.animatable.instance.AnimatableInstanceCache;
-import software.bernie.geckolib.animation.AnimatableManager;
-import software.bernie.geckolib.animation.AnimationController;
-import software.bernie.geckolib.animation.PlayState;
-import software.bernie.geckolib.animation.RawAnimation;
+import software.bernie.geckolib.core.animatable.instance.AnimatableInstanceCache;
+import software.bernie.geckolib.core.animation.AnimatableManager;
+import software.bernie.geckolib.core.animation.AnimationController;
+import software.bernie.geckolib.core.object.PlayState;
+import software.bernie.geckolib.core.animation.RawAnimation;
 import software.bernie.geckolib.constant.DataTickets;
 import software.bernie.geckolib.util.GeckoLibUtil;
 import software.bernie.geckolib.renderer.GeoItemRenderer;
@@ -173,23 +173,22 @@ public abstract class BaseRevolverItem extends ProjectileWeaponItem implements G
     }
 
     @Override
-    public void createGeoRenderer(Consumer<GeoRenderProvider> consumer) {
-        consumer.accept(new GeoRenderProvider() {
+    public void initializeClient(Consumer<IClientItemExtensions> consumer) {
+        consumer.accept(new IClientItemExtensions() {
+            private GeoItemRenderer<?> renderer;
+
             @Override
-            public @Nullable GeoItemRenderer<?> getGeoItemRenderer() {
-                return cachedRenderer;
+            public @NotNull BlockEntityWithoutLevelRenderer getCustomRenderer() {
+                if (this.renderer == null){
+                    this.renderer = new BaseRevolverItemRenderer(new RevolverItemModel());
+                }
+                return this.renderer;
             }
         });
     }
 
-    @Override
-    protected void shoot(@NotNull ServerLevel level, @NotNull LivingEntity shooter, @NotNull InteractionHand hand, @NotNull ItemStack weapon, @NotNull List<ItemStack> projectileItems, float velocity, float inaccuracy, boolean isCrit, @Nullable LivingEntity target) {
-        // Custom shooting logic is in performShoot()
-    }
-
-    @Override
-    protected void shootProjectile(@NotNull LivingEntity shooter, @NotNull Projectile projectile, int index, float velocity, float inaccuracy, float angle, @Nullable LivingEntity target) {
-        // Revolvers handle their own projectile shooting in performShoot
+    public String getTextureName() {
+        return BuiltInRegistries.ITEM.getKey(this).getPath();
     }
 
     @Override
@@ -200,7 +199,7 @@ public abstract class BaseRevolverItem extends ProjectileWeaponItem implements G
     public boolean isPerspectiveAware() { return true; }
 
     @Override
-    public int getUseDuration(@NotNull ItemStack stack, @NotNull LivingEntity entity) {
+    public int getUseDuration(@NotNull ItemStack stack) {
         return USE_DURATION;
     }
 
@@ -252,9 +251,9 @@ public abstract class BaseRevolverItem extends ProjectileWeaponItem implements G
             RevolverReloadParticlePacket packet = new RevolverReloadParticlePacket(user.getId());
 
             if (user instanceof ServerPlayer shooter) {
-                PacketDistributor.sendToPlayer(shooter, packet);
+                PacketDistributor.PLAYER.with(shooter).send(packet);
             }
-            PacketDistributor.sendToPlayersTrackingEntity(user, packet);
+            PacketDistributor.TRACKING_ENTITY.with(user).send(packet);
         }
     }
 
@@ -285,7 +284,7 @@ public abstract class BaseRevolverItem extends ProjectileWeaponItem implements G
         if (isCharged(stack)) {
             if (!level.isClientSide) {
                 performShoot(level, user, hand, stack, getProjectileVelocity(), getProjectileDivergence());
-                PacketDistributor.sendToPlayersTrackingEntity(user, new RevolverFireParticlePacket(user.getId()));
+                PacketDistributor.TRACKING_ENTITY.with(user).send(new RevolverFireParticlePacket(user.getId()));
             } else {
                 triggerClientCallbacks(user, stack);
             }
@@ -328,7 +327,7 @@ public abstract class BaseRevolverItem extends ProjectileWeaponItem implements G
         if (chargedTicks >= chargeTimerMax && !isCharged(stack)) {
             if (loadBullet(user, stack)) {
                 level.playSound(null, user.getX(), user.getY(), user.getZ(),
-                        SoundEvents.CROSSBOW_LOADING_END.value(), SoundSource.PLAYERS, 1.0f, 1.0f);
+                        SoundEvents.CROSSBOW_LOADING_END, SoundSource.PLAYERS, 1.0f, 1.0f);
             }
         } else {
             if (!level.isClientSide && user instanceof Player player) {
@@ -365,8 +364,8 @@ public abstract class BaseRevolverItem extends ProjectileWeaponItem implements G
      * Protected to allow subclasses to override draw animation tracking behavior.
      */
     protected boolean hasDrawAnimationPlayed(ItemStack stack) {
-        CustomData customData = stack.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY);
-        return customData.copyTag().getBoolean(DRAW_PLAYED_KEY);
+        CompoundTag tag = stack.getTag();
+        return tag != null && tag.getBoolean(DRAW_PLAYED_KEY);
     }
 
     /**
@@ -374,7 +373,7 @@ public abstract class BaseRevolverItem extends ProjectileWeaponItem implements G
      * Protected to allow subclasses to override draw animation tracking behavior.
      */
     protected void markDrawAnimationPlayed(ItemStack stack) {
-        CustomData.update(DataComponents.CUSTOM_DATA, stack, tag -> tag.putBoolean(DRAW_PLAYED_KEY, true));
+        stack.getOrCreateTag().putBoolean(DRAW_PLAYED_KEY, true);
     }
 
     /**
@@ -382,7 +381,10 @@ public abstract class BaseRevolverItem extends ProjectileWeaponItem implements G
      * Protected to allow subclasses to override draw animation tracking behavior.
      */
     protected void clearDrawAnimationFlag(ItemStack stack) {
-        CustomData.update(DataComponents.CUSTOM_DATA, stack, tag -> tag.remove(DRAW_PLAYED_KEY));
+        CompoundTag tag = stack.getTag();
+        if (tag != null && tag.contains(DRAW_PLAYED_KEY)) {
+            tag.remove(DRAW_PLAYED_KEY);
+        }
     }
 
     /**
@@ -411,8 +413,21 @@ public abstract class BaseRevolverItem extends ProjectileWeaponItem implements G
             projectiles.add(new ItemStack(ModItems.STONE_BULLET.get()));
         }
 
-        revolver.set(DataComponents.CHARGED_PROJECTILES, ChargedProjectiles.of(projectiles));
+        writeProjectilesToNbt(revolver, projectiles);
         return true;
+    }
+
+    protected void writeProjectilesToNbt(ItemStack revolver, List<ItemStack> projectiles) {
+        CompoundTag tag = revolver.getOrCreateTag();
+        net.minecraft.nbt.ListTag listTag = new net.minecraft.nbt.ListTag();
+
+        for (ItemStack stack : projectiles) {
+            CompoundTag bulletTag = new CompoundTag();
+            stack.save(bulletTag);
+            listTag.add(bulletTag);
+        }
+
+        tag.put("ChargedProjectiles", listTag);
     }
 
     /**
@@ -460,10 +475,14 @@ public abstract class BaseRevolverItem extends ProjectileWeaponItem implements G
                                  float velocity, float divergence) {
         if (level.isClientSide) return;
 
-        ChargedProjectiles component = stack.get(DataComponents.CHARGED_PROJECTILES);
-        if (component == null || component.isEmpty()) return;
+        CompoundTag tag = stack.getTag();
+        if (tag == null || !tag.contains("ChargedProjectiles", 9)) return;
 
-        ItemStack bulletStack = component.getItems().get(0);
+        ListTag listTag = tag.getList("ChargedProjectiles", 10);
+        if (listTag.isEmpty()) return;
+
+        ItemStack bulletStack = ItemStack.of(listTag.getCompound(0));
+        if (bulletStack.isEmpty()) return;
 
         float bulletDamage = 0.0f;
         if (bulletStack.getItem() instanceof BaseBulletItem bulletItem) {
@@ -492,10 +511,10 @@ public abstract class BaseRevolverItem extends ProjectileWeaponItem implements G
 
         level.addFreshEntity(projectile);
 
-        stack.hurtAndBreak(1, shooter, LivingEntity.getSlotForHand(hand));
+        stack.hurtAndBreak(1, shooter, (entity) -> entity.broadcastBreakEvent(hand));
 
         level.playSound(null, shooter.getX(), shooter.getY(), shooter.getZ(),
-                SoundEvents.GENERIC_EXPLODE.value(), SoundSource.PLAYERS,
+                SoundEvents.GENERIC_EXPLODE, SoundSource.PLAYERS,
                 0.35f, 1.5f / (level.getRandom().nextFloat() * 0.4f + 0.8f));
 
         if (shooter instanceof Player player) {
@@ -503,15 +522,15 @@ public abstract class BaseRevolverItem extends ProjectileWeaponItem implements G
             triggerAnim(player, instanceId, "controller", "animation.model.fireright");
         }
 
-        stack.set(DataComponents.CHARGED_PROJECTILES, ChargedProjectiles.EMPTY);
+        tag.remove("ChargedProjectiles");
     }
 
     /**
      * Checks if the revolver currently has a loaded bullet.
      */
     public static boolean isCharged(ItemStack stack) {
-        ChargedProjectiles component = stack.get(DataComponents.CHARGED_PROJECTILES);
-        return component != null && !component.isEmpty();
+        CompoundTag tag = stack.getTag();
+        return tag != null && tag.contains("ChargedProjectiles", 9) && !tag.getList("ChargedProjectiles", 10).isEmpty();
     }
 
     @Override
@@ -528,20 +547,24 @@ public abstract class BaseRevolverItem extends ProjectileWeaponItem implements G
 
             AnimationController<?> ctrl = state.getController();
 
+            // In third-person: suppress draw animation by stopping it
+
             if (!isFirstPerson) {
-                RawAnimation triggered = ctrl.getTriggeredAnimation();
-                if (triggered != null && DRAW_ANIM.equals(triggered)) {
-                    ctrl.setAnimation(IDLE_ANIM);
-                    return PlayState.CONTINUE;
+                RawAnimation current = ctrl.getCurrentRawAnimation();
+                if (DRAW_ANIM.equals(current)) {
+                    ctrl.stop();
+                    return PlayState.STOP;
                 }
             }
 
-            RawAnimation triggered = ctrl.getTriggeredAnimation();
-            if (triggered != null) {
-                if (RELOAD_ANIM.equals(triggered)) {
-                    ctrl.setAnimationSpeed(50.0f / config.revolvers.chargeTimeTicks);
+            // Update animation speed ONLY when a new animation is triggered.
+            // This ensures the speed remains stable for the duration of the animation
+            // and doesn't reset to 1.0f prematurely once the trigger is processed.
+            if (ctrl.getCurrentRawAnimation() != null) {
+                if (RELOAD_ANIM.equals(ctrl.getCurrentRawAnimation())) {
+                    ctrl.setAnimationSpeed(50.0 / config.revolvers.chargeTimeTicks);
                 } else {
-                    ctrl.setAnimationSpeed(1.0f);
+                    ctrl.setAnimationSpeed(1.0);
                 }
             }
 

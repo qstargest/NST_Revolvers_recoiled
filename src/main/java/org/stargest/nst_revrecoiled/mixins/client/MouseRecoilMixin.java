@@ -2,6 +2,7 @@ package org.stargest.nst_revrecoiled.mixins.client;
 
 import net.minecraft.client.MouseHandler;
 import net.minecraft.client.Minecraft;
+import net.minecraft.util.Mth;
 import net.minecraft.client.player.LocalPlayer;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
@@ -56,7 +57,7 @@ public class MouseRecoilMixin {
             float newPitch = player.getXRot() + pitchDelta;
             float newYaw = player.getYRot() + yawDelta;
 
-            newPitch = Math.clamp(newPitch, -90.0f, 90.0f);
+            newPitch = Mth.clamp(newPitch, -90.0f, 90.0f);
 
             player.setXRot(newPitch);
             player.setYRot(newYaw);

@@ -2,6 +2,10 @@
   "type": "minecraft:crafting_shaped",
   "show_notification": true,
   "category": "misc",
+  "pattern": [
+    " &%",
+    "$#$"
+  ],
   "key": {
     "#": {
       "item": "minecraft:spruce_planks"
@@ -16,12 +20,8 @@
       "item": "minecraft:iron_ingot"
     }
   },
-  "pattern": [
-    " &%",
-    "$#$"
-  ],
   "result": {
-    "count": 1,
-    "id": "nst_revrecoiled:assembly_table"
+    "item": "nst_revrecoiled:assembly_table",
+    "count": 1
   }
 }

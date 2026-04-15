@@ -10,9 +10,11 @@ import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.network.chat.Component;
 import net.minecraft.sounds.SoundEvents;
+import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.ItemDisplayContext;
+import net.neoforged.neoforge.client.extensions.common.IClientItemExtensions;
 import org.jetbrains.annotations.NotNull;
 import org.lwjgl.glfw.GLFW;
 import org.stargest.nst_revrecoiled.Items.BaseBulletItem;
@@ -23,7 +25,6 @@ import org.stargest.nst_revrecoiled.recipe.AssemblyRecipe;
 import org.stargest.nst_revrecoiled.recipe.AssemblyRecipes;
 import org.stargest.nst_revrecoiled.recipe.BulletAssemblyRecipe;
 import net.neoforged.neoforge.network.PacketDistributor;
-import software.bernie.geckolib.animatable.client.GeoRenderProvider;
 import software.bernie.geckolib.renderer.GeoItemRenderer;
 
 import java.util.ArrayList;
@@ -358,7 +359,7 @@ public class AssemblyTableScreen extends AbstractContainerScreen<AssemblyTableSc
                     if (rx >= CRAFT_BTN_X && rx < CRAFT_BTN_X + CRAFT_BTN_W
                             && ry >= CRAFT_BTN_Y && ry < CRAFT_BTN_Y + CRAFT_BTN_H) {
                         if (cachedCanCraft) {
-                            PacketDistributor.sendToServer(
+                            PacketDistributor.SERVER.noArg().send(
                                     new AssemblyCraftC2SPacket.Payload(
                                             recipes.get(selectedRecipe).getId().toString()));
                             playUiClick();
@@ -473,7 +474,7 @@ public class AssemblyTableScreen extends AbstractContainerScreen<AssemblyTableSc
         if (rx >= QTY_PICK_X && rx < QTY_PICK_X + QTY_PICK_W
                 && ry >= QTY_ROW_Y && ry < QTY_ROW_Y + QTY_MINUS_H) {
             if (cachedCanCraft) {
-                PacketDistributor.sendToServer(
+                PacketDistributor.SERVER.noArg().send(
                         new AssemblyCraftC2SPacket.BulletPayload(
                                 recipes.get(selectedRecipe).getId().toString(),
                                 bulletQuantity));
@@ -489,7 +490,7 @@ public class AssemblyTableScreen extends AbstractContainerScreen<AssemblyTableSc
      * Resets the editing state regardless of whether parsing succeeded.
      */
     private void confirmQuantityInput(BulletAssemblyRecipe recipe) {
-        try { bulletQuantity = Math.clamp(Integer.parseInt(quantityInputStr), 1, BULLET_QTY_MAX); }
+        try { bulletQuantity = Mth.clamp(Integer.parseInt(quantityInputStr), 1, BULLET_QTY_MAX); }
         catch (NumberFormatException ignored) { }
         editingQuantity = false; quantityInputStr = "";
     }
@@ -542,7 +543,7 @@ public class AssemblyTableScreen extends AbstractContainerScreen<AssemblyTableSc
             boolean overQtyRow = rx >= QTY_MINUS_X && rx < QTY_PLUS_X + QTY_PLUS_W
                     && ry >= QTY_ROW_Y && ry < QTY_ROW_Y + QTY_MINUS_H;
             if (overQtyRow) {
-                bulletQuantity = Math.clamp(
+                bulletQuantity = Mth.clamp(
                         bulletQuantity + (scrollY > 0 ? 1 : -1), 1, BULLET_QTY_MAX);
                 return true;
             }
@@ -940,11 +941,13 @@ public class AssemblyTableScreen extends AbstractContainerScreen<AssemblyTableSc
             return;
         }
 
-        Object providerObj = revolver.getRenderProvider();
-        if (!(providerObj instanceof GeoRenderProvider provider)) return;
+        var extensions = IClientItemExtensions.of(stack);
+        var customRenderer = extensions.getCustomRenderer();
 
-        GeoItemRenderer<?> renderer = (GeoItemRenderer<?>) provider.getGeoItemRenderer();
-        if (renderer == null) return;
+        if (!(customRenderer instanceof GeoItemRenderer<?> renderer)) {
+            ctx.renderItem(stack, centerX - 8, centerY - 8);
+            return;
+        }
 
         Minecraft client = Minecraft.getInstance();
         MultiBufferSource.BufferSource buffers = client.renderBuffers().bufferSource();
@@ -964,7 +967,7 @@ public class AssemblyTableScreen extends AbstractContainerScreen<AssemblyTableSc
             m.mulPose(com.mojang.math.Axis.YP.rotationDegrees(yawDeg));
             m.translate(-MODEL_PIVOT_X, -MODEL_PIVOT_Y, -MODEL_PIVOT_Z);
 
-            com.mojang.blaze3d.platform.Lighting.setupForEntityInInventory();
+            com.mojang.blaze3d.platform.Lighting.setupFor3DItems();
             renderer.renderByItem(
                     stack,
                     ItemDisplayContext.NONE, m, buffers,

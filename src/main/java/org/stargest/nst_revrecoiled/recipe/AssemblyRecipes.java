@@ -27,7 +27,7 @@ public class AssemblyRecipes {
     private static boolean frozen = false;
 
     public static final AssemblyRecipe COBBLESTONE_REVOLVER = add(new AssemblyRecipe(
-            ResourceLocation.fromNamespaceAndPath(NstRevRecoiled.MOD_ID, "cobblestone_revolver"),
+           new ResourceLocation(NstRevRecoiled.MOD_ID, "cobblestone_revolver"),
             ModItems.COBBLESTONE_REVOLVER.get(),
             "item.nst_revrecoiled.cobblestone_revolver",
             List.of(
@@ -38,7 +38,7 @@ public class AssemblyRecipes {
     ));
 
     public static final AssemblyRecipe IRON_REVOLVER = add(new AssemblyRecipe(
-            ResourceLocation.fromNamespaceAndPath(NstRevRecoiled.MOD_ID, "iron_revolver"),
+            new ResourceLocation(NstRevRecoiled.MOD_ID, "iron_revolver"),
             ModItems.IRON_REVOLVER.get(),
             "item.nst_revrecoiled.iron_revolver",
             List.of(
@@ -49,7 +49,7 @@ public class AssemblyRecipes {
     ));
 
     public static final AssemblyRecipe GOLDEN_REVOLVER = add(new AssemblyRecipe(
-            ResourceLocation.fromNamespaceAndPath(NstRevRecoiled.MOD_ID, "golden_revolver"),
+            new ResourceLocation(NstRevRecoiled.MOD_ID, "golden_revolver"),
             ModItems.GOLDEN_REVOLVER.get(),
             "item.nst_revrecoiled.golden_revolver",
             List.of(
@@ -60,7 +60,7 @@ public class AssemblyRecipes {
     ));
 
     public static final AssemblyRecipe DIAMOND_REVOLVER = add(new AssemblyRecipe(
-            ResourceLocation.fromNamespaceAndPath(NstRevRecoiled.MOD_ID, "diamond_revolver"),
+            new ResourceLocation(NstRevRecoiled.MOD_ID, "diamond_revolver"),
             ModItems.DIAMOND_REVOLVER.get(),
             "item.nst_revrecoiled.diamond_revolver",
             List.of(
@@ -71,7 +71,7 @@ public class AssemblyRecipes {
     ));
 
     public static final BulletAssemblyRecipe STONE_BULLET = addBullet(new BulletAssemblyRecipe(
-            ResourceLocation.fromNamespaceAndPath(NstRevRecoiled.MOD_ID, "stone_bullet"),
+            new ResourceLocation(NstRevRecoiled.MOD_ID, "stone_bullet"),
             ModItems.STONE_BULLET.get(),
             "item.nst_revrecoiled.stone_bullet",
             List.of(
@@ -82,7 +82,7 @@ public class AssemblyRecipes {
     ));
 
     public static final BulletAssemblyRecipe IRON_BULLET = addBullet(new BulletAssemblyRecipe(
-            ResourceLocation.fromNamespaceAndPath(NstRevRecoiled.MOD_ID, "iron_bullet"),
+            new ResourceLocation(NstRevRecoiled.MOD_ID, "iron_bullet"),
             ModItems.IRON_BULLET.get(),
             "item.nst_revrecoiled.iron_bullet",
             List.of(
@@ -93,7 +93,7 @@ public class AssemblyRecipes {
     ));
 
     public static final BulletAssemblyRecipe GOLDEN_BULLET = addBullet(new BulletAssemblyRecipe(
-            ResourceLocation.fromNamespaceAndPath(NstRevRecoiled.MOD_ID, "golden_bullet"),
+            new ResourceLocation(NstRevRecoiled.MOD_ID, "golden_bullet"),
             ModItems.GOLDEN_BULLET.get(),
             "item.nst_revrecoiled.golden_bullet",
             List.of(
@@ -104,7 +104,7 @@ public class AssemblyRecipes {
     ));
 
     public static final BulletAssemblyRecipe DIAMOND_BULLET = addBullet(new BulletAssemblyRecipe(
-            ResourceLocation.fromNamespaceAndPath(NstRevRecoiled.MOD_ID, "diamond_bullet"),
+            new ResourceLocation(NstRevRecoiled.MOD_ID, "diamond_bullet"),
             ModItems.DIAMOND_BULLET.get(),
             "item.nst_revrecoiled.diamond_bullet",
             List.of(

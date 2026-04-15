@@ -1,10 +1,8 @@
 package org.stargest.nst_revrecoiled.Entities;
 
-import net.minecraft.core.HolderLookup;
 import net.minecraft.core.particles.ItemParticleOption;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.Tag;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
@@ -19,13 +17,11 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.EntityHitResult;
+import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
 import org.stargest.nst_revrecoiled.util.ModConfig;
 import org.stargest.nst_revrecoiled.util.ModEntities;
 import org.stargest.nst_revrecoiled.util.ModItems;
-
-import java.util.Objects;
-import java.util.Optional;
 
 /**
  * Custom bullet projectile entity with ballistic physics.
@@ -54,7 +50,7 @@ public class BulletProjectileEntity extends AbstractArrow implements ItemSupplie
      * Constructor for deserialization (called by Minecraft on client side).
      */
     public BulletProjectileEntity(EntityType<? extends BulletProjectileEntity> entityType, Level level) {
-        super(entityType, level);
+        super(entityType, level, new ItemStack(ModItems.STONE_BULLET.get()));
     }
 
     /**
@@ -66,7 +62,8 @@ public class BulletProjectileEntity extends AbstractArrow implements ItemSupplie
      * @param damage Total damage (revolver base + bullet damage)
      */
     public BulletProjectileEntity(Level level, LivingEntity owner, ItemStack bulletStack, float damage) {
-        super(ModEntities.BULLET_PROJECTILE.get(), owner, level, bulletStack, null);
+        super(ModEntities.BULLET_PROJECTILE.get(), owner, level, bulletStack.copy());
+
         this.bulletStack = (bulletStack != null) ? bulletStack.copy() : ItemStack.EMPTY;
         this.fixedDamage = damage;
 
@@ -77,28 +74,17 @@ public class BulletProjectileEntity extends AbstractArrow implements ItemSupplie
     }
 
     /**
-     * Gravity applied per tick for ballistic trajectory.
-     * 0.15 gives ~30 blocks effective range on horizontal shots.
-     * Angled shots naturally travel farther due to ballistic arc.
-     */
-    @Override
-    protected double getDefaultGravity() {
-        return ModConfig.get().bullets.gravity;
-    }
-
-    /**
      * Initializes data tracker with custom fields.
-     * Uses Builder pattern from Minecraft 1.21.
      */
     @Override
-    protected void defineSynchedData(SynchedEntityData.@NotNull Builder builder) {
-        super.defineSynchedData(builder);
-        builder.define(DATA_BULLET_STACK, ItemStack.EMPTY);
-        builder.define(DATA_FIXED_DAMAGE, 0.0f);
+    protected void defineSynchedData() {
+        super.defineSynchedData();
+        this.entityData.define(DATA_BULLET_STACK, ItemStack.EMPTY);
+        this.entityData.define(DATA_FIXED_DAMAGE, 0.0f);
     }
 
     @Override
-    protected @NotNull ItemStack getDefaultPickupItem() {
+    protected @NotNull ItemStack getPickupItem() {
         return new ItemStack(ModItems.STONE_BULLET.get());
     }
 
@@ -116,7 +102,7 @@ public class BulletProjectileEntity extends AbstractArrow implements ItemSupplie
         if (this.bulletStack != null && !this.bulletStack.isEmpty()) {
             return this.bulletStack;
         }
-        return this.getDefaultPickupItem();
+        return this.getPickupItem();
     }
 
     /**
@@ -185,38 +171,26 @@ public class BulletProjectileEntity extends AbstractArrow implements ItemSupplie
 
     /**
      * Writes bullet ItemStack to NBT for world saving.
-     * Uses NbtElement because ItemStack.toNbt returns NbtElement in 1.21.
      */
     @Override
     public void addAdditionalSaveData(@NotNull CompoundTag tag) {
         super.addAdditionalSaveData(tag);
-
-        if (this.bulletStack != null && !this.bulletStack.isEmpty()) {
-            HolderLookup.Provider lookup = this.level().registryAccess();
-            Tag element = this.bulletStack.save(lookup, new CompoundTag());
-            tag.put("BulletStack", element);
+        if (!this.bulletStack.isEmpty()) {
+            tag.put("BulletStack", this.bulletStack.save(new CompoundTag()));
         }
-
         tag.putFloat("FixedDamage", this.fixedDamage);
     }
 
     /**
      * Reads bullet ItemStack from NBT when loading from world.
-     * Uses ItemStack.fromNbt which returns Optional<ItemStack> in 1.21.
      */
     @Override
     public void readAdditionalSaveData(@NotNull CompoundTag tag) {
         super.readAdditionalSaveData(tag);
-
-        if (tag.contains("BulletStack")) {
-            HolderLookup.Provider lookup = this.level().registryAccess();
-            Optional<ItemStack> parsed = ItemStack.parse(lookup, Objects.requireNonNull(tag.get("BulletStack")));
-            if (parsed.isPresent()) {
-                this.bulletStack = parsed.get();
-                this.entityData.set(DATA_BULLET_STACK, this.bulletStack);
-            }
+        if (tag.contains("BulletStack", 10)) {
+            this.bulletStack = ItemStack.of(tag.getCompound("BulletStack"));
+            this.entityData.set(DATA_BULLET_STACK, this.bulletStack);
         }
-
         if (tag.contains("FixedDamage")) {
             this.fixedDamage = tag.getFloat("FixedDamage");
             this.entityData.set(DATA_FIXED_DAMAGE, this.fixedDamage);
@@ -243,6 +217,11 @@ public class BulletProjectileEntity extends AbstractArrow implements ItemSupplie
             this.tickCount++;
         } else {
             super.tick();
+
+            float targetGravity = ModConfig.get().bullets.gravity;
+            float defaultGravity = 0.05f;
+            Vec3 motion = this.getDeltaMovement();
+            this.setDeltaMovement(motion.x, motion.y + defaultGravity - targetGravity, motion.z);
 
             if (this.tickCount >= ModConfig.get().bullets.maxAgeTicks) {
                 this.discard();

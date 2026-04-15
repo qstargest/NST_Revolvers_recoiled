@@ -114,7 +114,7 @@ public class BulletAssemblyRecipe extends AssemblyRecipe {
             }
         }
 
-        int maxStack  = getResult().getDefaultMaxStackSize();
+        int maxStack  = getResult().getMaxStackSize();
         int remaining = count;
         while (remaining > 0) {
             int batch = Math.min(remaining, maxStack);
