@@ -21,10 +21,9 @@ import org.stargest.nst_revrecoiled.Villager.ModVillagers;
 public class VillagerClothingFeatureRendererMixin {
 
     @Inject(
-            method = "render*",
+            method = "render(Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;ILnet/minecraft/world/entity/LivingEntity;FFFFFF)V",
             at = @At("HEAD"),
-            cancellable = true,
-            remap = false
+            cancellable = true
     )
     private void onRender(PoseStack matrices, MultiBufferSource vertexConsumers, int light, LivingEntity entity, float limbAngle, float limbDistance, float tickDelta, float animationProgress, float headYaw, float headPitch, CallbackInfo ci) {
         if (entity instanceof Villager villager
