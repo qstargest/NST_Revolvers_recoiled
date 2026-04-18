@@ -33,6 +33,33 @@ import java.util.List;
 
 /**
  * Client-side GUI for the Assembly Table block.
+ * Renders a custom crafting interface supporting two recipe categories:
+ * revolvers and bullets.
+ *
+ * Layout:
+ *   [ Revolver buttons | Scrollbar | Bullet buttons | Scrollbar | Detail panel ]
+ *   [                   Player inventory (3 rows + hotbar)                      ]
+ *
+ * Craft requests are sent as packet events. The server validates
+ * and executes the craft; the resulting inventory update is synced back to the
+ * client through the normal slot-sync mechanism.
+ *
+ * Key features:
+ * - Independent scrollable lists for revolver and bullet recipes (up to 4 visible at once)
+ * - Detail panel shows a rotating 3D GeckoLib model for revolvers and a spinning
+ *   2D icon for bullets, with damage stat and ingredient counts
+ * - Bullet detail includes quantity controls (−, text input, +) and a craft button
+ *   that doubles as a pickaxe-durability indicator; the icon shows the weakest
+ *   valid pickaxe for the tier when none is present in the inventory
+ * - Per-frame inventory cache (refreshInventoryCache) avoids redundant ingredient
+ *   counts, canCraft checks, and pickaxe searches during the render pass
+ * - Recipe-change cache (onRecipeSelected) avoids rebuilding ingredient ItemStacks
+ *   and scale factors every frame
+ *
+ * Key render and input methods are protected to allow addon mods to subclass this
+ * screen and override recipe display, detail panels, or input handling for custom
+ * recipe types registered via AssemblyRecipes.register().
+ *
  * Adapted for Forge 1.20.1.
  */
 public class AssemblyTableScreen extends AbstractContainerScreen<AssemblyTableScreenHandler> {
@@ -75,7 +102,7 @@ public class AssemblyTableScreen extends AbstractContainerScreen<AssemblyTableSc
     private static final float FIXED_PITCH        =  10f;
     private static final long  ROTATION_PERIOD_MS = 3000L;
 
-    // GeckoLib model pivot offsets
+    // GeckoLib model pivot offsets — tuned to center the revolver in the preview box
     private static final float MODEL_PIVOT_X = 1.4f;
     private static final float MODEL_PIVOT_Y = 0.8f;
     private static final float MODEL_PIVOT_Z = 1.1f;
@@ -93,7 +120,7 @@ public class AssemblyTableScreen extends AbstractContainerScreen<AssemblyTableSc
     private static final int MAIN_INV_Y = 148;
     private static final int HOTBAR_Y   = 206;
 
-    // ── Quantity control button bounds ──
+    // ── Quantity control button bounds (static to avoid per-frame allocation) ─
     private static final int QTY_ROW_Y   = RECIPE_ZONE_BOTTOM - 17;             // 114
     private static final int QTY_MINUS_X = DETAIL_X + DETAIL_PAD;               // 75
     private static final int QTY_MINUS_W = 14;
@@ -140,6 +167,30 @@ public class AssemblyTableScreen extends AbstractContainerScreen<AssemblyTableSc
     private List<AssemblyRecipe> recipes;
     private int selectedRecipe = -1;
     private int revolverCount  = 0;
+
+    /** Recipe icon stacks, created once in init() and reused for all rendering. */
+    private ItemStack[] recipeIconStacks;
+
+    /**
+     * Selected-recipe cache: ingredients, their ItemStacks, and ingredient row scale.
+     * Rebuilt in onRecipeSelected(); not updated per frame.
+     */
+    private List<AssemblyRecipe.Ingredient> cachedIngredients;
+    private List<ItemStack>                 cachedIngStacks;
+    private float                           cachedIngScale;
+
+    /**
+     * Per-frame inventory cache. Rebuilt once per frame in refreshInventoryCache()
+     * to avoid redundant inventory scans during the render pass.
+     */
+    private boolean   cachedCanCraft;
+    private int[]     cachedIngCounts;
+    private int       cachedPickaxeSlot;
+    private net.minecraft.world.item.Item cachedDisplayPickaxe;
+    private ItemStack cachedDisplayPickaxeStack;
+
+    /** Frame timestamp in milliseconds, captured once per frame for animations and cursor blinking. */
+    private long frameTimeMs;
     private int bulletCount    = 0;
 
     private int     bulletQuantity   = 1;
@@ -155,20 +206,6 @@ public class AssemblyTableScreen extends AbstractContainerScreen<AssemblyTableSc
     private boolean draggingBullScroll  = false;
     private float   dragScrollStartNorm = 0f;
     private int     dragMouseYStart     = 0;
-
-    private ItemStack[] recipeIconStacks;
-
-    private List<AssemblyRecipe.Ingredient> cachedIngredients;
-    private List<ItemStack>                 cachedIngStacks;
-    private float                           cachedIngScale;
-
-    private boolean   cachedCanCraft;
-    private int[]     cachedIngCounts;
-    private int       cachedPickaxeSlot;
-    private net.minecraft.world.item.Item cachedDisplayPickaxe;
-    private ItemStack cachedDisplayPickaxeStack;
-
-    private long frameTimeMs;
 
     public AssemblyTableScreen(AssemblyTableScreenHandler handler, Inventory inventory, Component title) {
         super(handler, inventory, title);
@@ -201,12 +238,22 @@ public class AssemblyTableScreen extends AbstractContainerScreen<AssemblyTableSc
         );
     }
 
+    /**
+     * Public wrapper to refresh the currently selected recipe's data.
+     * Useful when recipes are updated via configuration sync while the screen is open.
+     */
     public void refreshSelectedRecipe() {
         if (selectedRecipe >= 0) {
             onRecipeSelected(selectedRecipe);
         }
     }
 
+    /**
+     * Called whenever selectedRecipe changes.
+     * Rebuilds recipe-dependent cache (ingredient list, ItemStacks, and row scale)
+     * that does not depend on current inventory state.
+     * Avoids rebuilding this data on every frame — only on actual selection changes.
+     */
     protected void onRecipeSelected(int newIndex) {
         selectedRecipe = newIndex;
         if (newIndex >= 0) bulletQuantity = 1;
@@ -230,6 +277,18 @@ public class AssemblyTableScreen extends AbstractContainerScreen<AssemblyTableSc
         cachedIngCounts = null;
     }
 
+    /**
+     * Rebuilds the per-frame inventory cache. Called exactly once at the start of
+     * each frame, consolidating all calls to countInInventory, canCraft,
+     * findBestPickaxeSlot, and getMaxCraftable into a single pass.
+     * Results are stored in cachedCanCraft, cachedIngCounts, cachedPickaxeSlot,
+     * and cachedDisplayPickaxeStack for use during the render pass.
+     *
+     * When no valid pickaxe is present, the GUI icon falls back to the weakest
+     * pickaxe in the tier's valid list (PickaxeTier.getValidPickaxes().get(0)),
+     * giving the player a visual hint of the minimum tool required.
+     * The ItemStack is only recreated when the displayed pickaxe type actually changes.
+     */
     protected void refreshInventoryCache() {
         if (selectedRecipe < 0 || selectedRecipe >= recipes.size()
                 || cachedIngredients == null) return;
@@ -313,6 +372,10 @@ public class AssemblyTableScreen extends AbstractContainerScreen<AssemblyTableSc
         return super.mouseClicked(mouseX, mouseY, button);
     }
 
+    /**
+     * Handles a left-click on a scrollbar track or thumb.
+     * Clicking the thumb starts a drag; clicking the track jumps the scroll position.
+     */
     protected boolean handleScrollbarClick(int rx, int ry, int absMouseY) {
         if (revolverCount > MAX_VISIBLE_BTNS
                 && rx >= REV_SCROLLBAR_X && rx < REV_SCROLLBAR_X + SCROLLBAR_W
@@ -365,6 +428,7 @@ public class AssemblyTableScreen extends AbstractContainerScreen<AssemblyTableSc
         return super.mouseDragged(mouseX, mouseY, button, dragX, dragY);
     }
 
+    /** Converts the current drag mouse position into a clamped scroll offset. */
     private int calcScrollFromDrag(int total, int absMouseY) {
         int max        = total - MAX_VISIBLE_BTNS;
         int thumbH     = calcThumbHeight(total);
@@ -381,6 +445,10 @@ public class AssemblyTableScreen extends AbstractContainerScreen<AssemblyTableSc
         return super.mouseReleased(mouseX, mouseY, button);
     }
 
+    /**
+     * Handles left-clicks on the bullet detail panel controls:
+     * quantity box, − button, + button, and the pickaxe craft button.
+     */
     private boolean handleBulletInputClick(int rx, int ry, BulletAssemblyRecipe recipe) {
         if (rx >= QTY_BOX_X && rx < QTY_BOX_X + QTY_BOX_W
                 && ry >= QTY_ROW_Y && ry < QTY_ROW_Y + QTY_MINUS_H) {
@@ -409,6 +477,10 @@ public class AssemblyTableScreen extends AbstractContainerScreen<AssemblyTableSc
         return false;
     }
 
+    /**
+     * Commits the current quantity text input, clamping to [1, BULLET_QTY_MAX].
+     * Resets the editing state regardless of whether parsing succeeded.
+     */
     private void confirmQuantityInput(BulletAssemblyRecipe recipe) {
         try { bulletQuantity = Mth.clamp(Integer.parseInt(quantityInputStr), 1, BULLET_QTY_MAX); }
         catch (NumberFormatException ignored) { }
@@ -484,6 +556,8 @@ public class AssemblyTableScreen extends AbstractContainerScreen<AssemblyTableSc
 
     @Override
     public void render(@NotNull GuiGraphics ctx, int mx, int my, float delta) {
+        // Refresh every frame so craft-button state reacts immediately to quantity
+        // changes and inventory changes — mirrors the original mod's behaviour.
         this.renderBackground(ctx);
         frameTimeMs = System.currentTimeMillis();
         refreshInventoryCache();
@@ -531,6 +605,7 @@ public class AssemblyTableScreen extends AbstractContainerScreen<AssemblyTableSc
             drawSlotCell(ctx, leftPos + INV_X + col * 18, topPos + HOTBAR_Y);
     }
 
+    /** Draws a single inventory slot cell with a recessed bevel border. */
     private void drawSlotCell(GuiGraphics ctx, int sx, int sy) {
         ctx.fill(sx,     sy,     sx + 16, sy + 16, C_SLOT_INNER);
         ctx.fill(sx - 1, sy - 1, sx + 17, sy,      C_SLOT_SHADOW);
@@ -651,6 +726,11 @@ public class AssemblyTableScreen extends AbstractContainerScreen<AssemblyTableSc
         drawQuantityControls(ctx, mx, my);
     }
 
+    /**
+     * Draws the bullet icon with a horizontal squash animation simulating rotation.
+     * scaleX oscillates between 0.08 (edge-on) and 1.0 (face-on) using a cosine curve
+     * driven by frameTimeMs and ROTATION_PERIOD_MS.
+     */
     private void drawSpinningBulletIcon(GuiGraphics ctx, int cx, int cy) {
         float yaw    = (float)((frameTimeMs % ROTATION_PERIOD_MS) * 360.0 / ROTATION_PERIOD_MS);
         float scaleX = Math.max(0.08f, Math.abs((float) Math.cos(Math.toRadians(yaw))));
@@ -664,6 +744,11 @@ public class AssemblyTableScreen extends AbstractContainerScreen<AssemblyTableSc
         }
     }
 
+    /**
+     * Draws the pickaxe status line below the ingredient row.
+     * Shows the required tier in red if no valid pickaxe is present,
+     * or remaining durability in green/red depending on whether it covers the current quantity.
+     */
     private void drawPickaxeStatus(GuiGraphics ctx, int statusY,
                                     BulletAssemblyRecipe recipe, int maxW) {
         Component statusText; int color;
@@ -680,6 +765,11 @@ public class AssemblyTableScreen extends AbstractContainerScreen<AssemblyTableSc
         drawTextFitted(ctx, statusText, leftPos + DETAIL_X + DETAIL_PAD, statusY, maxW, color);
     }
 
+    /**
+     * Draws the quantity row: − button, quantity text box, + button, and pickaxe craft button.
+     * The quantity box shows a blinking cursor while editing.
+     * The pickaxe button is greyed out when cachedCanCraft is false.
+     */
     private void drawQuantityControls(GuiGraphics ctx, int mx, int my) {
         int aMx = leftPos + QTY_MINUS_X, aMy = topPos + QTY_ROW_Y;
         int aPx = leftPos + QTY_PLUS_X,  aPy = topPos + QTY_ROW_Y;
@@ -795,10 +885,19 @@ public class AssemblyTableScreen extends AbstractContainerScreen<AssemblyTableSc
                 by + (CRAFT_BTN_H - 8) / 2, labelMaxW, 0xFFFFFFFF);
     }
 
+    /**
+     * Renders the GeckoLib 3D model of a revolver item centered in the preview box.
+     * Falls back to a flat item render if the revolver's GeoItemRenderer is not yet
+     * initialized (e.g. during the first frame after screen open).
+     *
+     * Scissor is enabled to clip the model to the preview box bounds,
+     * preventing it from bleeding into adjacent UI elements.
+     * DiffuseLighting is toggled around the render call to match GUI lighting expectations.
+     */
     @SuppressWarnings({"unchecked", "rawtypes"})
     protected void renderGeckoModel(GuiGraphics ctx, ItemStack stack, int centerX, int centerY,
                                     float scale, float yawDeg, float pitchDeg) {
-        if (!(stack.getItem() instanceof BaseRevolverItem revolver)) {
+        if (!(stack.getItem() instanceof BaseRevolverItem)) {
             ctx.renderItem(stack, centerX - 8, centerY - 8);
             return;
         }
@@ -842,6 +941,10 @@ public class AssemblyTableScreen extends AbstractContainerScreen<AssemblyTableSc
         ctx.disableScissor();
     }
 
+    /**
+     * Draws text scaled down to fit within maxWidth if the natural width exceeds it.
+     * Scaling is applied via matrix transform to preserve sub-pixel alignment.
+     */
     protected void drawTextFitted(GuiGraphics ctx, Component text, int tx, int ty, int maxWidth, int color) {
         int w = font.width(text);
         if (w <= maxWidth) { ctx.drawString(font, text, tx, ty, color, false); return; }
@@ -855,6 +958,10 @@ public class AssemblyTableScreen extends AbstractContainerScreen<AssemblyTableSc
         }
     }
 
+    /**
+     * Draws a raised panel with a 1-pixel dark outer border, 1-pixel light highlight
+     * on the bottom/right, and a 1-pixel bright inner highlight on top/left for depth.
+     */
     protected void drawPanel(GuiGraphics ctx, int px, int py, int pw, int ph, int bg) {
         ctx.fill(px + 1,      py + 1,      px + pw - 1, py + ph - 1, bg);
         ctx.fill(px,          py,          px + pw,     py + 1,      C_DARK);
@@ -865,6 +972,11 @@ public class AssemblyTableScreen extends AbstractContainerScreen<AssemblyTableSc
         ctx.fill(px + 1,      py + 1,      px + 2,      py + ph - 1, 0xFFEEEEEE);
     }
 
+    /**
+     * Draws a recessed bevel border matching the vanilla inventory slot style.
+     * Dark top/left edges, light bottom/right edges — gives the appearance of
+     * a pressed-in surface.
+     */
     protected void drawBevelBorder(GuiGraphics ctx, int sx, int sy, int sw, int sh) {
         ctx.fill(sx,          sy,          sx + sw, sy + 1,  C_SLOT_SHADOW);
         ctx.fill(sx,          sy,          sx + 1,  sy + sh, C_SLOT_SHADOW);

@@ -5,6 +5,8 @@ import org.stargest.nst_revrecoiled.client.render.models.revolvers.RevolverItemM
 
 /**
  * GeckoLib renderer for the Diamond Revolver item.
+ * Uses the BaseRevolverItemRenderer logic for model/icon switching.
+ *
  * Adapted for Forge 1.20.1.
  */
 public class DiamondRevolverItemRenderer extends BaseRevolverItemRenderer<DiamondRevolverItem> {

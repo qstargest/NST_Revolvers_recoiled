@@ -21,6 +21,21 @@ import java.util.Map;
 
 /**
  * Handles custom arm positioning and animations for revolver weapons.
+ * Manages first-person and third-person arm poses including:
+ * - Aim tracking (following player's look direction)
+ * - Reload animations with adaptive hand positioning
+ * - Recoil effects
+ * - Movement shake
+ * - Smooth interpolation between states
+ *
+ * Uses a consolidated state management approach with a single Map&lt;Integer,
+ * PlayerRevolverState&gt;
+ * instead of multiple parallel HashMaps, improving code organization and cache
+ * locality.
+ *
+ * Provides cleanup methods to prevent memory leaks when players disconnect or
+ * entities unload.
+ *
  * Adapted for Forge 1.20.1.
  */
 public class PlayerArmPose {

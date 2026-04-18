@@ -7,6 +7,12 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * Custom particle for revolver visual effects.
+ * Renders as a translucent sprite that fades out over time.
+ *
+ * Two variants:
+ * - Fire: Short-lived (2 ticks), small size, for muzzle flash
+ * - Reload: Longer-lived (6 ticks), larger size, for reload smoke
+ *
  * Adapted for Forge 1.20.1.
  */
  public class RevolverParticle extends TextureSheetParticle {
@@ -38,6 +44,10 @@ import org.jetbrains.annotations.NotNull;
         return ParticleRenderType.PARTICLE_SHEET_TRANSLUCENT;
     }
 
+    /**
+     * Factory for fire particles (muzzle flash).
+     * Creates short-lived, small particles.
+     */
     public static class FireFactory implements ParticleProvider<SimpleParticleType> {
         private final SpriteSet spriteSet;
         public FireFactory(SpriteSet spriteSet) { this.spriteSet = spriteSet; }

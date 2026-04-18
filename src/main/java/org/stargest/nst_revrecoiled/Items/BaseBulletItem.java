@@ -7,6 +7,9 @@ import org.stargest.nst_revrecoiled.util.ModConfig;
 /**
  * Base class for all bullet items.
  * Stores bullet-specific properties like damage.
+ * Damage values are fetched from configuration if available,
+ * falling back to the hardcoded value provided during construction.
+ *
  * Adapted for Forge 1.20.1.
  */
 public class BaseBulletItem extends Item {

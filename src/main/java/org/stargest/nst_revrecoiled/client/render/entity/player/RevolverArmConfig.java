@@ -2,7 +2,13 @@ package org.stargest.nst_revrecoiled.client.render.entity.player;
 
 /**
  * Configuration for revolver arm pose animation.
- * Controls all animation parameters.
+ * Controls all animation parameters: lerp speeds, aim tracking,
+ * draw animation, reload animation, recoil, and movement shake.
+ *
+ * Use RevolverArmConfig.DEFAULT for standard revolver behavior.
+ * Create a custom instance and register it via PlayerArmPose.registerArmConfig()
+ * to override animation parameters for a specific item.
+ *
  * Adapted for Forge 1.20.1.
  */
 public class RevolverArmConfig {

@@ -11,6 +11,10 @@ import org.stargest.nst_revrecoiled.Villager.ModVillagers;
 
 /**
  * Custom renderer for revolvermaker zombie villagers.
+ * Overrides texture selection to apply the custom revolvermaker profession
+ * texture to zombie villagers when applicable, falling back to vanilla
+ * variant-based textures for all other professions.
+ *
  * Adapted for Forge 1.20.1.
  */
 public class ModZombieVillagerRenderer extends ZombieVillagerRenderer {

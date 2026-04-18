@@ -60,7 +60,7 @@ import java.util.function.Predicate;
  * - Prevents vanilla animations (hand swing, item switch)
  * - Ballistic projectiles with gravity (spawned from calculated barrel position)
  * - Per-item recoil and particle callbacks (extensible for addon mods)
- * - Server-timed reload particles (sent via packet at animation keyframe tick, no GeckoLib dependency)
+ * - Server-timed reload particles (sent via packet at animation keyframe tick)
  * - Networked particle synchronization (all nearby players see fire and reload particles)
  *
  * Addon mods can register custom recoil and particle behavior per item via
@@ -180,7 +180,7 @@ public abstract class BaseRevolverItem extends ProjectileWeaponItem implements G
             @Override
             public @NotNull BlockEntityWithoutLevelRenderer getCustomRenderer() {
                 if (this.renderer == null){
-                    this.renderer = new BaseRevolverItemRenderer(new RevolverItemModel());
+                    this.renderer = new BaseRevolverItemRenderer<>(new RevolverItemModel<>());
                 }
                 return this.renderer;
             }

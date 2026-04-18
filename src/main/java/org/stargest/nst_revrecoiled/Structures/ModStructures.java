@@ -20,7 +20,13 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * Injects the revolvermaker house into vanilla village house pools.
+ * Injects the revolvermaker house into vanilla village house pools
+ * so it spawns alongside regular village houses with road connections.
+ *
+ * Implements dynamic injection logic that allows adding and removing the structure
+ * live when the configuration file changes, without requiring a game restart.
+ * Depends on StructurePoolAccessor mixins.
+ *
  * Adapted for Forge 1.20.1.
  */
 public class ModStructures {
@@ -34,11 +40,19 @@ public class ModStructures {
     private static final ResourceLocation REVOLVERMAKER_HOUSE_ELEM =
             new ResourceLocation(Main.MODID, "revolvermaker_house");
 
+    /**
+     * Clears and re-injects the structures based on the current configuration.
+     * Safe to call multiple times (e.g. on config reload).
+     */
     public static void reinit(MinecraftServer server) {
         clearInjectedPools(server);
         init(server);
     }
 
+    /**
+     * Injects the revolvermaker house into the configured village biome house pools.
+     * Uses the weight specified in ModConfig.
+     */
     private static void init(MinecraftServer server) {
         if (!ModConfig.get().worldGen.spawnHouse) {
             LOGGER.info("Revolvermaker house generation disabled via config.");
@@ -78,6 +92,10 @@ public class ModStructures {
                 REVOLVERMAKER_HOUSE_ELEM, TAIGA_VILLAGE_HOUSES.location(), weight);
     }
 
+    /**
+     * Reverts structural injection by filtering out any injected revolvermaker house
+     * entries from both the raw templates list and the unrolled elements list.
+     */
     private static void clearInjectedPools(MinecraftServer server) {
         Optional<Holder.Reference<StructureTemplatePool>> poolOpt = server.registryAccess()
                 .lookupOrThrow(Registries.TEMPLATE_POOL)

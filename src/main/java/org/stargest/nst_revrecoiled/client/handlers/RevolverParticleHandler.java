@@ -11,7 +11,24 @@ import org.stargest.nst_revrecoiled.util.ModParticles;
 
 /**
  * Handles immediate particle spawning for revolver fire and reload effects.
- * Calculated for Forge 1.20.1.
+ * Calculates correct spawn positions for both first-person and third-person camera modes.
+ *
+ * Particle positions are calculated using vector math to account for:
+ * - Player look direction
+ * - Camera perspective
+ * - Weapon positioning in hand
+ * - Body rotation (third-person only)
+ *
+ * Both fire and reload particles bypass GeckoLib animation keyframes entirely:
+ * - Fire particles: spawned via spawnFireImmediate(), called from the clientFireCallback
+ *   registered in ClientEvents, which is invoked directly by
+ *   BaseRevolverItem.use() at the exact moment of firing.
+ * - Reload particles: spawned via spawnReloadImmediate(), called from the
+ *   RevolverReloadParticlePacket receiver registered in PacketHandler,
+ *   which is sent server-side at tick 20 of the charge — matching the bullet-insertion
+ *   keyframe timing without depending on GeckoLib keyframe callbacks.
+ *
+ * Adapted for Forge 1.20.1.
  */
 public class RevolverParticleHandler {
 

@@ -17,6 +17,24 @@ import org.stargest.nst_revrecoiled.Items.BaseRevolverItem;
 
 /**
  * Feature renderer for items held by villagers.
+ * Fixes incorrect 3D GeckoLib model rendering when a villager holds a revolver
+ * during the trade offer UI — replaces it with a standard 2D flat item render.
+ *
+ * Problem: GeckoLib registers a custom item renderer for BaseRevolverItem.
+ * When CrossedArmsItemLayer calls ItemRenderer with ItemDisplayContext.GROUND
+ * or NONE, GeckoLib intercepts the call and renders the full animated 3D model
+ * instead of the flat 2D sprite.
+ *
+ * Fix: Detect revolver items in the render state and force
+ * ItemDisplayContext.FIXED, which maps to the "fixed" display entry in
+ * the item JSON model. This bypasses GeckoLib's renderer and produces the
+ * correct 2D appearance matching other held items in the villager's hand.
+ * All non-revolver items fall through to super.render() unchanged.
+ *
+ * The body transforms from CrossedArmsItemLayer.render() are replicated
+ * manually via getParentModel().root().getChild("body").translateAndRotate(poseStack)
+ * — without this the item renders at the entity origin and is invisible.
+ *
  * Adapted for Forge 1.20.1.
  */
 public class ModVillagerHeldItemFeatureRenderer<T extends LivingEntity, M extends VillagerModel<T>>

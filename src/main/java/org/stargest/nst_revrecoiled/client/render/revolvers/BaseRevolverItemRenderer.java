@@ -19,6 +19,9 @@ import software.bernie.geckolib.renderer.GeoItemRenderer;
 /**
  * Base renderer for all revolvers.
  * Standard GeckoLib renderer that handles the 2D icon / 3D model switch.
+ * For GUI and FIXED contexts, it renders a high-quality 2D flat model using
+ * the ItemRendererAccessor to bypass GeckoLib's default 3D rendering.
+ *
  * Adapted for Forge 1.20.1.
  */
 public class BaseRevolverItemRenderer<T extends BaseRevolverItem> extends GeoItemRenderer<T> {
