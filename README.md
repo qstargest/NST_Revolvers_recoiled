@@ -47,5 +47,5 @@ Our mod is friendly for addons, but if there some problems with addon creation, 
 
 <h5>Future plans</h5>
 
-- NeoForge version
+- <del>NeoForge version</del> ... done✅
 - small content update
