@@ -3,40 +3,24 @@ package org.stargest.nst_revrecoiled.client;
 import net.fabricmc.api.ClientModInitializer;
 
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientEntityEvents;
-import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
-import net.fabricmc.fabric.api.client.model.loading.v1.ModelLoadingPlugin;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.client.particle.v1.ParticleFactoryRegistry;
 import net.minecraft.client.gui.screen.ingame.HandledScreens;
-import net.minecraft.client.render.model.BakedModel;
-import net.minecraft.client.render.model.BakedModelManager;
-import net.minecraft.client.util.ModelIdentifier;
-import net.minecraft.util.Identifier;
-import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import org.stargest.nst_revrecoiled.Items.BaseRevolverItem;
 import org.stargest.nst_revrecoiled.Main;
 import org.stargest.nst_revrecoiled.client.gui.AssemblyTableScreen;
-import org.stargest.nst_revrecoiled.client.handlers.RevolverParticleHandler;
 import org.stargest.nst_revrecoiled.client.managers.CameraRecoilManager;
-import org.stargest.nst_revrecoiled.client.particles.RevolverParticle;
 import org.stargest.nst_revrecoiled.client.render.entity.player.PlayerArmPose;
 import org.stargest.nst_revrecoiled.client.util.ModEntityRenderers;
 import org.stargest.nst_revrecoiled.client.util.ModItemRenderers;
-import org.stargest.nst_revrecoiled.network.RevolverFireParticlePacket;
-import org.stargest.nst_revrecoiled.network.RevolverReloadParticlePacket;
 import org.stargest.nst_revrecoiled.network.SyncConfigS2CPacket;
 import org.stargest.nst_revrecoiled.util.ModConfig;
 import org.stargest.nst_revrecoiled.util.ModItems;
-import org.stargest.nst_revrecoiled.util.ModParticles;
 import org.stargest.nst_revrecoiled.util.ModScreenHandlers;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
 import java.util.function.Consumer;
 
 /**
@@ -84,13 +68,10 @@ public class Nst_revolvers_recoiledClient implements ClientModInitializer {
             shooter -> CameraRecoilManager.getInstance().applyRecoil();
 
     /**
-     * Default muzzle-flash particle callback shared by all base-mod revolvers.
-     * Spawns fire particles immediately at shot time, bypassing GeckoLib animation delay.
-     * Extracted as a constant to avoid allocating a new lambda per item registration.
+     * Called upon client initialization.
+     * Orchestrates registration of renderers, particles, screens, event listeners,
+     * network handlers, and recoil callbacks.
      */
-    private static final Consumer<LivingEntity> DEFAULT_PARTICLES =
-            RevolverParticleHandler::spawnFireImmediate;
-
     @Override
     public void onInitializeClient() {
         // Register entity renderers (bullet projectiles, revolvermaker villager)
@@ -125,8 +106,6 @@ public class Nst_revolvers_recoiledClient implements ClientModInitializer {
 
         // Register particle factories for revolver muzzle flash and reload smoke
         ParticleFactoryRegistry registry = ParticleFactoryRegistry.getInstance();
-        registry.register(ModParticles.REVOLVER_FIRE, RevolverParticle.FireFactory::new);
-        registry.register(ModParticles.REVOLVER_RELOAD, RevolverParticle.ReloadFactory::new);
 
         // Register per-item recoil callbacks for all base-mod revolvers.
         // Addon mods can call registerRecoilCallback() with their own items
@@ -135,47 +114,6 @@ public class Nst_revolvers_recoiledClient implements ClientModInitializer {
         BaseRevolverItem.registerRecoilCallback(ModItems.IRON_REVOLVER,        DEFAULT_RECOIL);
         BaseRevolverItem.registerRecoilCallback(ModItems.GOLDEN_REVOLVER,      DEFAULT_RECOIL);
         BaseRevolverItem.registerRecoilCallback(ModItems.DIAMOND_REVOLVER,     DEFAULT_RECOIL);
-
-        // Register per-item muzzle-flash particle callbacks for all base-mod revolvers.
-        // Addon mods can call registerParticleCallback() with their own items
-        // and a custom consumer from their ClientModInitializer.
-        BaseRevolverItem.registerParticleCallback(ModItems.COBBLESTONE_REVOLVER, DEFAULT_PARTICLES);
-        BaseRevolverItem.registerParticleCallback(ModItems.IRON_REVOLVER,        DEFAULT_PARTICLES);
-        BaseRevolverItem.registerParticleCallback(ModItems.GOLDEN_REVOLVER,      DEFAULT_PARTICLES);
-        BaseRevolverItem.registerParticleCallback(ModItems.DIAMOND_REVOLVER,     DEFAULT_PARTICLES);
-
-        // Receive server-timed reload particle packets.
-        // Sent to all players including the shooter at tick 20 of the charge,
-        // matching the bullet-insertion moment in the reload animation.
-        ClientPlayNetworking.registerGlobalReceiver(
-                RevolverReloadParticlePacket.ID,
-                (payload, ctx) -> ctx.client().execute(() -> {
-                    Entity entity = Objects.requireNonNull(ctx.client().world)
-                            .getEntityById(payload.entityId());
-
-                    if (entity instanceof LivingEntity living) {
-                        RevolverParticleHandler.spawnReloadImmediate(living);
-                    }
-                })
-        );
-
-        // Receive server-broadcast fire particle packets for other players' shots.
-        // Local player is skipped — particles already spawned via the particle callback above.
-        ClientPlayNetworking.registerGlobalReceiver(
-                RevolverFireParticlePacket.ID,
-                (payload, ctx) -> ctx.client().execute(() -> {
-                    Entity entity = Objects.requireNonNull(ctx.client().world)
-                            .getEntityById(payload.entityId());
-
-                    if (entity instanceof LivingEntity living) {
-                        // Skip local player — particles already spawned via particle callback
-                        if (entity == ctx.client().player) return;
-
-                        // Spawn fire particles for remote players
-                        RevolverParticleHandler.spawnFireImmediate(living);
-                    }
-                })
-        );
 
         // Receive configuration synchronization packet from server.
         // Updates the local ModConfig singleton to match the server's values.

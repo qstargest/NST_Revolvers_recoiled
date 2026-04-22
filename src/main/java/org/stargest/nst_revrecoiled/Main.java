@@ -8,8 +8,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.stargest.nst_revrecoiled.Villager.ModVillagers;
 import org.stargest.nst_revrecoiled.network.AssemblyCraftC2SPacket;
-import org.stargest.nst_revrecoiled.network.RevolverFireParticlePacket;
-import org.stargest.nst_revrecoiled.network.RevolverReloadParticlePacket;
 import org.stargest.nst_revrecoiled.network.SyncConfigS2CPacket;
 import org.stargest.nst_revrecoiled.recipe.AssemblyRecipes;
 import org.stargest.nst_revrecoiled.util.*;
@@ -24,19 +22,15 @@ public class Main implements ModInitializer {
     public static final String MOD_ID = "nst_revrecoiled";
     public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
 
+    /**
+     * Called upon mod initialization.
+     * Registers network payloads, configuration, registries, and server events.
+     */
     @Override
     public void onInitialize() {
         LOGGER.info("Initializing {}", MOD_ID);
 
         // Register networking payloads FIRST to avoid client sync crashes
-        PayloadTypeRegistry.playS2C().register(
-                RevolverReloadParticlePacket.ID,
-                RevolverReloadParticlePacket.CODEC
-        );
-        PayloadTypeRegistry.playS2C().register(
-                RevolverFireParticlePacket.ID,
-                RevolverFireParticlePacket.CODEC
-        );
         PayloadTypeRegistry.playS2C().register(
                 SyncConfigS2CPacket.ID,
                 SyncConfigS2CPacket.CODEC
