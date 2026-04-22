@@ -69,6 +69,7 @@ public class Main implements ModInitializer {
                 }
         );
 
+        // Clean up pending delayed shots and bullets when a player disconnects to prevent memory leaks
         ServerPlayConnectionEvents.DISCONNECT.register((handler, server) -> {
             if (handler != null && handler.player != null) {
                 BaseRevolverItem.removePendingShot(handler.player.getUuid());

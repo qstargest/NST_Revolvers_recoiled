@@ -8,7 +8,7 @@
           "thirdperson_righthand", "thirdperson_lefthand", "head", "ground"],
         "model": {
           "type": "minecraft:special",
-          "base": "nst_revrecoiled:item/cobblestone_revolver",
+          "base": "nst_revrecoiled:item/diamond_revolver",
           "model": {
             "type": "geckolib:geckolib"
           }

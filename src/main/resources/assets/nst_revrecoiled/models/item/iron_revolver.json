@@ -1,0 +1,12 @@
+{
+  "credit": "Made with Blockbench",
+  "parent": "builtin/entity",
+  "gui_light": "front",
+  "textures": {
+    "particle": "nst_revrecoiled:item/iron_revolver_item"
+  },
+  "texture_size": [
+    32,
+    32
+  ]
+}

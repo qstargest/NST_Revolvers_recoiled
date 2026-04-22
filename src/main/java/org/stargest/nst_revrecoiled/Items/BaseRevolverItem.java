@@ -56,14 +56,14 @@ import java.util.function.Predicate;
  * - Draw animation when equipping
  * - Prevents vanilla animations (hand swing, item switch)
  * - Ballistic projectiles with gravity (spawned from calculated barrel position)
- * - Per-item recoil and particle callbacks (extensible for addon mods)
- * - Server-timed reload particles (sent via packet at animation keyframe tick, no GeckoLib dependency)
- * - Networked particle synchronization (all nearby players see fire and reload particles)
+ * - Delayed firing mechanics allowing synchronization of projectile spawning with fire animations
+ * - Per-item recoil callbacks (extensible for addon mods)
  *
- * Addon mods can register custom recoil and particle behavior per item via
- * registerRecoilCallback() and registerParticleCallback(), called during client initialization.
+ * Addon mods can register custom recoil behavior per item via
+ * registerRecoilCallback(), called during client initialization.
  * Core methods (loadBullet, calcBarrelPosition, performShoot, draw animation helpers)
  * are protected to allow subclasses to override shooting and animation behavior.
+ * Pending shots and memory management are tracked internally for safe server-side firing delays.
  */
 public abstract class BaseRevolverItem extends RangedWeaponItem implements GeoItem, RevolverArmPoseItem {
 
@@ -264,14 +264,11 @@ public abstract class BaseRevolverItem extends RangedWeaponItem implements GeoIt
      * Called when the player right-clicks with the revolver.
      *
      * If the revolver is charged:
-     * - Server: fires the projectile via performShoot().
+     * - Server: triggers the firing animation and schedules a delayed projectile launch
+     *   by placing the bullet and a delay timer into the pending maps.
      * - Client: looks up and invokes the recoil callback registered for this item,
-     *   then the particle callback — both bypassing GeckoLib animation delay.
-     *   Callbacks are keyed by item registry ID, allowing addon mods to register
-     *   custom behavior per item without modifying this class.
-     * - Server: broadcasts RevolverFireParticlePacket to all tracking players so
-     *   that nearby players also see the muzzle-flash (local player is skipped
-     *   on the receiving end to avoid duplication).
+     *   bypassing GeckoLib animation delay for immediate feedback.
+     *   Callbacks are keyed by item registry ID, allowing for addon extensibility.
      * - Returns PASS to suppress the vanilla hand-swing animation.
      *
      * If the revolver is not charged:
@@ -279,6 +276,11 @@ public abstract class BaseRevolverItem extends RangedWeaponItem implements GeoIt
      * - Server: triggers the reload animation via GeckoLib triggerAnim().
      * - Sets the active hand to begin the charge timer.
      * - Returns CONSUME to prevent other interactions from firing.
+     *
+     * @param world the world the item was used in
+     * @param user  the user of the item
+     * @param hand  the hand the item is held in
+     * @return the result of using the item
      */
     @Override
     public ActionResult use(World world, PlayerEntity user, Hand hand) {
@@ -362,8 +364,20 @@ public abstract class BaseRevolverItem extends RangedWeaponItem implements GeoIt
     }
 
     /**
-     * Called every tick while item is in inventory.
-     * Triggers draw animation when item is first selected.
+     * Called every tick while the item is in an entity's inventory.
+     * Handles state ticks for the revolver, focusing on the actively held instance.
+     *
+     * Responsibilities:
+     * - Triggers the draw animation when the item is first selected.
+     * - Unsets the draw animation flag when the item is not selected.
+     * - Processes pending delayed shots. If the delay timer reaches zero, invokes
+     *   performShoot method with the cached bullet and removes the pending state.
+     *
+     * @param stack    the item stack
+     * @param world    the world
+     * @param entity   the entity holding the item
+     * @param slot     the inventory slot index
+     * @param selected true if the item is in the active hand slot
      */
     @Override
     public void inventoryTick(ItemStack stack, World world, Entity entity, int slot, boolean selected) {
@@ -509,12 +523,21 @@ public abstract class BaseRevolverItem extends RangedWeaponItem implements GeoIt
     }
 
     /**
-     * Fires the loaded bullet as a projectile entity.
+     * Spawns the loaded bullet as a projectile entity and handles shooting effects.
      * Combines revolver base damage with bullet damage.
-     * Spawns projectile from calculated barrel position for visual accuracy.
-     * Triggers fire animation and plays explosion sound.
+     * Spawns the projectile from the perspective-corrected barrel position for visual accuracy.
+     * Called by the inventory tick loop once the delayed shooting timer reaches zero.
+     * Plays the gunshot explosion sound and damages the item stack.
      * Protected to allow subclasses to override projectile type, damage scaling,
-     * sound, or animation behavior.
+     * or sound behavior.
+     *
+     * @param world       the server world
+     * @param shooter     the entity shooting the revolver
+     * @param hand        the hand the revolver is held in
+     * @param stack       the revolver item stack
+     * @param bulletStack the bullet item stack to fire
+     * @param velocity    the base velocity of the projectile
+     * @param divergence  the scatter/divergence applying to the projectile
      */
     protected void performShoot(World world, LivingEntity shooter, Hand hand, ItemStack stack,
                                 ItemStack bulletStack, float velocity, float divergence) {

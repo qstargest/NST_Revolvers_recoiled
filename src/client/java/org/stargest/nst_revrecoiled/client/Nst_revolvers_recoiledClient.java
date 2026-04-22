@@ -24,8 +24,8 @@ import java.util.function.Consumer;
 
 /**
  * Client-side initialization for the mod.
- * Orchestrates registration of renderers, particles, screens, event listeners,
- * and network handlers.
+ * Orchestrates registration of renderers, screens, event listeners,
+ * and network handlers for the client.
  *
  * Initialization order:
  * 1. Entity renderers (bullet projectiles, custom villager renderer)
@@ -33,25 +33,12 @@ import java.util.function.Consumer;
  * 3. Screen handlers (Assembly Table GUI binding)
  * 4. Event listeners (disconnect handler for recoil reset and arm pose cleanup,
  *    entity unload handler for per-entity arm pose cleanup)
- * 5. Particle factories (fire and reload effects)
- * 6. Per-item recoil and particle callbacks (registered for all base-mod revolvers)
- * 7. Network packet receiver for reload particles (server-timed, sent at animation keyframe tick)
- * 8. Network packet receiver for fire particles (synchronization to nearby players)
+ * 5. Per-item recoil callbacks (registered for all base-mod revolvers)
+ * 6. Network packet receiver for configuration synchronization
  *
- * Both fire and reload particles bypass GeckoLib animation keyframe callbacks entirely.
- * Fire particles are triggered client-side at the exact moment of firing via per-item
- * callbacks registered in PARTICLE_CALLBACKS. Reload particles are triggered by a server
- * packet sent at tick 20 of the charge, matching the bullet-insertion keyframe timing.
- *
- * Per-item callbacks (DEFAULT_RECOIL, DEFAULT_PARTICLES) are shared across all base-mod
+ * Per-item callbacks (DEFAULT_RECOIL) are shared across all base-mod
  * revolvers. Addon mods can register their own callbacks for custom revolver items via
- * BaseRevolverItem.registerRecoilCallback() and BaseRevolverItem.registerParticleCallback()
- * from their own ClientModInitializer without modifying this class.
- *
- * Network synchronization ensures all nearby players see fire and reload particles.
- * For fire particles, the local player is skipped on the packet receiver side since
- * it is already handled by the particle callback to avoid duplication.
- * For reload particles, the server sends to all players including the shooter.
+ * BaseRevolverItem.registerRecoilCallback() from their own ClientModInitializer.
  *
  * PlayerArmPose state is cleaned up on both disconnect (clearAllStates) and
  * individual entity unload (clearState) to prevent memory leaks.
