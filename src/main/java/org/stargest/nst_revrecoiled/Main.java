@@ -6,6 +6,7 @@ import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.stargest.nst_revrecoiled.Items.BaseRevolverItem;
 import org.stargest.nst_revrecoiled.Villager.ModVillagers;
 import org.stargest.nst_revrecoiled.network.AssemblyCraftC2SPacket;
 import org.stargest.nst_revrecoiled.network.SyncConfigS2CPacket;
@@ -54,6 +55,14 @@ public class Main implements ModInitializer {
                 AssemblyRecipes.freeze();
             }
             reinit(server);
+        });
+
+        // Clean up pending delayed shots and bullets when a player disconnects to prevent memory leaks
+        ServerPlayConnectionEvents.DISCONNECT.register((handler, server) -> {
+            if (handler != null && handler.player != null) {
+                BaseRevolverItem.removePendingShot(handler.player.getUuid());
+                BaseRevolverItem.removePendingBullet(handler.player.getUuid());
+            }
         });
 
         ServerLifecycleEvents.END_DATA_PACK_RELOAD.register(
