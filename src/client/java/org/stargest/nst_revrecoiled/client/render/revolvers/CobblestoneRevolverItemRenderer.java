@@ -8,7 +8,7 @@ import software.bernie.geckolib.renderer.GeoItemRenderer;
  * GeckoLib renderer for the Cobblestone Revolver item.
  * Handles 3D model rendering in hand and ground.
  */
-public class CobblestoneRevolverItemRenderer extends GeoItemRenderer<CobblestoneRevolverItem> {
+public class CobblestoneRevolverItemRenderer extends BaseRevolverItemRenderer<CobblestoneRevolverItem> {
     public CobblestoneRevolverItemRenderer() {
         super(new CobblestoneRevolverItemModel());
     }

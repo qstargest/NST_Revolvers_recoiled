@@ -15,7 +15,7 @@ public class CobblestoneRevolverItemModel extends GeoModel<CobblestoneRevolverIt
 
     @Override
     public Identifier getModelResource(CobblestoneRevolverItem animatable, GeoRenderer<CobblestoneRevolverItem> renderer) {
-        return Identifier.of(Main.MOD_ID, "geo/cobblestone_revolver.geo.json");
+        return Identifier.of(Main.MOD_ID, "geo/revolver.geo.json");
     }
 
     @Override
@@ -25,6 +25,6 @@ public class CobblestoneRevolverItemModel extends GeoModel<CobblestoneRevolverIt
 
     @Override
     public Identifier getAnimationResource(CobblestoneRevolverItem animatable) {
-        return Identifier.of(Main.MOD_ID, "animations/cobblestone_revolver.animation.json");
+        return Identifier.of(Main.MOD_ID, "animations/revolver.animation.json");
     }
 }

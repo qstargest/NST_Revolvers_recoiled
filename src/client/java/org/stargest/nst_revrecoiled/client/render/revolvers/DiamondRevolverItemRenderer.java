@@ -8,7 +8,7 @@ import software.bernie.geckolib.renderer.GeoItemRenderer;
  * GeckoLib renderer for the Diamond Revolver item.
  * Handles 3D model rendering in hand and ground.
  */
-public class DiamondRevolverItemRenderer extends GeoItemRenderer<DiamondRevolverItem> {
+public class DiamondRevolverItemRenderer extends BaseRevolverItemRenderer<DiamondRevolverItem> {
     public DiamondRevolverItemRenderer() {
         super(new DiamondRevolverItemModel());
     }

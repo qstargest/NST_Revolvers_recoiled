@@ -6,15 +6,15 @@ import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.stargest.nst_revrecoiled.Items.BaseRevolverItem;
 import org.stargest.nst_revrecoiled.Villager.ModVillagers;
 import org.stargest.nst_revrecoiled.network.AssemblyCraftC2SPacket;
-import org.stargest.nst_revrecoiled.network.RevolverFireParticlePacket;
-import org.stargest.nst_revrecoiled.network.RevolverReloadParticlePacket;
 import org.stargest.nst_revrecoiled.network.SyncConfigS2CPacket;
 import org.stargest.nst_revrecoiled.recipe.AssemblyRecipes;
 import org.stargest.nst_revrecoiled.util.*;
 
-import static org.stargest.nst_revrecoiled.Structures.ModStructures.*;
+import static org.stargest.nst_revrecoiled.Structures.ModStructures.reinit;
+
 
 /**
  * Main mod initializer for the Revolver mod.
@@ -24,19 +24,15 @@ public class Main implements ModInitializer {
     public static final String MOD_ID = "nst_revrecoiled";
     public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
 
+    /**
+     * Called upon mod initialization.
+     * Registers network payloads, configuration, registries, and server events.
+     */
     @Override
     public void onInitialize() {
         LOGGER.info("Initializing {}", MOD_ID);
 
         // Register networking payloads FIRST to avoid client sync crashes
-        PayloadTypeRegistry.playS2C().register(
-                RevolverReloadParticlePacket.ID,
-                RevolverReloadParticlePacket.CODEC
-        );
-        PayloadTypeRegistry.playS2C().register(
-                RevolverFireParticlePacket.ID,
-                RevolverFireParticlePacket.CODEC
-        );
         PayloadTypeRegistry.playS2C().register(
                 SyncConfigS2CPacket.ID,
                 SyncConfigS2CPacket.CODEC
@@ -72,6 +68,13 @@ public class Main implements ModInitializer {
                     }
                 }
         );
+
+        ServerPlayConnectionEvents.DISCONNECT.register((handler, server) -> {
+            if (handler != null && handler.player != null) {
+                BaseRevolverItem.removePendingShot(handler.player.getUuid());
+                BaseRevolverItem.removePendingBullet(handler.player.getUuid());
+            }
+        });
 
         // Sync config on join
         ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> sender.sendPacket(new SyncConfigS2CPacket(ConfigLoader.toJson())));
