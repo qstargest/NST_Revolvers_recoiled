@@ -60,7 +60,7 @@ public class ModStructures {
                 server.getRegistryManager().getOrThrow(RegistryKeys.TEMPLATE_POOL);
 
         Optional<StructurePool> poolOpt = poolRegistry.getOptional(TAIGA_VILLAGE_HOUSES)
-                .map(RegistryEntry.Reference::value); // <-- fix 1
+                .map(RegistryEntry.Reference::value);
         if (poolOpt.isEmpty()) {
             Main.LOGGER.warn("Template pool {} not found! Skipping injection.",
                     TAIGA_VILLAGE_HOUSES.getValue());
