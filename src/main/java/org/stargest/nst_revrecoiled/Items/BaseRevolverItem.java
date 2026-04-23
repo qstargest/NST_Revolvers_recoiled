@@ -1,17 +1,15 @@
 package org.stargest.nst_revrecoiled.Items;
 
-import net.fabricmc.fabric.api.networking.v1.PlayerLookup;
-import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.client.render.model.json.ModelTransformationMode;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EquipmentSlot;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.*;
+import net.minecraft.nbt.NbtList;
 import net.minecraft.util.UseAction;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.registry.Registries;
-import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.sound.SoundCategory;
 import net.minecraft.sound.SoundEvents;
@@ -21,8 +19,6 @@ import net.minecraft.util.TypedActionResult;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 import org.stargest.nst_revrecoiled.Entities.BulletProjectileEntity;
-import org.stargest.nst_revrecoiled.network.RevolverFireParticlePacket;
-import org.stargest.nst_revrecoiled.network.RevolverReloadParticlePacket;
 import org.stargest.nst_revrecoiled.util.ModItems;
 import org.stargest.nst_revrecoiled.util.ModConfig;
 import software.bernie.geckolib.animatable.GeoItem;
@@ -39,6 +35,7 @@ import software.bernie.geckolib.renderer.GeoItemRenderer;
 import software.bernie.geckolib.util.GeckoLibUtil;
 
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
@@ -57,14 +54,14 @@ import java.util.function.Supplier;
  * - Draw animation when equipping
  * - Prevents vanilla animations (hand swing, item switch)
  * - Ballistic projectiles with gravity (spawned from calculated barrel position)
- * - Per-item recoil and particle callbacks (extensible for addon mods)
- * - Server-timed reload particles (sent via packet at animation keyframe tick, no GeckoLib dependency)
- * - Networked particle synchronization (all nearby players see fire and reload particles)
+ * - Delayed firing mechanics allowing synchronization of projectile spawning with fire animations
+ * - Per-item recoil callbacks (extensible for addon mods)
  *
- * Addon mods can register custom recoil and particle behavior per item via
- * registerRecoilCallback() and registerParticleCallback(), called during client initialization.
+ * Addon mods can register custom recoil behavior per item via
+ * registerRecoilCallback(), called during client initialization.
  * Core methods (loadBullet, calcBarrelPosition, performShoot, draw animation helpers)
  * are protected to allow subclasses to override shooting and animation behavior.
+ * Pending shots and memory management are tracked internally for safe server-side firing delays.
  */
 public abstract class BaseRevolverItem extends RangedWeaponItem implements GeoItem, RevolverArmPoseItem {
 
@@ -79,10 +76,18 @@ public abstract class BaseRevolverItem extends RangedWeaponItem implements GeoIt
     private static final double BARREL_RIGHT    = -0.20;
     private static final double BARREL_UP       = 0.05;
 
+    private static final int SHOOT_DELAY_TICKS = 3;
+
+    /** Tracks the remaining delay ticks before a scheduled shot is actually fired. */
+    private static final Map<UUID, Integer> PENDING_SHOTS = new ConcurrentHashMap<>();
+
+    /** Stores bullets that have been fired but are waiting for their delayed release. */
+    private static final Map<UUID, ItemStack> PENDING_BULLETS = new ConcurrentHashMap<>();
+
     // Animation definitions
-    private static final RawAnimation FIRE_ANIM   = RawAnimation.begin().thenPlay("animation.model.fireright");
-    private static final RawAnimation RELOAD_ANIM = RawAnimation.begin().thenPlay("animation.model.reloademptyright");
-    private static final RawAnimation DRAW_ANIM   = RawAnimation.begin().thenPlay("animation.model.drawright");
+    private static final RawAnimation FIRE_ANIM   = RawAnimation.begin().thenPlay("fire");
+    private static final RawAnimation RELOAD_ANIM = RawAnimation.begin().thenPlay("reload");
+    private static final RawAnimation DRAW_ANIM   = RawAnimation.begin().thenPlay("draw");
     private static final RawAnimation IDLE_ANIM   = RawAnimation.begin().thenLoop("idle");
 
     // NBT key for tracking draw animation state
@@ -120,6 +125,16 @@ public abstract class BaseRevolverItem extends RangedWeaponItem implements GeoIt
         return ModConfig.get().revolvers.projectileDivergence;
     }
 
+    /**
+     * Gets the number of ticks to delay the projectile spawn after firing.
+     * Allows custom revolvers to synchronize projectile spawning with firing animations.
+     *
+     * @return the delay in ticks
+     */
+    public int getShootDelayTicks(){
+        return SHOOT_DELAY_TICKS;
+    }
+
     // -------------------------------------------------------------------------
     // Per-item client-side fire callbacks
     // -------------------------------------------------------------------------
@@ -134,18 +149,6 @@ public abstract class BaseRevolverItem extends RangedWeaponItem implements GeoIt
      * custom recoil behavior for their revolver items without subclassing the callback system.
      */
     private static final Map<Identifier, Consumer<LivingEntity>> RECOIL_CALLBACKS =
-            new ConcurrentHashMap<>();
-
-    /**
-     * Per-item muzzle-flash particle callbacks, keyed by item registry ID.
-     * Invoked on the client at the exact moment of firing to bypass GeckoLib animation delay.
-     * ConcurrentHashMap used defensively — registration happens during client init,
-     * but the map may be read from the render thread.
-     *
-     * Addon mods register their own callbacks via registerParticleCallback() to apply
-     * custom particle effects for their revolver items.
-     */
-    private static final Map<Identifier, Consumer<LivingEntity>> PARTICLE_CALLBACKS =
             new ConcurrentHashMap<>();
 
     /**
@@ -169,29 +172,6 @@ public abstract class BaseRevolverItem extends RangedWeaponItem implements GeoIt
             );
         }
         RECOIL_CALLBACKS.put(id, callback);
-    }
-
-    /**
-     * Registers a muzzle-flash particle callback for a specific revolver item.
-     * Called during client initialization from Nst_revolvers_recoiledClient
-     * or from an addon mod's ClientModInitializer.
-     *
-     * The callback is invoked on the client at the exact moment of firing,
-     * bypassing GeckoLib animation delay for instant visual feedback.
-     *
-     * @param item     the revolver item to bind the callback to
-     * @param callback consumer invoked on the client when the revolver is fired
-     * @throws IllegalStateException if the item has not yet been registered
-     *                               in the item registry at call time
-     */
-    public static void registerParticleCallback(Item item, Consumer<LivingEntity> callback) {
-        Identifier id = Registries.ITEM.getId(item);
-        if (id == null || id.equals(Registries.ITEM.getId(Items.AIR))) {
-            throw new IllegalStateException(
-                    "registerParticleCallback called before item registration for: " + item
-            );
-        }
-        PARTICLE_CALLBACKS.put(id, callback);
     }
 
     public BaseRevolverItem(Settings settings, float baseDamage, int maxDurability) {
@@ -291,46 +271,14 @@ public abstract class BaseRevolverItem extends RangedWeaponItem implements GeoIt
     }
 
     /**
-     * Called every tick while the revolver is being actively used (charging).
-     * Sends RevolverReloadParticlePacket to the shooter and all tracking players
-     * at tick 20 (1.0 second into the charge) — the moment the bullet-insertion
-     * keyframe occurs in the reload animation.
-     *
-     * Sending the packet server-side at a fixed tick is simpler and more reliable
-     * than relying on GeckoLib animation keyframe callbacks, and ensures reload
-     * particles are visible to all nearby players regardless of their GeckoLib state.
-     */
-    @Override
-    public void usageTick(World world, LivingEntity user, ItemStack stack, int remainingUseTicks) {
-        int chargeTimerMax = getChargeTimeTicks();
-        int elapsed = chargeTimerMax - remainingUseTicks;
-
-        // Trigger reload particles at 40% of the charge duration (matches default tick 20/50)
-        int triggerTick = (int) (0.4f * chargeTimerMax);
-        if (elapsed == triggerTick && !world.isClient) {
-            RevolverReloadParticlePacket packet = new RevolverReloadParticlePacket(user.getId());
-
-            // Send to the shooter themselves
-            if (user instanceof ServerPlayerEntity shooter) {
-                ServerPlayNetworking.send(shooter, packet);
-            }
-            // Send to all other players tracking this entity
-            PlayerLookup.tracking(user).forEach(p -> ServerPlayNetworking.send(p, packet));
-        }
-    }
-
-    /**
      * Called when the player right-clicks with the revolver.
      *
      * If the revolver is charged:
-     * - Server: fires the projectile via performShoot().
+     * - Server: triggers the firing animation and schedules a delayed projectile launch
+     *   by placing the bullet and a delay timer into the pending maps.
      * - Client: looks up and invokes the recoil callback registered for this item,
-     *   then the particle callback — both bypassing GeckoLib animation delay.
-     *   Callbacks are keyed by item registry ID, allowing addon mods to register
-     *   custom behavior per item without modifying this class.
-     * - Server: broadcasts RevolverFireParticlePacket to all tracking players so
-     *   that nearby players also see the muzzle-flash (local player is skipped
-     *   on the receiving end to avoid duplication).
+     *   bypassing GeckoLib animation delay for immediate feedback.
+     *   Callbacks are keyed by item registry ID, allowing for addon extensibility.
      * - Returns PASS to suppress the vanilla hand-swing animation.
      *
      * If the revolver is not charged:
@@ -338,15 +286,40 @@ public abstract class BaseRevolverItem extends RangedWeaponItem implements GeoIt
      * - Server: triggers the reload animation via GeckoLib triggerAnim().
      * - Sets the active hand to begin the charge timer.
      * - Returns CONSUME to prevent other interactions from firing.
+     *
+     * @param world the world the item was used in
+     * @param user  the user of the item
+     * @param hand  the hand the item is held in
+     * @return the result of using the item
      */
     @Override
     public TypedActionResult<ItemStack> use(World world, PlayerEntity user, Hand hand) {
         ItemStack stack = user.getStackInHand(hand);
 
+        if (hand == Hand.OFF_HAND) {
+            return TypedActionResult.fail(stack);
+        }
+
         if (isCharged(stack)) {
             // Shoot only on server
             if (!world.isClient) {
-                performShoot(world, user, hand, stack, getProjectileVelocity(), getProjectileDivergence());
+                if (PENDING_BULLETS.containsKey(user.getUuid())) {
+                    return TypedActionResult.fail(stack);
+                }
+                long instanceId = GeoItem.getOrAssignId(stack, (ServerWorld) world);
+                triggerAnim(user, instanceId, "controller", "fire");
+
+                // Save the loaded bullet and clear the charged state
+                NbtCompound nbt = stack.getNbt();
+                if (nbt != null && nbt.contains(CHARGED_KEY)) {
+                    ItemStack bullet = ItemStack.fromNbt(nbt.getCompound(CHARGED_KEY)).copy();
+                    PENDING_BULLETS.put(user.getUuid(), bullet);
+                }
+
+                NbtCompound nbt2 = stack.getOrCreateNbt();
+                nbt2.remove(CHARGED_KEY);
+
+                PENDING_SHOTS.put(user.getUuid(), this.getShootDelayTicks());
             }
 
             // Invoke per-item recoil and particle callbacks on the client.
@@ -358,17 +331,6 @@ public abstract class BaseRevolverItem extends RangedWeaponItem implements GeoIt
                 if (recoilCallback != null) {
                     recoilCallback.accept(user);
                 }
-
-                Consumer<LivingEntity> particleCallback = PARTICLE_CALLBACKS.get(itemId);
-                if (particleCallback != null) {
-                    particleCallback.accept(user);
-                }
-            }
-
-            // Server-side: broadcast fire particles to all players tracking this entity
-            if (!world.isClient()) {
-                RevolverFireParticlePacket packet = new RevolverFireParticlePacket(user.getId());
-                PlayerLookup.tracking(user).forEach(p -> ServerPlayNetworking.send(p, packet));
             }
 
             // PASS prevents vanilla hand swing animation
@@ -383,7 +345,7 @@ public abstract class BaseRevolverItem extends RangedWeaponItem implements GeoIt
         // Trigger reload animation when starting to charge
         if (!world.isClient) {
             long instanceId = GeoItem.getOrAssignId(stack, (ServerWorld) world);
-            triggerAnim(user, instanceId, "controller", "animation.model.reloademptyright");
+            triggerAnim(user, instanceId, "controller", "reload");
         }
 
         user.setCurrentHand(hand);
@@ -423,25 +385,55 @@ public abstract class BaseRevolverItem extends RangedWeaponItem implements GeoIt
     }
 
     /**
-     * Called every tick while item is in inventory.
-     * Triggers draw animation when item is first selected.
+     * Called every tick while the item is in an entity's inventory.
+     * Handles state ticks for the revolver, focusing on the actively held instance.
+     *
+     * Responsibilities:
+     * - Triggers the draw animation when the item is first selected.
+     * - Unsets the draw animation flag when the item is not selected.
+     * - Processes pending delayed shots. If the delay timer reaches zero, invokes
+     *   performShoot method with the cached bullet and removes the pending state.
+     *
+     * @param stack    the item stack
+     * @param world    the world
+     * @param entity   the entity holding the item
+     * @param slot     the inventory slot index
+     * @param selected true if the item is in the active hand slot
      */
     @Override
     public void inventoryTick(ItemStack stack, World world, Entity entity, int slot, boolean selected) {
         super.inventoryTick(stack, world, entity, slot, selected);
 
-        if (!world.isClient && selected && entity instanceof PlayerEntity player) {
-            // Trigger draw animation only once when first selected
-            if (!hasDrawAnimationPlayed(stack)) {
-                long instanceId = GeoItem.getOrAssignId(stack, (ServerWorld) world);
-                triggerAnim(player, instanceId, "controller", "animation.model.drawright");
-                markDrawAnimationPlayed(stack);
-            }
-        }
-
-        // Reset draw animation flag when item is no longer selected
         if (!selected) {
             clearDrawAnimationFlag(stack);
+            return; // Do not process draw or pending shots for inactive slots
+        }
+
+        if (world.isClient || !(entity instanceof PlayerEntity player)) return;
+
+        // Draw animation
+        if (!hasDrawAnimationPlayed(stack)) {
+            long instanceId = GeoItem.getOrAssignId(stack, (ServerWorld) world);
+            triggerAnim(player, instanceId, "controller", "draw");
+            markDrawAnimationPlayed(stack);
+        }
+
+        // Delayed shoot — only executed when the item is actively held
+        Integer ticksLeft = PENDING_SHOTS.get(player.getUuid());
+        if (ticksLeft == null) return;
+
+        if (ticksLeft <= 0) {
+            PENDING_SHOTS.remove(player.getUuid());
+            ItemStack savedBullet = PENDING_BULLETS.remove(player.getUuid());
+            if (savedBullet != null) {
+                Hand hand = player.getMainHandStack().getItem() == stack.getItem()
+                        ? Hand.MAIN_HAND
+                        : Hand.OFF_HAND;
+                performShoot(world, player, hand, stack, savedBullet,
+                        getProjectileVelocity(), getProjectileDivergence());
+            }
+        } else {
+            PENDING_SHOTS.put(player.getUuid(), ticksLeft - 1);
         }
     }
 
@@ -538,23 +530,25 @@ public abstract class BaseRevolverItem extends RangedWeaponItem implements GeoIt
     }
 
     /**
-     * Fires the loaded bullet as a projectile entity.
+     * Spawns the loaded bullet as a projectile entity and handles shooting effects.
      * Combines revolver base damage with bullet damage.
-     * Spawns projectile from calculated barrel position for visual accuracy.
-     * Triggers fire animation and plays explosion sound.
+     * Spawns the projectile from the perspective-corrected barrel position for visual accuracy.
+     * Called by the inventory tick loop once the delayed shooting timer reaches zero.
+     * Plays the gunshot explosion sound and damages the item stack.
      * Protected to allow subclasses to override projectile type, damage scaling,
-     * sound, or animation behavior.
+     * or sound behavior.
+     *
+     * @param world       the server world
+     * @param shooter     the entity shooting the revolver
+     * @param hand        the hand the revolver is held in
+     * @param stack       the revolver item stack
+     * @param bulletStack the bullet item stack to fire
+     * @param velocity    the base velocity of the projectile
+     * @param divergence  the scatter/divergence applying to the projectile
      */
     protected void performShoot(World world, LivingEntity shooter, Hand hand, ItemStack stack,
-                                float velocity, float divergence) {
-        if (world.isClient) {
-            return;
-        }
-
-        NbtCompound nbt = stack.getNbt();
-        if (nbt == null || !nbt.contains(CHARGED_KEY)) return;
-
-        ItemStack bulletStack = ItemStack.fromNbt(nbt.getCompound(CHARGED_KEY));
+                                ItemStack bulletStack, float velocity, float divergence) {
+        if (world.isClient) return;
 
         float bulletDamage = 0.0f;
         if (bulletStack.getItem() instanceof BaseBulletItem bulletItem) {
@@ -562,28 +556,13 @@ public abstract class BaseRevolverItem extends RangedWeaponItem implements GeoIt
         }
         float totalDamage = this.getDamage() + bulletDamage;
 
-        BulletProjectileEntity projectile = new BulletProjectileEntity(
-                world,
-                shooter,
-                bulletStack,
-                totalDamage
-        );
+        BulletProjectileEntity projectile = new BulletProjectileEntity(world, shooter, bulletStack, totalDamage);
 
-        // Set spawn position to barrel tip for visual accuracy
         Vec3d barrelPos = calcBarrelPosition(shooter);
         projectile.setPosition(barrelPos.x, barrelPos.y, barrelPos.z);
-
-        projectile.setVelocity(
-                shooter,
-                shooter.getPitch(),
-                shooter.getYaw(),
-                0.0f,
-                velocity,
-                divergence
-        );
+        projectile.setVelocity(shooter, shooter.getPitch(), shooter.getYaw(), 0.0f, velocity, divergence);
 
         world.spawnEntity(projectile);
-
         stack.damage(1, shooter, e -> e.sendEquipmentBreakStatus(EquipmentSlot.MAINHAND));
 
         world.playSound(
@@ -594,14 +573,6 @@ public abstract class BaseRevolverItem extends RangedWeaponItem implements GeoIt
                 0.35f,
                 1.5f / (world.getRandom().nextFloat() * 0.4f + 0.8f)
         );
-
-        // Trigger fire animation
-        if (shooter instanceof PlayerEntity player) {
-            long instanceId = GeoItem.getOrAssignId(stack, (ServerWorld) world);
-            triggerAnim(player, instanceId, "controller", "animation.model.fireright");
-        }
-
-        stack.getOrCreateNbt().remove(CHARGED_KEY);
     }
 
     // -------------------------------------------------------------------------
@@ -662,9 +633,9 @@ public abstract class BaseRevolverItem extends RangedWeaponItem implements GeoIt
 
         controller
                 .receiveTriggeredAnimations() // Required for predicate to be called during triggers
-                .triggerableAnim("animation.model.fireright", FIRE_ANIM)
-                .triggerableAnim("animation.model.reloademptyright", RELOAD_ANIM)
-                .triggerableAnim("animation.model.drawright", DRAW_ANIM)
+                .triggerableAnim("fire", FIRE_ANIM)
+                .triggerableAnim("reload", RELOAD_ANIM)
+                .triggerableAnim("draw", DRAW_ANIM)
                 .triggerableAnim("idle", IDLE_ANIM);
 
         controllers.add(controller);
@@ -673,5 +644,21 @@ public abstract class BaseRevolverItem extends RangedWeaponItem implements GeoIt
     @Override
     public AnimatableInstanceCache getAnimatableInstanceCache() {
         return cache;
+    }
+
+    /**
+     * Removes any pending shot delays for the given player.
+     * Called when a player disconnects or unloads.
+     */
+    public static void removePendingShot(UUID playerId){
+        PENDING_SHOTS.remove(playerId);
+    }
+
+    /**
+     * Removes any stored pending bullet for the given player.
+     * Called when a player disconnects or unloads.
+     */
+    public static void removePendingBullet(UUID playerId){
+        PENDING_BULLETS.remove(playerId);
     }
 }

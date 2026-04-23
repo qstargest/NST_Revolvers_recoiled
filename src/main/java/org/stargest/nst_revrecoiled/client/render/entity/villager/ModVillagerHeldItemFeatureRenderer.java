@@ -50,7 +50,7 @@ public class ModVillagerHeldItemFeatureRenderer<T extends VillagerEntity, M exte
 
         if (!heldItem.isEmpty() && heldItem.getItem() instanceof BaseRevolverItem) {
             matrices.push();
-            matrices.translate(0.0f, 0.4f, -0.4f);
+            matrices.translate(0.0f, 0.35f, -0.45f);
             matrices.multiply(RotationAxis.POSITIVE_X.rotationDegrees(180.0f));
             matrices.scale(0.5f, 0.5f, 0.5f);
 

@@ -13,7 +13,7 @@ public class DiamondRevolverItemModel extends GeoModel<DiamondRevolverItem> {
 
     @Override
     public Identifier getModelResource(DiamondRevolverItem animatable) {
-        return Identifier.of(Main.MOD_ID, "geo/cobblestone_revolver.geo.json");
+        return Identifier.of(Main.MOD_ID, "geo/revolver.geo.json");
     }
 
     @Override
@@ -23,6 +23,6 @@ public class DiamondRevolverItemModel extends GeoModel<DiamondRevolverItem> {
 
     @Override
     public Identifier getAnimationResource(DiamondRevolverItem animatable) {
-        return Identifier.of(Main.MOD_ID, "animations/cobblestone_revolver.animation.json");
+        return Identifier.of(Main.MOD_ID, "animations/revolver.animation.json");
     }
 }
