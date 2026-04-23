@@ -1,6 +1,7 @@
 package org.stargest.nst_revrecoiled.Structures;
 
 import com.mojang.datafixers.util.Pair;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import net.minecraft.registry.Registry;
 import net.minecraft.registry.RegistryKey;
 import net.minecraft.registry.RegistryKeys;
@@ -14,6 +15,8 @@ import org.stargest.nst_revrecoiled.Mixins.StructurePoolAccessor;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * Injects the revolvermaker house into vanilla village house pools
@@ -24,98 +27,97 @@ import java.util.List;
  */
 public class ModStructures {
 
-    /** Village house pools to inject into. Add/remove biomes as needed. */
-    private static final String[] VILLAGE_POOLS = {
-            "minecraft:village/taiga/houses"
-    };
+    private static final RegistryKey<StructurePool> TAIGA_VILLAGE_HOUSES =
+            RegistryKey.of(RegistryKeys.TEMPLATE_POOL,
+                    new Identifier("village/taiga/houses"));
+
+    private static final Identifier REVOLVERMAKER_HOUSE_ELEM =
+            Identifier.of(Main.MOD_ID, "revolvermaker_house");
 
     /**
-     * Injects the revolvermaker house into the configured village biome house pools.
-     * Call exactly once; subsequent calls will add duplicate entries.
+     * Clears and re-injects the structures based on the current configuration.
+     * Safe to call multiple times (e.g. on /nst_rev reload).
      */
-    public static void init(MinecraftServer server) {
-        ModConfig config = org.stargest.nst_revrecoiled.util.ModConfig.get();
-        if (!config.worldGen.spawnHouse) {
-            Main.LOGGER.info("Village house spawn is disabled in config. Skipping injection.");
-            return;
-        }
-
-        int weight = config.worldGen.houseWeight;
-
-        Registry<StructurePool> poolRegistry = server.getRegistryManager()
-                .get(RegistryKeys.TEMPLATE_POOL);
-
-        StructurePoolElement element = StructurePoolElement
-                .ofSingle(Main.MOD_ID + ":revolvermaker_house")
-                .apply(StructurePool.Projection.RIGID);
-
-        for (String poolId : VILLAGE_POOLS) {
-            try {
-                RegistryKey<StructurePool> key =
-                        RegistryKey.of(RegistryKeys.TEMPLATE_POOL, new Identifier(poolId));
-
-                StructurePool pool = poolRegistry
-                        .getOrEmpty(new Identifier(poolId))
-                        .orElse(null);
-                if (pool == null) {
-                    Main.LOGGER.warn("Template pool {} not found! Skipping injection.", poolId);
-                    continue;
-                }
-
-                StructurePoolAccessor accessor = (StructurePoolAccessor) pool;
-
-                List<Pair<StructurePoolElement, Integer>> newWeights =
-                        new ArrayList<>(accessor.getElementWeights());
-                newWeights.add(Pair.of(element, weight));
-                accessor.setElementWeights(newWeights);
-
-                for (int i = 0; i < weight; i++) {
-                    accessor.getElements().add(element);
-                }
-
-                Main.LOGGER.info("Injected revolvermaker_house into {} with weight {}", poolId, weight);
-
-            } catch (Exception e) {
-                Main.LOGGER.error("Failed to inject into pool {}: {}", poolId, e.getMessage(), e);
-            }
-        }
-    }
-
-    public static void clearInjectedPools(MinecraftServer server) {
-        Registry<StructurePool> poolRegistry = server.getRegistryManager()
-                .get(RegistryKeys.TEMPLATE_POOL);
-        String targetId = Main.MOD_ID + ":revolvermaker_house";
-
-        for (String poolId : VILLAGE_POOLS) {
-            try {
-                RegistryKey<StructurePool> key =
-                        RegistryKey.of(RegistryKeys.TEMPLATE_POOL, new Identifier(poolId));
-
-                StructurePool pool = poolRegistry
-                        .getOrEmpty(new Identifier(poolId))
-                        .orElse(null);
-                if (pool == null) continue;
-
-                StructurePoolAccessor accessor = (StructurePoolAccessor) pool;
-
-                // Remove from elementWeights list
-                accessor.getElementWeights().removeIf(pair -> {
-                    StructurePoolElement element = pair.getFirst();
-                    return element.toString().contains(targetId);
-                });
-
-                // Remove from flattend elements list
-                accessor.getElements().removeIf(element -> element.toString().contains(targetId));
-
-                Main.LOGGER.info("Cleared revolvermaker_house from {}", poolId);
-            } catch (Exception e) {
-                Main.LOGGER.error("Failed to clear pool {}: {}", poolId, e.getMessage());
-            }
-        }
-    }
-
     public static void reinit(MinecraftServer server) {
         clearInjectedPools(server);
         init(server);
+    }
+
+    /**
+     * Injects the revolvermaker house into the configured village biome house pools.
+     * Uses the weight specified in ModConfig.
+     */
+    private static void init(MinecraftServer server) {
+        if (!ModConfig.get().worldGen.spawnHouse) {
+            Main.LOGGER.info("Revolvermaker house generation disabled via config.");
+            return;
+        }
+
+        int weight = ModConfig.get().worldGen.houseWeight;
+
+        Registry<StructurePool> poolRegistry = server.getRegistryManager()
+                .getOptional(RegistryKeys.TEMPLATE_POOL)
+                .orElse(null);
+        if (poolRegistry == null) return;
+
+        StructurePool pool = poolRegistry.get(TAIGA_VILLAGE_HOUSES);
+        if (pool == null) {
+            Main.LOGGER.warn("Template pool {} not found! Skipping injection.",
+                    TAIGA_VILLAGE_HOUSES.getValue());
+            return;
+        }
+
+
+        StructurePoolElement element = StructurePoolElement
+                .ofSingle(Objects.requireNonNull(REVOLVERMAKER_HOUSE_ELEM).toString())
+                .apply(StructurePool.Projection.RIGID);
+
+        StructurePoolAccessor accessor = (StructurePoolAccessor) pool;
+
+        List<Pair<StructurePoolElement, Integer>> newWeights =
+                new ArrayList<>(accessor.getElementWeights());
+        newWeights.add(Pair.of(element, weight));
+        accessor.setElementWeights(newWeights);
+
+        ObjectArrayList<StructurePoolElement> newElements =
+                new ObjectArrayList<>(accessor.getElements());
+        for (int i = 0; i < weight; i++) {
+            newElements.add(element);
+        }
+        accessor.setElements(newElements);
+
+        Main.LOGGER.info("Injected {} into {} with weight {}",
+                REVOLVERMAKER_HOUSE_ELEM, TAIGA_VILLAGE_HOUSES.getValue(), weight);
+    }
+
+    /**
+     * Reverts structural injection by filtering out any injected revolvermaker house
+     * entries from both the raw templates list and the unrolled elements list.
+     */
+    private static void clearInjectedPools(MinecraftServer server) {
+        Registry<StructurePool> poolRegistry = server.getRegistryManager()
+                .getOptional(RegistryKeys.TEMPLATE_POOL)
+                .orElse(null);
+        if (poolRegistry == null) return;
+
+        StructurePool pool = poolRegistry.get(TAIGA_VILLAGE_HOUSES);
+        if (pool == null) return;
+
+        StructurePoolAccessor accessor = (StructurePoolAccessor) pool;
+        String targetId = Objects.requireNonNull(REVOLVERMAKER_HOUSE_ELEM).toString();
+
+        List<Pair<StructurePoolElement, Integer>> filteredWeights = accessor.getElementWeights()
+                .stream()
+                .filter(pair -> !pair.getFirst().toString().contains(targetId))
+                .collect(Collectors.toCollection(ArrayList::new));
+        accessor.setElementWeights(filteredWeights);
+
+        ObjectArrayList<StructurePoolElement> filteredElements = accessor.getElements()
+                .stream()
+                .filter(e -> !e.toString().contains(targetId))
+                .collect(Collectors.toCollection(ObjectArrayList::new));
+        accessor.setElements(filteredElements);
+
+        Main.LOGGER.info("Cleared {} from {}", targetId, TAIGA_VILLAGE_HOUSES.getValue());
     }
 }
