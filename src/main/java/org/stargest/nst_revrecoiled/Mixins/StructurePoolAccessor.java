@@ -10,7 +10,10 @@ import org.spongepowered.asm.mixin.gen.Accessor;
 
 import java.util.List;
 
-
+/**
+ * Accessor mixin exposing the internal element lists of StructurePool.
+ * Used by ModStructures to inject the revolvermaker house into village pools.
+ */
 @Mixin(StructurePool.class)
 public interface StructurePoolAccessor {
     /** Weighted list of (element, weight) pairs — drives piece selection display/serialisation. */
