@@ -1,6 +1,7 @@
 package org.stargest.nst_revrecoiled.client.render.entity.player;
 
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.model.ModelPart;
 import net.minecraft.client.network.AbstractClientPlayerEntity;
 import net.minecraft.client.render.entity.model.BipedEntityModel;
 import net.minecraft.entity.player.PlayerEntity;
@@ -174,9 +175,13 @@ public class PlayerArmPose {
         // ------------------------------------------------------------------
         // LEFT ARM (supporting hand) — initially unchanged from vanilla
         // ------------------------------------------------------------------
-        float targetLP = model.leftArm.pitch;
-        float targetLY = model.leftArm.yaw;
-        float targetLR = model.leftArm.roll;
+        boolean isLeftHanded = mainArm == Arm.LEFT;
+
+        ModelPart supportVanillaArm = isLeftHanded ? model.rightArm : model.leftArm;
+        float targetLP = supportVanillaArm.pitch;
+        float targetLY = supportVanillaArm.yaw;
+        float targetLR = supportVanillaArm.roll;
+
 
         // Recoil effect - applies after draw and within recoil time window
         if (drawProgress > 0.2f && timeSinceShot >= cfg.recoilTicksMin && timeSinceShot < cfg.recoilTicksMax) {
@@ -239,8 +244,13 @@ public class PlayerArmPose {
             targetRY += shake * cfg.shakeYawFactor;
         }
 
+        if (isLeftHanded) {
+            targetRR = -targetRR;
+            targetLR = -targetLR;
+        }
+
         applyToModel(model, player, state, targetRP, targetRY, targetRR, targetLP, targetLY, targetLR,
-                drawProgress, (float) timeSinceShot, cfg);
+                drawProgress, (float) timeSinceShot, cfg, isLeftHanded);
     }
 
     // -------------------------------------------------------------------------
@@ -256,7 +266,7 @@ public class PlayerArmPose {
                                      PlayerRevolverState state,
                                      float rp, float ry, float rr,
                                      float lp, float ly, float lr,
-                                     float drawProgress, float timeSinceShot, RevolverArmConfig cfg) {
+                                     float drawProgress, float timeSinceShot, RevolverArmConfig cfg, boolean isLeftHanded) {
 
         // Initialize with current targets if no previous state
         ArmState lastR = state.rightArm != null ? state.rightArm : new ArmState(rp, ry, rr);
@@ -282,14 +292,21 @@ public class PlayerArmPose {
         float fLr = MathHelper.lerp(cfg.lerpSpeed, lastL.roll,  lr);
         state.leftArm = new ArmState(fLp, fLy, fLr);
 
-        model.leftArm.pitch = fLp;
-        model.leftArm.yaw   = fLy;
-        model.leftArm.roll  = fLr;
+        ModelPart shootingArm = isLeftHanded ? model.leftArm  : model.rightArm;
+        ModelPart supportArm  = isLeftHanded ? model.rightArm : model.leftArm;
+
+        shootingArm.pitch = fRp;
+        shootingArm.yaw   = fRy;
+        shootingArm.roll  = fRr;
+
+        supportArm.pitch = fLp;
+        supportArm.yaw   = fLy;
+        supportArm.roll  = fLr;
 
         // Adjust arm pivot points for better visual positioning
-        model.rightArm.pivotX = -5.0f;
-        model.rightArm.pivotY = MathHelper.lerp(drawProgress, 4.0f, 2.0f) + (player.isSneaking() ? 2.0f : 0.0f);
-        model.rightArm.pivotZ = MathHelper.lerp(drawProgress, 2.0f, 0.0f);
+        shootingArm.pivotX = isLeftHanded ? 5.0f : -5.0f;
+        shootingArm.pivotY = MathHelper.lerp(drawProgress, 4.0f, 2.0f) + (player.isSneaking() ? 2.0f : 0.0f);
+        shootingArm.pivotZ = MathHelper.lerp(drawProgress, 2.0f, 0.0f);
     }
 
     /**
