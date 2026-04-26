@@ -1,5 +1,7 @@
 package org.stargest.nst_revrecoiled.Entities;
 
+import net.minecraft.block.BlockState;
+import net.minecraft.block.PaneBlock;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.FlyingItemEntity;
@@ -15,9 +17,11 @@ import net.minecraft.particle.ItemStackParticleEffect;
 import net.minecraft.particle.ParticleTypes;
 import net.minecraft.registry.RegistryWrapper;
 import net.minecraft.server.world.ServerWorld;
+import net.minecraft.sound.SoundCategory;
 import net.minecraft.sound.SoundEvents;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.hit.EntityHitResult;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 import org.stargest.nst_revrecoiled.util.ModEntities;
@@ -155,16 +159,47 @@ public class BulletProjectileEntity extends PersistentProjectileEntity implement
     /**
      * Called when bullet hits a block.
      * Spawns impact particles and removes bullet.
+     * If the block is a glass pane — breaks it.
      */
     @Override
     protected void onBlockHit(BlockHitResult hitResult) {
-        super.onBlockHit(hitResult);
-
         World world = this.getWorld();
+
         if (world instanceof ServerWorld serverWorld) {
+            BlockPos blockPos = hitResult.getBlockPos();
+            BlockState blockState = world.getBlockState(blockPos);
+
+            // Check if the hit block is any glass pane
+            if (blockState.getBlock() instanceof PaneBlock) {
+                world.playSound(
+                        null,
+                        blockPos,
+                        SoundEvents.BLOCK_GLASS_BREAK,
+                        SoundCategory.BLOCKS,
+                        1.0f,
+                        0.9f + this.random.nextFloat() * 0.2f
+                );
+
+
+                world.playSound(
+                        null,
+                        blockPos,
+                        SoundEvents.ENTITY_ARROW_HIT,
+                        SoundCategory.BLOCKS,
+                        1.0f,
+                        1.2f + this.random.nextFloat() * 0.2f + 0.9f
+                );
+
+                world.breakBlock(blockPos, false, this.getOwner());
+                spawnImpactParticles(serverWorld, hitResult.getPos());
+                this.discard();
+                return;
+            }
+
             spawnImpactParticles(serverWorld, hitResult.getPos());
         }
 
+        super.onBlockHit(hitResult);
         this.discard();
     }
 
