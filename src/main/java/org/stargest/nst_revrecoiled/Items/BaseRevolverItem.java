@@ -6,13 +6,11 @@ import net.minecraft.entity.EquipmentSlot;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.*;
-import net.minecraft.nbt.NbtList;
 import net.minecraft.util.UseAction;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.registry.Registries;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.sound.SoundCategory;
-import net.minecraft.sound.SoundEvents;
 import net.minecraft.util.Hand;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.TypedActionResult;
@@ -21,6 +19,7 @@ import net.minecraft.world.World;
 import org.stargest.nst_revrecoiled.Entities.BulletProjectileEntity;
 import org.stargest.nst_revrecoiled.util.ModItems;
 import org.stargest.nst_revrecoiled.util.ModConfig;
+import org.stargest.nst_revrecoiled.util.ModSounds;
 import software.bernie.geckolib.animatable.GeoItem;
 import software.bernie.geckolib.animatable.SingletonGeoAnimatable;
 import software.bernie.geckolib.animatable.client.RenderProvider;
@@ -368,7 +367,7 @@ public abstract class BaseRevolverItem extends RangedWeaponItem implements GeoIt
                 world.playSound(
                         null,
                         user.getX(), user.getY(), user.getZ(),
-                        SoundEvents.ITEM_CROSSBOW_LOADING_END,
+                        ModSounds.RELOAD,
                         SoundCategory.PLAYERS,
                         1.0f, 1.0f
                 );
@@ -413,6 +412,14 @@ public abstract class BaseRevolverItem extends RangedWeaponItem implements GeoIt
 
         // Draw animation
         if (!hasDrawAnimationPlayed(stack)) {
+            world.playSound(
+                    null,
+                    player.getX(), player.getY(), player.getZ(),
+                    ModSounds.DRAW,
+                    SoundCategory.PLAYERS,
+                    1.0f, 1.0f
+            );
+
             long instanceId = GeoItem.getOrAssignId(stack, (ServerWorld) world);
             triggerAnim(player, instanceId, "controller", "draw");
             markDrawAnimationPlayed(stack);
@@ -568,7 +575,7 @@ public abstract class BaseRevolverItem extends RangedWeaponItem implements GeoIt
         world.playSound(
                 null,
                 shooter.getX(), shooter.getY(), shooter.getZ(),
-                SoundEvents.ENTITY_GENERIC_EXPLODE,
+                ModSounds.SHOT,
                 SoundCategory.PLAYERS,
                 0.35f,
                 1.5f / (world.getRandom().nextFloat() * 0.4f + 0.8f)

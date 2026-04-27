@@ -1,0 +1,20 @@
+{
+  "revolver_shot": {
+    "subtitle": "subtitle.nst_revrecoiled.revolver_shot",
+    "sounds": [
+      "nst_revrecoiled:shot"
+    ]
+  },
+  "revolver_reload": {
+    "subtitle": "subtitle.nst_revrecoiled.revolver_reload",
+    "sounds": [
+      "nst_revrecoiled:reload"
+    ]
+  },
+  "revolver_draw": {
+    "subtitle": "subtitle.nst_revrecoiled.revolver_draw",
+    "sounds": [
+      "nst_revrecoiled:draw"
+    ]
+  }
+}
