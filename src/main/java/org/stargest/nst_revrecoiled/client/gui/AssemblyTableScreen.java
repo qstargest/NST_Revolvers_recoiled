@@ -97,16 +97,16 @@ public class AssemblyTableScreen extends HandledScreen<AssemblyTableScreenHandle
 
     private static final int   MODEL_SIZE        = 60;
     private static final int   MODEL_W           = 96;
-    private static final float MODEL_SCALE       = 23f;
+    private static final float MODEL_SCALE       = 28f;
 
     private static final float FIXED_YAW          = 100f;
     private static final float FIXED_PITCH        =  10f;
     private static final long  ROTATION_PERIOD_MS = 3000L;
 
     // GeckoLib model pivot offsets — tuned to center the revolver in the preview box
-    private static final float MODEL_PIVOT_X = 1.4f;
-    private static final float MODEL_PIVOT_Y = 0.8f;
-    private static final float MODEL_PIVOT_Z = 1.1f;
+    private static final float MODEL_PIVOT_X = 0f;
+    private static final float MODEL_PIVOT_Y = 0.6f;
+    private static final float MODEL_PIVOT_Z = 0f;
 
     private static final int NAME_OFFSET  = 3;
     private static final int MODEL_OFFSET = 13;
@@ -911,7 +911,7 @@ public class AssemblyTableScreen extends HandledScreen<AssemblyTableScreenHandle
         ctx.fill(cx,               mY + MODEL_SIZE - 1, cx + MODEL_W, mY + MODEL_SIZE,   bc);
         ctx.fill(cx + MODEL_W - 1, mY,                cx + MODEL_W, mY + MODEL_SIZE,     bc);
 
-        float autoYaw = FIXED_YAW - (float)((frameTimeMs % ROTATION_PERIOD_MS) * 360.0 / ROTATION_PERIOD_MS);
+        float autoYaw = FIXED_YAW + (float)((frameTimeMs % ROTATION_PERIOD_MS) * 360.0 / ROTATION_PERIOD_MS);
         renderGeckoModel(ctx, recipeIconStacks[selectedRecipe],
                 cx + MODEL_W / 2, mY + MODEL_SIZE / 2, MODEL_SCALE, autoYaw, FIXED_PITCH);
 
