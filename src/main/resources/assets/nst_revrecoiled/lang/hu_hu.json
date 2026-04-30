@@ -15,5 +15,7 @@
   "gui.nst_revrecoiled.pickaxe_tier_any": "Bármilyen csákány szükséges",
   "gui.nst_revrecoiled.pickaxe_tier_stone": "Kő csákány+ szükséges",
   "gui.nst_revrecoiled.pickaxe_tier_iron": "Vas csákány+ szükséges",
-  "gui.nst_revrecoiled.pickaxe_durability": "Csákány: %s/%s tar."
+  "gui.nst_revrecoiled.pickaxe_durability": "Csákány: %s/%s tar.",
+  "entity.nst_revrecoiled.revolver_bandit": "Bandita",
+  "item.nst_revrecoiled.revolver_bandit_spawn_egg": "Bandita Idézőtojás"
 }

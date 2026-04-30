@@ -15,5 +15,7 @@
   "gui.nst_revrecoiled.pickaxe_tier_any": "Benötigt eine beliebige Spitzhacke",
   "gui.nst_revrecoiled.pickaxe_tier_stone": "Benötigt Steinspitzhacke+",
   "gui.nst_revrecoiled.pickaxe_tier_iron": "Benötigt Eisenspitzhacke+",
-  "gui.nst_revrecoiled.pickaxe_durability": "Spitzhacke: %s/%s Htk."
+  "gui.nst_revrecoiled.pickaxe_durability": "Spitzhacke: %s/%s Htk.",
+  "entity.nst_revrecoiled.revolver_bandit": "Bandit",
+  "item.nst_revrecoiled.revolver_bandit_spawn_egg": "Bandit-Spawnei"
 }

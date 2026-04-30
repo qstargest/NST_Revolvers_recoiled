@@ -15,5 +15,7 @@
   "gui.nst_revrecoiled.pickaxe_tier_any": "Nécessite n'importe quelle pioche",
   "gui.nst_revrecoiled.pickaxe_tier_stone": "Nécessite une pioche en pierre+",
   "gui.nst_revrecoiled.pickaxe_tier_iron": "Nécessite une pioche en fer+",
-  "gui.nst_revrecoiled.pickaxe_durability": "Pioche : %s/%s dur."
+  "gui.nst_revrecoiled.pickaxe_durability": "Pioche : %s/%s dur.",
+  "entity.nst_revrecoiled.revolver_bandit": "Bandit",
+  "item.nst_revrecoiled.revolver_bandit_spawn_egg": "Œuf d'apparition de Bandit"
 }

@@ -15,5 +15,7 @@
   "gui.nst_revrecoiled.pickaxe_tier_any": "דאַרף אַ האַק",
   "gui.nst_revrecoiled.pickaxe_tier_stone": "דאַרף שטיין האַק+",
   "gui.nst_revrecoiled.pickaxe_tier_iron": "דאַרף אײַזן האַק+",
-  "gui.nst_revrecoiled.pickaxe_durability": "האַק: %s/%s הלט."
+  "gui.nst_revrecoiled.pickaxe_durability": "האַק: %s/%s הלט.",
+  "entity.nst_revrecoiled.revolver_bandit": "באַנדיט",
+  "item.nst_revrecoiled.revolver_bandit_spawn_egg": "באַנדיט ספּאַוון יי"
 }

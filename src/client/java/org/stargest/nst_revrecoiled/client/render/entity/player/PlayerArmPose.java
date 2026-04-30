@@ -5,6 +5,7 @@ import net.minecraft.client.model.ModelPart;
 import net.minecraft.client.render.entity.model.BipedEntityModel;
 import net.minecraft.client.render.entity.state.PlayerEntityRenderState;
 import net.minecraft.entity.Entity;
+import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
@@ -14,6 +15,7 @@ import net.minecraft.util.Arm;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
+import org.stargest.nst_revrecoiled.Entities.RevolverBanditEntity;
 import org.stargest.nst_revrecoiled.Items.BaseRevolverItem;
 import org.stargest.nst_revrecoiled.Items.RevolverArmPoseItem;
 
@@ -22,32 +24,22 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 
 import java.util.Map;
 
+
 /**
- * Handles custom arm positioning and animations for revolver weapons.
- * Manages first-person and third-person arm poses including:
- * - Aim tracking (following player's look direction)
- * - Reload animations with adaptive hand positioning
- * - Recoil effects
- * - Movement shake
- * - Smooth interpolation between states
- *
- * Uses a consolidated state management approach with a single Map&lt;Integer, PlayerRevolverState&gt;
- * instead of multiple parallel HashMaps, improving code organization and cache locality.
- *
- * Provides cleanup methods to prevent memory leaks when players disconnect or entities unload.
+ * Manages custom arm poses and animations for revolver use.
+ * Shared between player entities and mob entities to ensure consistent visual behavior.
+ * Handles aiming, recoil, reloading, and movement-based camera/arm shake.
  */
 public class PlayerArmPose {
 
     // -------------------------------------------------------------------------
-    // Per-player state — consolidated into single map for better organization
+    // Per-entity state — keyed by entity ID (players AND mobs share the same map)
     // -------------------------------------------------------------------------
 
     private static final Int2ObjectMap<PlayerRevolverState> playerStates = new Int2ObjectOpenHashMap<>();
 
     /**
-     * Holds all per-player revolver rendering state.
-     * Consolidates what were previously six separate HashMaps into one state object
-     * for better code organization and cache locality.
+     * Holds all per-entity revolver rendering state.
      */
     private static class PlayerRevolverState {
         ArmState rightArm;
@@ -94,15 +86,15 @@ public class PlayerArmPose {
     }
 
     // -------------------------------------------------------------------------
-    // Public entry point
+    // Public entry points
     // -------------------------------------------------------------------------
 
     /**
-     * Main method to apply revolver-specific arm poses to the player model.
+     * Entry point for player entities.
      * Called from PlayerEntityModelMixin injecting into setAngles().
      *
-     * @param model       The biped entity model to modify
-     * @param renderState The player's current render state
+     * @param model       the biped entity model to modify
+     * @param renderState the player's current render state
      */
     public static void applyRevolverPose(BipedEntityModel<PlayerEntityRenderState> model,
                                          PlayerEntityRenderState renderState) {
@@ -115,38 +107,103 @@ public class PlayerArmPose {
 
         ItemStack stack = player.getStackInHand(player.getActiveHand());
         if (!(stack.getItem() instanceof RevolverArmPoseItem)) {
-            // Not holding revolver - remove cached state
             playerStates.remove(renderState.id);
             return;
         }
 
+        boolean isCharging = player.isUsingItem();
+        float chargeProgress = getPlayerProgress(player, stack);
+        boolean isLeftHanded = renderState.mainArm == Arm.LEFT;
+
+        applyCore(model, player, renderState.id, stack, renderTime,
+                isCharging, chargeProgress, isLeftHanded, renderState.sneaking);
+    }
+
+    /**
+     * Entry point for RevolverBandit mob entities.
+     * Called from RevolverBanditModel.setAngles() after vanilla angle setup.
+     *
+     * <p>Reads charge state from the mob's TrackedData so it is always
+     * consistent with server-side weapon logic.
+     *
+     * @param model    the biped entity model to modify
+     * @param bandit   the mob entity
+     * @param entityId the entity's numeric ID (used as state map key)
+     */
+    public static void applyRevolverPoseForMob(BipedEntityModel<?> model,
+                                               RevolverBanditEntity bandit,
+                                               int entityId) {
+        MinecraftClient client = MinecraftClient.getInstance();
+        if (client.world == null) return;
+
+        double renderTime = client.world.getTime() + client.getRenderTickCounter().getTickDelta(false);
+
+        ItemStack stack = bandit.getMainHandStack();
+        if (!(stack.getItem() instanceof RevolverArmPoseItem)) {
+            playerStates.remove(entityId);
+            return;
+        }
+
+        // Read synced state from TrackedData — always consistent with server
+        boolean isCharging = bandit.isChargingRevolver();
+        float chargeProgress = bandit.getChargeProgress();
+
+        // Mobs use right hand; they don't sneak while shooting
+        applyCore(model, bandit, entityId, stack, renderTime,
+                isCharging, chargeProgress, false, bandit.isSneaking());
+    }
+
+    // -------------------------------------------------------------------------
+    // Shared animation core
+    // -------------------------------------------------------------------------
+
+    /**
+     * Core animation logic shared by both player and mob entry points.
+     * All entity-type-specific data has been extracted to primitives before
+     * this is called, so the implementation is fully generic.
+     *
+     * @param model          model to write bone angles into
+     * @param entity         living entity (for velocity, sprint state and state map)
+     * @param entityId       entity ID used as the state map key
+     * @param stack          held item stack (for arm config lookup and charge check)
+     * @param renderTime     current fractional world time (world.time + tickDelta)
+     * @param isCharging     true while the entity is actively reloading
+     * @param chargeProgress reload progress 0–1
+     * @param isLeftHanded   true if the dominant arm is left
+     * @param isSneaking     true if the entity is sneaking
+     */
+    private static void applyCore(BipedEntityModel<?> model,
+                                  LivingEntity entity,
+                                  int entityId,
+                                  ItemStack stack,
+                                  double renderTime,
+                                  boolean isCharging,
+                                  float chargeProgress,
+                                  boolean isLeftHanded,
+                                  boolean isSneaking) {
+
         RevolverArmConfig cfg = ARM_CONFIGS.getOrDefault(stack.getItem(), RevolverArmConfig.DEFAULT);
 
-        // Get or create player state
-        PlayerRevolverState state = playerStates.computeIfAbsent(renderState.id,
+        PlayerRevolverState state = playerStates.computeIfAbsent(entityId,
                 id -> new PlayerRevolverState());
 
-        // Track item identity to detect item switches
         int currentItemHash = System.identityHashCode(stack.getItem());
         if (state.lastItemId != currentItemHash) {
             state.drawStartTime = renderTime;
             state.lastItemId = currentItemHash;
         }
 
-        // Detect shot event (charged → not charged transition)
         boolean isCharged = BaseRevolverItem.isCharged(stack);
         if (state.wasCharged && !isCharged) {
             state.lastShotTime = renderTime;
         }
         state.wasCharged = isCharged;
 
-        // Draw animation progress (0 → 1 over DRAW_DURATION_TICKS ticks)
         double rawDrawProgress = (renderTime - state.drawStartTime) / cfg.drawDurationTicks;
         float drawProgress = MathHelper.clamp(
                 (float) Math.pow(MathHelper.clamp((float) rawDrawProgress, 0f, 1f), cfg.drawEaseExponent),
                 0f, 1f);
 
-        boolean isCharging = player.isUsingItem();
         double timeSinceShot = renderTime - state.lastShotTime;
 
         // ------------------------------------------------------------------
@@ -155,16 +212,19 @@ public class PlayerArmPose {
         float headPitch = model.head.pitch;
         float headYaw   = model.head.yaw;
 
-        float sideSign = (renderState.mainArm == Arm.RIGHT) ? -1.0f : 1.0f;
+        float sideSign = isLeftHanded ? 1.0f : -1.0f;
         float basePitch = cfg.baseAimPitch;
         float baseYaw   = sideSign * cfg.baseAimYawOffset;
 
-        // Store base reload position (without aim tracking)
         float reloadBasePitch = MathHelper.lerp(drawProgress, cfg.drawStartPitch, basePitch);
         float reloadBaseYaw   = baseYaw;
 
-        // Apply aim tracking after draw animation is mostly complete
-        if (org.stargest.nst_revrecoiled.util.ModConfig.get().visuals.enableAimTracking && drawProgress > 0.5f) {
+        boolean isPlayer = entity instanceof PlayerEntity;
+        boolean enableTracking = isPlayer
+                ? org.stargest.nst_revrecoiled.util.ModConfig.get().visuals.enablePlayerAimTracking
+                : org.stargest.nst_revrecoiled.util.ModConfig.get().visuals.enableBanditAimTracking;
+
+        if (enableTracking && drawProgress > 0.5f) {
             float trackingStrength = MathHelper.clamp((drawProgress - 0.5f) / 0.5f, 0f, 1f);
             basePitch += headPitch * trackingStrength;
             baseYaw   += headYaw  * trackingStrength;
@@ -175,16 +235,14 @@ public class PlayerArmPose {
         float targetRR = MathHelper.lerp(drawProgress, cfg.drawStartRoll, 0.0f);
 
         // ------------------------------------------------------------------
-        // LEFT ARM (supporting hand) — initially unchanged from vanilla
+        // LEFT ARM (supporting hand)
         // ------------------------------------------------------------------
-        boolean isLeftHanded = renderState.mainArm == Arm.LEFT;
-
         ModelPart supportVanillaArm = isLeftHanded ? model.rightArm : model.leftArm;
         float targetLP = supportVanillaArm.pitch;
         float targetLY = supportVanillaArm.yaw;
         float targetLR = supportVanillaArm.roll;
 
-        // Recoil effect - applies after draw and within recoil time window
+        // Recoil
         if (drawProgress > 0.2f && timeSinceShot >= cfg.recoilTicksMin && timeSinceShot < cfg.recoilTicksMax) {
             float recoil = (float) ((cfg.recoilTicksMax - timeSinceShot) / (cfg.recoilTicksMax - cfg.recoilTicksMin));
             targetRP -= recoil * cfg.recoilPitchFactor;
@@ -195,31 +253,24 @@ public class PlayerArmPose {
         // ADAPTIVE RELOAD ANIMATION
         // ------------------------------------------------------------------
         if (isCharging) {
-            float chargeProgress = getProgress(player, stack);
-
-            // Snap factor creates smooth ease in/out at animation boundaries
             float snap = (chargeProgress < cfg.reloadSnapEdge)
                     ? chargeProgress / cfg.reloadSnapEdge
                     : (chargeProgress > (1f - cfg.reloadSnapEdge)
                     ? (1f - chargeProgress) / cfg.reloadSnapEdge
                     : 1.0f);
 
-            // Rotate cylinder and adjust aim
             targetRR = snap * cfg.reloadCylinderRoll;
             targetRY -= snap * cfg.reloadCylinderYaw;
             targetRP = MathHelper.lerp(snap, targetRP, reloadBasePitch);
             targetRY = MathHelper.lerp(snap, targetRY, reloadBaseYaw - snap * cfg.reloadCylinderYaw);
 
-            // Left hand follows right hand position
             float adaptiveLeftPitch = targetRP + cfg.reloadLeftPitchOffset;
             float adaptiveLeftYaw   = targetRY + (cfg.reloadLeftYawOffset * -sideSign);
-            float adaptiveLeftRoll  = 0.0f;
 
             targetLP = MathHelper.lerp(snap, targetLP, adaptiveLeftPitch);
             targetLY = MathHelper.lerp(snap, targetLY, adaptiveLeftYaw);
-            targetLR = MathHelper.lerp(snap, targetLR, adaptiveLeftRoll);
+            targetLR = MathHelper.lerp(snap, targetLR, 0.0f);
 
-            // Bullet-insertion shake near end of reload
             if (snap > 0.9f) {
                 float shake = (float) (Math.sin(renderTime * cfg.reloadShakeFreq) * cfg.reloadShakeAmp);
                 targetLP += shake;
@@ -230,14 +281,14 @@ public class PlayerArmPose {
         // ------------------------------------------------------------------
         // MOVEMENT SHAKE
         // ------------------------------------------------------------------
-        Vec3d velocity = player.getVelocity();
+        Vec3d velocity = entity.getVelocity();
         float horizontalSpeed = (float) Math.sqrt(velocity.x * velocity.x + velocity.z * velocity.z);
-        float shakeAmp  = player.isSprinting() ? cfg.shakeSprintAmp
+        float shakeAmp  = entity.isSprinting() ? cfg.shakeSprintAmp
                 : (horizontalSpeed > cfg.shakeWalkMinSpeed ? cfg.shakeWalkAmp : 0f);
-        float shakeFreq = player.isSprinting() ? cfg.shakeFreqSprint : cfg.shakeFreqWalk;
+        float shakeFreq = entity.isSprinting() ? cfg.shakeFreqSprint : cfg.shakeFreqWalk;
 
         if (shakeAmp > 0f) {
-            float timeSeed = (float) ((renderTime + renderState.id * 7) * shakeFreq * 0.5);
+            float timeSeed = (float) ((renderTime + entityId * 7) * shakeFreq * 0.5);
             float shake = (float) (Math.sin(timeSeed) * shakeAmp
                     + Math.sin(timeSeed * cfg.shakeSecondaryFreqMult) * (shakeAmp * cfg.shakeSecondaryAmpMult));
             targetRP += shake * cfg.shakePitchFactor;
@@ -250,8 +301,9 @@ public class PlayerArmPose {
             targetLR = -targetLR;
         }
 
-        applyToModel(model, renderState, state, targetRP, targetRY, targetRR, targetLP, targetLY, targetLR,
-                drawProgress, (float) timeSinceShot, cfg, isLeftHanded);
+        applyToModel(model, entityId, state, targetRP, targetRY, targetRR,
+                targetLP, targetLY, targetLR, drawProgress, (float) timeSinceShot, cfg,
+                isLeftHanded, isSneaking);
     }
 
     // -------------------------------------------------------------------------
@@ -260,34 +312,28 @@ public class PlayerArmPose {
 
     /**
      * Applies interpolated arm rotations to the model with smooth transitions.
-     * Uses different lerp speeds for recoil vs normal movement.
+     * entityId replaces the previous renderState.id usage for generic support.
      */
-    private static void applyToModel(BipedEntityModel<PlayerEntityRenderState> model,
-                                     PlayerEntityRenderState renderState,
+    private static void applyToModel(BipedEntityModel<?> model,
+                                     int entityId,
                                      PlayerRevolverState state,
                                      float rp, float ry, float rr,
                                      float lp, float ly, float lr,
-                                     float drawProgress, float timeSinceShot, RevolverArmConfig cfg, boolean isLeftHanded) {
+                                     float drawProgress, float timeSinceShot,
+                                     RevolverArmConfig cfg, boolean isLeftHanded,
+                                     boolean isSneaking) {
 
-        // Initialize with current targets if no previous state
         ArmState lastR = state.rightArm != null ? state.rightArm : new ArmState(rp, ry, rr);
         ArmState lastL = state.leftArm  != null ? state.leftArm  : new ArmState(lp, ly, lr);
 
-        // Use slower lerp speed during recoil for a more dramatic effect
         float rightLerp = (timeSinceShot >= cfg.recoilTicksMin && timeSinceShot < cfg.recoilTicksMax)
                 ? cfg.lerpSpeedRecoil : cfg.lerpSpeed;
 
-        // Interpolate right arm
         float fRp = MathHelper.lerp(rightLerp, lastR.pitch, rp);
         float fRy = MathHelper.lerp(cfg.lerpSpeed,  lastR.yaw,   ry);
         float fRr = MathHelper.lerp(rightLerp, lastR.roll,  rr);
         state.rightArm = new ArmState(fRp, fRy, fRr);
 
-        model.rightArm.pitch = fRp;
-        model.rightArm.yaw   = fRy;
-        model.rightArm.roll  = fRr;
-
-        // Interpolate left arm
         float fLp = MathHelper.lerp(cfg.lerpSpeed, lastL.pitch, lp);
         float fLy = MathHelper.lerp(cfg.lerpSpeed, lastL.yaw,   ly);
         float fLr = MathHelper.lerp(cfg.lerpSpeed, lastL.roll,  lr);
@@ -304,36 +350,36 @@ public class PlayerArmPose {
         supportArm.yaw   = fLy;
         supportArm.roll  = fLr;
 
-        // Adjust arm pivot points for better visual positioning
         shootingArm.pivotX = isLeftHanded ? 5.0f : -5.0f;
-        shootingArm.pivotY = MathHelper.lerp(drawProgress, 4.0f, 2.0f) + (renderState.sneaking ? 2.0f : 0.0f);
+        shootingArm.pivotY = MathHelper.lerp(drawProgress, 4.0f, 2.0f) + (isSneaking ? 2.0f : 0.0f);
         shootingArm.pivotZ = MathHelper.lerp(drawProgress, 2.0f, 0.0f);
     }
 
     /**
-     * Calculates the progress of item use as a 0→1 value.
+     * Calculates the player's item-use progress as a 0→1 value.
+     * Only used for the player entry point; mobs provide progress via TrackedData.
      */
-    private static float getProgress(PlayerEntity player, ItemStack stack) {
+    private static float getPlayerProgress(PlayerEntity player, ItemStack stack) {
         int max = stack.getMaxUseTime(player);
         return max <= 0 ? 0 : MathHelper.clamp((float) (max - player.getItemUseTimeLeft()) / max, 0, 1);
     }
 
     // -------------------------------------------------------------------------
-    // Public cleanup methods (called from client event listeners)
+    // Public cleanup methods
     // -------------------------------------------------------------------------
 
     /**
-     * Clears cached state for a specific entity.
-     * Called when an entity unloads to prevent memory leaks.
+     * Clears cached state for a specific entity (player or mob).
+     * Must be called when an entity unloads to prevent memory leaks.
      *
-     * @param entityId The entity ID to clear state for
+     * @param entityId the entity ID to clear state for
      */
     public static void clearState(int entityId) {
         playerStates.remove(entityId);
     }
 
     /**
-     * Clears all cached player states.
+     * Clears all cached entity states.
      * Called when disconnecting from server to prevent stale data.
      */
     public static void clearAllStates() {

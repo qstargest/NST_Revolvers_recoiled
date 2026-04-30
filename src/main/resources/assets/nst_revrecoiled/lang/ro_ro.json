@@ -15,5 +15,7 @@
   "gui.nst_revrecoiled.pickaxe_tier_any": "Necesită orice târnăcop",
   "gui.nst_revrecoiled.pickaxe_tier_stone": "Necesită târnăcop de piatră+",
   "gui.nst_revrecoiled.pickaxe_tier_iron": "Necesită târnăcop de fier+",
-  "gui.nst_revrecoiled.pickaxe_durability": "Târnăcop: %s/%s dur."
+  "gui.nst_revrecoiled.pickaxe_durability": "Târnăcop: %s/%s dur.",
+  "entity.nst_revrecoiled.revolver_bandit": "Bandit",
+  "item.nst_revrecoiled.revolver_bandit_spawn_egg": "Ou de invocare Bandit"
 }

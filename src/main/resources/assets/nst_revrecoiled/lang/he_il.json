@@ -15,5 +15,7 @@
   "gui.nst_revrecoiled.pickaxe_tier_any": "דורש כל מקוש",
   "gui.nst_revrecoiled.pickaxe_tier_stone": "דורש מקוש אבן+",
   "gui.nst_revrecoiled.pickaxe_tier_iron": "דורש מקוש ברזל+",
-  "gui.nst_revrecoiled.pickaxe_durability": "מקוש: %s/%s עמ."
+  "gui.nst_revrecoiled.pickaxe_durability": "מקוש: %s/%s עמ.",
+  "entity.nst_revrecoiled.revolver_bandit": "שודד",
+  "item.nst_revrecoiled.revolver_bandit_spawn_egg": "ביצת זימון שודד"
 }

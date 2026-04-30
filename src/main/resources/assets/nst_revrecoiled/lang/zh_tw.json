@@ -15,5 +15,7 @@
   "gui.nst_revrecoiled.pickaxe_tier_any": "需要任意鎬",
   "gui.nst_revrecoiled.pickaxe_tier_stone": "需要石鎬或更高",
   "gui.nst_revrecoiled.pickaxe_tier_iron": "需要鐵鎬或更高",
-  "gui.nst_revrecoiled.pickaxe_durability": "鎬: %s/%s 耐久"
+  "gui.nst_revrecoiled.pickaxe_durability": "鎬: %s/%s 耐久",
+  "entity.nst_revrecoiled.revolver_bandit": "強盜",
+  "item.nst_revrecoiled.revolver_bandit_spawn_egg": "強盜生怪蛋"
 }

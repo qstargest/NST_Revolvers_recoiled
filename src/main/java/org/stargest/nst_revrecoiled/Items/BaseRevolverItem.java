@@ -16,7 +16,10 @@ import net.minecraft.sound.SoundCategory;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Hand;
 import net.minecraft.util.Identifier;
+import net.minecraft.util.hit.HitResult;
+import net.minecraft.util.math.Box;
 import net.minecraft.util.math.Vec3d;
+import net.minecraft.world.RaycastContext;
 import net.minecraft.world.World;
 import org.apache.commons.lang3.mutable.MutableObject;
 import org.jetbrains.annotations.Nullable;
@@ -35,10 +38,7 @@ import software.bernie.geckolib.animation.RawAnimation;
 import software.bernie.geckolib.constant.DataTickets;
 import software.bernie.geckolib.util.GeckoLibUtil;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
@@ -53,17 +53,12 @@ import java.util.function.Predicate;
  * - Charge-based shooting system (hold to reload, release to fire)
  * - GeckoLib animations (fire, reload, draw, idle)
  * - Perspective-aware rendering (draw animation suppressed in third-person)
- * - Draw animation when equipping
- * - Prevents vanilla animations (hand swing, item switch)
  * - Ballistic projectiles with gravity (spawned from calculated barrel position)
- * - Delayed firing mechanics allowing synchronization of projectile spawning with fire animations
- * - Per-item recoil callbacks (extensible for addon mods)
+ * - Delayed firing mechanics for synchronization with animations
+ * - Per-item recoil callbacks for addon extensibility
  *
- * Addon mods can register custom recoil behavior per item via
- * registerRecoilCallback(), called during client initialization.
- * Core methods (loadBullet, calcBarrelPosition, performShoot, draw animation helpers)
- * are protected to allow subclasses to override shooting and animation behavior.
- * Pending shots and memory management are tracked internally for safe server-side firing delays.
+ * Addon mods can register custom recoil behavior via registerRecoilCallback.
+ * Core shooting and animation methods are protected to allow for specialized subclasses.
  */
 public abstract class BaseRevolverItem extends RangedWeaponItem implements GeoItem, RevolverArmPoseItem {
 
@@ -71,12 +66,6 @@ public abstract class BaseRevolverItem extends RangedWeaponItem implements GeoIt
     private static final int DEFAULT_CHARGE_TIME_TICKS = 50; // 2.5 seconds at 20 TPS
     private static final float DEFAULT_PROJECTILE_VELOCITY = 6.0f;
     private static final float DEFAULT_PROJECTILE_DIVERGENCE = 0.2f; // Reduced for better accuracy
-
-    // Barrel position offsets — mirror TP_FIRE_* constants in RevolverParticleHandler
-    private static final double BARREL_SHOULDER = 0.35; // Body-right offset to shoulder
-    private static final double BARREL_FWD      = 1.0;  // Forward from shoulder
-    private static final double BARREL_RIGHT    = -0.20;
-    private static final double BARREL_UP       = 0.05;
 
     private static final int SHOOT_DELAY_TICKS = 3;
 
@@ -498,57 +487,49 @@ public abstract class BaseRevolverItem extends RangedWeaponItem implements GeoIt
     }
 
     /**
-     * Calculates the barrel tip position server-side,
-     * mirroring the third-person fire particle offset in RevolverParticleHandler.
-     * This ensures bullets spawn from the visually correct position.
-     * Uses constants that match RevolverParticleHandler's TP_FIRE_* offsets.
-     * Protected to allow subclasses to override barrel positioning for custom models.
+     * Calculates the barrel tip position server-side.
+     * Uses different offsets for players (optimized for 1st person view)
+     * and mobs (optimized for 3rd person outstretched arm view).
      */
     protected Vec3d calcBarrelPosition(LivingEntity shooter) {
         float pitch   = shooter.getPitch();
         float yaw     = shooter.getYaw();
-        float bodyYaw = shooter.getBodyYaw();
-
-        double baseX = shooter.getX();
-        double baseY = shooter.getY() + 1.45; // Approximate shoulder height
-        double baseZ = shooter.getZ();
-
-        Vec3d bodyRight = Vec3d.fromPolar(0, bodyYaw + 90).normalize();
+        
         Vec3d lookFwd   = Vec3d.fromPolar(pitch, yaw);
         Vec3d lookUp    = Vec3d.fromPolar(pitch - 90, yaw).normalize();
         Vec3d lookRight = lookFwd.crossProduct(lookUp).normalize();
 
-        Vec3d shoulder = new Vec3d(
-                baseX + bodyRight.x * BARREL_SHOULDER,
-                baseY,
-                baseZ + bodyRight.z * BARREL_SHOULDER
-        );
-
-        return shoulder
-                .add(lookFwd.multiply(BARREL_FWD))
-                .add(lookRight.multiply(BARREL_RIGHT))
-                .add(lookUp.multiply(BARREL_UP));
+        if (shooter instanceof PlayerEntity) {
+            // 1st-person perspective offset relative to the camera (eye pos)
+            Vec3d eyePos = shooter.getEyePos();
+            return eyePos
+                    .add(lookFwd.multiply(0.8))   // Forward from camera
+                    .add(lookRight.multiply(0.35)) // Right from camera
+                    .add(lookUp.multiply(-0.25));  // Down from camera
+        } else {
+            // 3rd-person shoulder offset for mobs (like RevolverBandit holding gun in outstretched right arm)
+            double baseY = shooter.getY() + shooter.getStandingEyeHeight() - 0.2;
+            Vec3d center = new Vec3d(shooter.getX(), baseY, shooter.getZ());
+            
+            // To find the exact right hand position safely regardless of yaw math flipped signs:
+            // lookRight points to the entity's visual right. 
+            // 0.35 blocks to the right places the anchor on the right shoulder.
+            // 0.85 blocks forward matches the fully outstretched arm.
+            return center
+                    .add(lookFwd.multiply(1.5))    // Length of extended arm + gun
+                    .add(lookRight.multiply(0.20))  // Offset to the physical Right shoulder
+                    .add(lookUp.multiply(1));   // Slight dip for arm posture
+        }
     }
 
     /**
      * Spawns the loaded bullet as a projectile entity and handles shooting effects.
-     * Combines revolver base damage with bullet damage.
-     * Spawns the projectile from the perspective-corrected barrel position for visual accuracy.
-     * Called by the inventory tick loop once the delayed shooting timer reaches zero.
-     * Plays the gunshot explosion sound and damages the item stack.
-     * Protected to allow subclasses to override projectile type, damage scaling,
-     * or sound behavior.
-     *
-     * @param world       the server world
-     * @param shooter     the entity shooting the revolver
-     * @param hand        the hand the revolver is held in
-     * @param stack       the revolver item stack
-     * @param bulletStack the bullet item stack to fire
-     * @param velocity    the base velocity of the projectile
-     * @param divergence  the scatter/divergence applying to the projectile
+     * Combines revolver base damage with bullet damage and plays gunshot sounds.
+     * Spawns the projectile from the perspective-corrected barrel position.
+     * Employs raycasting to ensure the projectile trajectory converges on the crosshair.
      */
-    protected void performShoot(World world, LivingEntity shooter, Hand hand, ItemStack stack,
-                                ItemStack bulletStack, float velocity, float divergence) {
+    public void performShoot(World world, LivingEntity shooter, Hand hand, ItemStack stack,
+                             ItemStack bulletStack, float velocity, float divergence) {
         if (world.isClient) return;
 
         float bulletDamage = 0.0f;
@@ -559,19 +540,60 @@ public abstract class BaseRevolverItem extends RangedWeaponItem implements GeoIt
 
         BulletProjectileEntity projectile = new BulletProjectileEntity(world, shooter, bulletStack, totalDamage);
 
+        // 1. Calculate physical barrel tip position
         Vec3d barrelPos = calcBarrelPosition(shooter);
         projectile.setPosition(barrelPos.x, barrelPos.y, barrelPos.z);
-        projectile.setVelocity(shooter, shooter.getPitch(), shooter.getYaw(), 0.0f, velocity, divergence);
+
+        // 2. Correction for offset: perform a raycast from the eye to find the exact target point.
+        // This ensures the trajectory converges directly on the crosshair target regardless of distance.
+        Vec3d lookVec = shooter.getRotationVec(1.0f);
+        Vec3d eyePos = shooter.getEyePos();
+        double maxRange = 100.0;
+        Vec3d endPoint = eyePos.add(lookVec.multiply(maxRange));
+
+        // Raycast against blocks
+        HitResult blockHit = world.raycast(new RaycastContext(
+                eyePos, endPoint,
+                RaycastContext.ShapeType.COLLIDER,
+                RaycastContext.FluidHandling.NONE,
+                shooter
+        ));
+
+        Vec3d actualTarget = blockHit.getType() != HitResult.Type.MISS
+                ? blockHit.getPos()
+                : endPoint;
+
+        // Try to find entities intersecting the ray
+        Box searchBox = shooter.getBoundingBox().stretch(lookVec.multiply(maxRange)).expand(1.0);
+        double closestDist = actualTarget.squaredDistanceTo(eyePos);
+
+        for (Entity entity : world.getOtherEntities(shooter, searchBox, e -> !e.isSpectator() && e.canHit())) {
+            Box entityBox = entity.getBoundingBox().expand(0.3f);
+            Optional<Vec3d> hitOpt = entityBox.raycast(eyePos, endPoint);
+            if (hitOpt.isPresent()) {
+                double dist = eyePos.squaredDistanceTo(hitOpt.get());
+                if (dist < closestDist) {
+                    closestDist = dist;
+                    actualTarget = hitOpt.get();
+                }
+            }
+        }
+
+        Vec3d aimDir = actualTarget.subtract(barrelPos).normalize();
+
+        // 3. Launch projectile
+        projectile.setVelocity(aimDir.x, aimDir.y, aimDir.z, velocity, divergence);
 
         world.spawnEntity(projectile);
         stack.damage(1, shooter, LivingEntity.getSlotForHand(hand));
 
+        // Gunshot sound
         world.playSound(
                 null,
                 shooter.getX(), shooter.getY(), shooter.getZ(),
                 ModSounds.SHOT,
                 SoundCategory.PLAYERS,
-                0.35f,
+                0.8f, // Slightly louder for better feedback
                 1.5f / (world.getRandom().nextFloat() * 0.4f + 0.8f)
         );
     }

@@ -8,11 +8,13 @@ import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.minecraft.client.gui.screen.ingame.HandledScreens;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
+import org.stargest.nst_revrecoiled.Entities.RevolverBanditEntity;
 import org.stargest.nst_revrecoiled.Items.BaseRevolverItem;
 import org.stargest.nst_revrecoiled.Main;
 import org.stargest.nst_revrecoiled.client.gui.AssemblyTableScreen;
 import org.stargest.nst_revrecoiled.client.managers.CameraRecoilManager;
 import org.stargest.nst_revrecoiled.client.render.entity.player.PlayerArmPose;
+import org.stargest.nst_revrecoiled.client.util.ModEntityModelLayers;
 import org.stargest.nst_revrecoiled.client.util.ModEntityRenderers;
 import org.stargest.nst_revrecoiled.client.util.ModItemRenderers;
 import org.stargest.nst_revrecoiled.network.SyncConfigS2CPacket;
@@ -60,7 +62,9 @@ public class Nst_revolvers_recoiledClient implements ClientModInitializer {
      */
     @Override
     public void onInitializeClient() {
-        // Register entity renderers (bullet projectiles, revolvermaker villager)
+        // Register custom entity model layers first (renderers reference them)
+        ModEntityModelLayers.init();
+        // Register entity renderers (bullet, revolvermaker villager, revolver bandit)
         // and item renderers (GeckoLib revolver models)
         ModEntityRenderers.init();
         ModItemRenderers.init();
@@ -70,7 +74,7 @@ public class Nst_revolvers_recoiledClient implements ClientModInitializer {
                 ModScreenHandlers.ASSEMBLY_TABLE_HANDLER,
                 AssemblyTableScreen.FACTORY
         );
-
+        
         // Reset camera recoil when disconnecting from server
         ClientPlayConnectionEvents.DISCONNECT.register(
                 (handler, client) -> CameraRecoilManager.getInstance().reset()
@@ -82,10 +86,10 @@ public class Nst_revolvers_recoiledClient implements ClientModInitializer {
                 PlayerArmPose.clearAllStates()
         );
 
-        // Clear per-entity arm pose state when a player entity unloads
+        // Clear per-entity arm pose state when a player or Revolver Bandit entity unloads
         // (e.g. goes out of render distance) to prevent unbounded map growth
         ClientEntityEvents.ENTITY_UNLOAD.register((entity, world) -> {
-            if (entity instanceof PlayerEntity) {
+            if (entity instanceof PlayerEntity || entity instanceof RevolverBanditEntity) {
                 PlayerArmPose.clearState(entity.getId());
             }
         });

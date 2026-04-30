@@ -15,5 +15,7 @@
   "gui.nst_revrecoiled.pickaxe_tier_any": "Wymaga dowolnego kilofa",
   "gui.nst_revrecoiled.pickaxe_tier_stone": "Wymaga kamiennego kilofa+",
   "gui.nst_revrecoiled.pickaxe_tier_iron": "Wymaga żelaznego kilofa+",
-  "gui.nst_revrecoiled.pickaxe_durability": "Kilof: %s/%s trw."
+  "gui.nst_revrecoiled.pickaxe_durability": "Kilof: %s/%s trw.",
+  "entity.nst_revrecoiled.revolver_bandit": "Bandyta",
+  "item.nst_revrecoiled.revolver_bandit_spawn_egg": "Jajo przyzywające: Bandyta"
 }
