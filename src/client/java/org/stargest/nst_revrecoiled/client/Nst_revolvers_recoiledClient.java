@@ -3,6 +3,7 @@ package org.stargest.nst_revrecoiled.client;
 import net.fabricmc.api.ClientModInitializer;
 
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientEntityEvents;
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.minecraft.client.gui.screen.ingame.HandledScreens;
@@ -53,7 +54,9 @@ public class Nst_revolvers_recoiledClient implements ClientModInitializer {
      * Extracted as a constant to avoid allocating a new lambda per item registration.
      */
     private static final Consumer<LivingEntity> DEFAULT_RECOIL =
-            shooter -> CameraRecoilManager.getInstance().applyRecoil();
+            shooter -> CameraRecoilManager.getInstance().scheduleRecoil(
+                    BaseRevolverItem.SHOOT_DELAY_TICKS
+            );
 
     /**
      * Called upon client initialization.
@@ -92,6 +95,10 @@ public class Nst_revolvers_recoiledClient implements ClientModInitializer {
             if (entity instanceof PlayerEntity || entity instanceof RevolverBanditEntity) {
                 PlayerArmPose.clearState(entity.getId());
             }
+        });
+
+        ClientTickEvents.END_CLIENT_TICK.register(client -> {
+            CameraRecoilManager.getInstance().tickPending();
         });
 
         // Register per-item recoil callbacks for all base-mod revolvers.

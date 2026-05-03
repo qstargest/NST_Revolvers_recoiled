@@ -67,7 +67,7 @@ public abstract class BaseRevolverItem extends RangedWeaponItem implements GeoIt
     private static final float DEFAULT_PROJECTILE_VELOCITY = 6.0f;
     private static final float DEFAULT_PROJECTILE_DIVERGENCE = 0.2f; // Reduced for better accuracy
 
-    private static final int SHOOT_DELAY_TICKS = 3;
+    public static final int SHOOT_DELAY_TICKS = 3;
 
     /** Tracks the remaining delay ticks before a scheduled shot is actually fired. */
     private static final Map<UUID, Integer> PENDING_SHOTS = new ConcurrentHashMap<>();
