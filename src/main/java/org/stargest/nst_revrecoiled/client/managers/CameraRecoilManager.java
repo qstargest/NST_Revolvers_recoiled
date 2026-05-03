@@ -3,10 +3,16 @@ package org.stargest.nst_revrecoiled.client.managers;
 import net.minecraft.client.MinecraftClient;
 import org.stargest.nst_revrecoiled.util.ModConfig;
 
+import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
+
 /**
  * Manages camera recoil effects for revolver weapons.
  * Applies smooth pitch and yaw offsets to the player camera on each shot.
  * Client-side only — offsets are consumed by MouseRecoilMixin each frame.
+ *
+ * Support for delayed recoil is included via scheduleRecoil method, allowing
+ * the effect to sync perfectly with projectile firing delays.
  *
  * Uses a two-phase animation system:
  * 1. KICKBACK  — quick upward/sideways snap to the recoil peak (easeOutQuad)
@@ -45,6 +51,8 @@ public class CameraRecoilManager {
     private long        recoilStartTime = 0;
     private RecoilPhase currentPhase    = RecoilPhase.IDLE;
 
+    private final Queue<int[]> pendingRecoils = new ConcurrentLinkedQueue<>();
+
     /**
      * Recoil animation phases.
      * IDLE     — no recoil active; updateAndGetOffsets() returns zero immediately.
@@ -66,6 +74,20 @@ public class CameraRecoilManager {
     // -------------------------------------------------------------------------
     // Public API
     // -------------------------------------------------------------------------
+
+    public void scheduleRecoil(int delayTicks) {
+        pendingRecoils.add(new int[]{delayTicks});
+    }
+
+    public void tickPending() {
+        pendingRecoils.removeIf(entry -> {
+            if (--entry[0] <= 0) {
+                applyRecoil();
+                return true;
+            }
+            return false;
+        });
+    }
 
     /**
      * Triggers a recoil event with default parameters from configuration.

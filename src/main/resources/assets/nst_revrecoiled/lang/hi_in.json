@@ -15,5 +15,7 @@
   "gui.nst_revrecoiled.pickaxe_tier_any": "कोई भी कुदाल चाहिए",
   "gui.nst_revrecoiled.pickaxe_tier_stone": "पत्थर की कुदाल या बेहतर चाहिए",
   "gui.nst_revrecoiled.pickaxe_tier_iron": "लोहे की कुदाल या बेहतर चाहिए",
-  "gui.nst_revrecoiled.pickaxe_durability": "कुदाल: %s/%s टि."
+  "gui.nst_revrecoiled.pickaxe_durability": "कुदाल: %s/%s टि.",
+  "entity.nst_revrecoiled.revolver_bandit": "डाकू",
+  "item.nst_revrecoiled.revolver_bandit_spawn_egg": "डाकू स्पॉन एग"
 }

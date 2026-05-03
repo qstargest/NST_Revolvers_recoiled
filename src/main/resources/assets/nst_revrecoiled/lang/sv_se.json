@@ -15,5 +15,7 @@
   "gui.nst_revrecoiled.pickaxe_tier_any": "Kräver en hacka",
   "gui.nst_revrecoiled.pickaxe_tier_stone": "Kräver stenhacka+",
   "gui.nst_revrecoiled.pickaxe_tier_iron": "Kräver järnhacka+",
-  "gui.nst_revrecoiled.pickaxe_durability": "Hacka: %s/%s hvb."
+  "gui.nst_revrecoiled.pickaxe_durability": "Hacka: %s/%s hvb.",
+  "entity.nst_revrecoiled.revolver_bandit": "Bandit",
+  "item.nst_revrecoiled.revolver_bandit_spawn_egg": "Bandit-spawnägg"
 }

@@ -15,5 +15,7 @@
   "gui.nst_revrecoiled.pickaxe_tier_any": "任意のツルハシが必要",
   "gui.nst_revrecoiled.pickaxe_tier_stone": "石のツルハシ以上が必要",
   "gui.nst_revrecoiled.pickaxe_tier_iron": "鉄のツルハシ以上が必要",
-  "gui.nst_revrecoiled.pickaxe_durability": "ツルハシ: %s/%s 耐久"
+  "gui.nst_revrecoiled.pickaxe_durability": "ツルハシ: %s/%s 耐久",
+  "entity.nst_revrecoiled.revolver_bandit": "バンディット",
+  "item.nst_revrecoiled.revolver_bandit_spawn_egg": "バンディットのスポーンエッグ"
 }

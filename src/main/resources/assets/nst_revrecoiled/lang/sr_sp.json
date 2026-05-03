@@ -15,5 +15,7 @@
   "gui.nst_revrecoiled.pickaxe_tier_any": "Потребна је нека пијука",
   "gui.nst_revrecoiled.pickaxe_tier_stone": "Потребна је камена пијука+",
   "gui.nst_revrecoiled.pickaxe_tier_iron": "Потребна је гвоздена пијука+",
-  "gui.nst_revrecoiled.pickaxe_durability": "Пијука: %s/%s тр."
+  "gui.nst_revrecoiled.pickaxe_durability": "Пијука: %s/%s тр.",
+  "entity.nst_revrecoiled.revolver_bandit": "Бандит",
+  "item.nst_revrecoiled.revolver_bandit_spawn_egg": "Јаје за призивање: Бандит"
 }

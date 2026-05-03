@@ -15,5 +15,7 @@
   "gui.nst_revrecoiled.pickaxe_tier_any": "Кез келген кирка керек",
   "gui.nst_revrecoiled.pickaxe_tier_stone": "Тас кирка+ керек",
   "gui.nst_revrecoiled.pickaxe_tier_iron": "Темір кирка+ керек",
-  "gui.nst_revrecoiled.pickaxe_durability": "Кирка: %s/%s дт."
+  "gui.nst_revrecoiled.pickaxe_durability": "Кирка: %s/%s дт.",
+  "entity.nst_revrecoiled.revolver_bandit": "Бандит",
+  "item.nst_revrecoiled.revolver_bandit_spawn_egg": "Бандит шақыру жұмыртқасы"
 }

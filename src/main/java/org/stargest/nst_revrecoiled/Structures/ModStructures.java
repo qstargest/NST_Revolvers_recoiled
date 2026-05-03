@@ -49,7 +49,7 @@ public class ModStructures {
      * Uses the weight specified in ModConfig.
      */
     private static void init(MinecraftServer server) {
-        if (!ModConfig.get().worldGen.spawnHouse) {
+        if (!ModConfig.get().worldGen.spawnRevolvermakerHouse) {
             Main.LOGGER.info("Revolvermaker house generation disabled via config.");
             return;
         }
