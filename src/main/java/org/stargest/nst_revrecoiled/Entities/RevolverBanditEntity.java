@@ -27,6 +27,7 @@ import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.raid.RaiderEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
+import net.minecraft.item.Items;
 import net.minecraft.registry.Registries;
 import net.minecraft.util.Identifier;
 import net.minecraft.server.world.ServerWorld;
@@ -144,6 +145,12 @@ public class RevolverBanditEntity extends RaiderEntity {
     public @Nullable EntityData initialize(ServerWorldAccess world, LocalDifficulty difficulty,
                                            SpawnReason spawnReason, @Nullable EntityData entityData) {
         EntityData data = super.initialize(world, difficulty, spawnReason, entityData);
+
+        ItemStack helmet = getEquippedStack(EquipmentSlot.HEAD);
+        if (helmet.getItem() == Items.WHITE_BANNER) {
+            equipStack(EquipmentSlot.HEAD, ItemStack.EMPTY);
+        }
+
         equipRevolver();
         return data;
     }
