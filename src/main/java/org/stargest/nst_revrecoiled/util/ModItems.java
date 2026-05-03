@@ -92,7 +92,7 @@ public class ModItems {
     // Spawn Eggs
     public static final Item REVOLVER_BANDIT_SPAWN_EGG = register(
             "revolver_bandit_spawn_egg",
-            settings -> new SpawnEggItem(ModEntities.REVOLVER_BANDIT, 0x2B5A2B, 0x94A89C, settings),
+            settings -> new SpawnEggItem(ModEntities.REVOLVER_BANDIT, 0x2B5C6B, 0x949C9C, settings),
             new Item.Settings());
 
     // Creative Tab

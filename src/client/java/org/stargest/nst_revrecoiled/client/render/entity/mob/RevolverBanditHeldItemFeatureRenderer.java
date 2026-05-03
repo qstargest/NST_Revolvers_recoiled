@@ -13,9 +13,9 @@ import org.stargest.nst_revrecoiled.Entities.RevolverBanditEntity;
 
 /**
  * Feature renderer for items held by the Revolver Bandit.
- * In 1.21.4, vanilla's ArmedEntityRenderState refactor makes direct item tracking
- * complex. This custom feature renderer reads an ItemStack directly from our
- * RevolverBanditRenderState, ensuring compatibility with GeckoLib's 3D models.
+ * In 1.21.1, this custom renderer ensures that weapons are correctly positioned
+ * in the bandit's hand and follow GeckoLib animations. It reads the ItemStack
+ * directly from the entity to guarantee synchronization with the bandit's state.
  */
 public class RevolverBanditHeldItemFeatureRenderer extends FeatureRenderer<RevolverBanditEntity, RevolverBanditModel> {
 
