@@ -11,6 +11,9 @@ import java.util.concurrent.ConcurrentLinkedQueue;
  * Applies smooth pitch and yaw offsets to the player camera on each shot.
  * Client-side only — offsets are consumed by MouseRecoilMixin each frame.
  *
+ * Support for delayed recoil is included via scheduleRecoil method, allowing
+ * the effect to sync perfectly with projectile firing delays.
+ *
  * Uses a two-phase animation system:
  * 1. KICKBACK  — quick upward/sideways snap to the recoil peak (easeOutQuad)
  * 2. RECOVERY  — smooth return to the original camera position (easeInOutCubic)
