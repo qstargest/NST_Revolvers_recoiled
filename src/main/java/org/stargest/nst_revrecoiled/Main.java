@@ -37,10 +37,9 @@ public class Main implements ModInitializer {
         // Load configuration
         ConfigLoader.load();
 
+        ModEntities.init();
         ModItems.init();
         ModSounds.init();
-        ModEntities.init();
-        ModParticles.init();
         ModBlocks.init();
         ModVillagers.init();
         ModScreenHandlers.register();

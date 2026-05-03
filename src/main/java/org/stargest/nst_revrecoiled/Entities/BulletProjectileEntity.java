@@ -120,10 +120,10 @@ public class BulletProjectileEntity extends PersistentProjectileEntity implement
         World world = this.getWorld();
 
         if (world instanceof ServerWorld serverWorld) {
-            if (target.damage(this.getDamageSources().arrow(this, owner), this.fixedDamage)) {
-                if (target instanceof LivingEntity livingTarget) {
-                    this.onHit(livingTarget);
-                }
+            boolean damaged = target.damage(this.getDamageSources().arrow(this, owner), this.fixedDamage);
+
+            if (damaged && target instanceof LivingEntity livingTarget) {
+                this.onHit(livingTarget);
             }
 
             spawnImpactParticles(serverWorld, this.getPos());

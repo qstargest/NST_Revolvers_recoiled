@@ -29,7 +29,7 @@ public class ConfigLoader {
      */
     public static void load() {
         ModConfig config = new ModConfig(); // Start with defaults
-        
+
         // 1. Load Settings (revolvers, bullets, worldgen)
         File sFile = getConfigFile(SETTINGS_FILE);
         if (sFile.exists()) {
@@ -39,6 +39,7 @@ public class ConfigLoader {
                     if (sc.revolvers != null) config.revolvers = sc.revolvers;
                     if (sc.bullets != null) config.bullets = sc.bullets;
                     if (sc.worldGen != null) config.worldGen = sc.worldGen;
+                    if (sc.bandit != null) config.bandit = sc.bandit;
                 }
             } catch (IOException e) {
                 Main.LOGGER.error("Failed to load settings.json", e);
@@ -69,7 +70,7 @@ public class ConfigLoader {
         }
 
         ModConfig.set(config);
-        
+
         // Save back to ensure all files exist and are up to date with defaults
         save();
     }
@@ -79,7 +80,7 @@ public class ConfigLoader {
      */
     public static void save() {
         ModConfig config = ModConfig.get();
-        
+
         // Ensure directory exists
         File dir = FabricLoader.getInstance().getConfigDir().resolve(CONFIG_DIR_NAME).toFile();
         if (!dir.exists() && !dir.mkdirs()) {
@@ -93,6 +94,7 @@ public class ConfigLoader {
             sc.revolvers = config.revolvers;
             sc.bullets = config.bullets;
             sc.worldGen = config.worldGen;
+            sc.bandit = config.bandit;
             GSON.toJson(sc, writer);
         } catch (IOException e) {
             Main.LOGGER.error("Failed to save settings.json", e);
@@ -120,6 +122,7 @@ public class ConfigLoader {
         public ModConfig.RevolverConfig revolvers;
         public ModConfig.BulletConfig bullets;
         public ModConfig.WorldGenConfig worldGen;
+        public ModConfig.BanditConfig bandit;
     }
 
     /**

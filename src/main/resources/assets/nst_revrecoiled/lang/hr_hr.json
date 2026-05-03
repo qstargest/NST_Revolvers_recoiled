@@ -15,5 +15,7 @@
   "gui.nst_revrecoiled.pickaxe_tier_any": "Potrebna je bilo koja pijuk",
   "gui.nst_revrecoiled.pickaxe_tier_stone": "Potrebna je kamena pijuk+",
   "gui.nst_revrecoiled.pickaxe_tier_iron": "Potrebna je željezna pijuk+",
-  "gui.nst_revrecoiled.pickaxe_durability": "Pijuk: %s/%s trj."
+  "gui.nst_revrecoiled.pickaxe_durability": "Pijuk: %s/%s trj.",
+  "entity.nst_revrecoiled.revolver_bandit": "Bandit",
+  "item.nst_revrecoiled.revolver_bandit_spawn_egg": "Jaje za prizivanje: Bandit"
 }

@@ -15,5 +15,7 @@
   "gui.nst_revrecoiled.pickaxe_tier_any": "Vaatii jonkin hakun",
   "gui.nst_revrecoiled.pickaxe_tier_stone": "Vaatii kivihakun+",
   "gui.nst_revrecoiled.pickaxe_tier_iron": "Vaatii rautahakun+",
-  "gui.nst_revrecoiled.pickaxe_durability": "Hakku: %s/%s kes."
+  "gui.nst_revrecoiled.pickaxe_durability": "Hakku: %s/%s kes.",
+  "entity.nst_revrecoiled.revolver_bandit": "Bandiitti",
+  "item.nst_revrecoiled.revolver_bandit_spawn_egg": "Bandiitin kutumuna"
 }
