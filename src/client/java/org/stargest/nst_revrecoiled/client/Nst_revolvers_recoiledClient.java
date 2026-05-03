@@ -3,17 +3,19 @@ package org.stargest.nst_revrecoiled.client;
 import net.fabricmc.api.ClientModInitializer;
 
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientEntityEvents;
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
-import net.fabricmc.fabric.api.client.particle.v1.ParticleFactoryRegistry;
 import net.minecraft.client.gui.screen.ingame.HandledScreens;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
+import org.stargest.nst_revrecoiled.Entities.RevolverBanditEntity;
 import org.stargest.nst_revrecoiled.Items.BaseRevolverItem;
 import org.stargest.nst_revrecoiled.Main;
 import org.stargest.nst_revrecoiled.client.gui.AssemblyTableScreen;
 import org.stargest.nst_revrecoiled.client.managers.CameraRecoilManager;
 import org.stargest.nst_revrecoiled.client.render.entity.player.PlayerArmPose;
+import org.stargest.nst_revrecoiled.client.util.ModEntityModelLayers;
 import org.stargest.nst_revrecoiled.client.util.ModEntityRenderers;
 import org.stargest.nst_revrecoiled.client.util.ModItemRenderers;
 import org.stargest.nst_revrecoiled.network.SyncConfigS2CPacket;
@@ -52,7 +54,9 @@ public class Nst_revolvers_recoiledClient implements ClientModInitializer {
      * Extracted as a constant to avoid allocating a new lambda per item registration.
      */
     private static final Consumer<LivingEntity> DEFAULT_RECOIL =
-            shooter -> CameraRecoilManager.getInstance().applyRecoil();
+            shooter -> CameraRecoilManager.getInstance().scheduleRecoil(
+                    BaseRevolverItem.SHOOT_DELAY_TICKS
+            );
 
     /**
      * Called upon client initialization.
@@ -61,6 +65,8 @@ public class Nst_revolvers_recoiledClient implements ClientModInitializer {
      */
     @Override
     public void onInitializeClient() {
+        // Register custom entity model layers first (renderers reference them)
+        ModEntityModelLayers.init();
         // Register entity renderers (bullet projectiles, revolvermaker villager)
         // and item renderers (GeckoLib revolver models)
         ModEntityRenderers.init();
@@ -83,16 +89,17 @@ public class Nst_revolvers_recoiledClient implements ClientModInitializer {
                 PlayerArmPose.clearAllStates()
         );
 
-        // Clear per-entity arm pose state when a player entity unloads
+        // Clear per-entity arm pose state when a player or Revolver Bandit entity unloads
         // (e.g. goes out of render distance) to prevent unbounded map growth
         ClientEntityEvents.ENTITY_UNLOAD.register((entity, world) -> {
-            if (entity instanceof PlayerEntity) {
+            if (entity instanceof PlayerEntity || entity instanceof RevolverBanditEntity) {
                 PlayerArmPose.clearState(entity.getId());
             }
         });
 
-        // Register particle factories for revolver muzzle flash and reload smoke
-        ParticleFactoryRegistry registry = ParticleFactoryRegistry.getInstance();
+        ClientTickEvents.END_CLIENT_TICK.register(client -> {
+            CameraRecoilManager.getInstance().tickPending();
+        });
 
         // Register per-item recoil callbacks for all base-mod revolvers.
         // Addon mods can call registerRecoilCallback() with their own items

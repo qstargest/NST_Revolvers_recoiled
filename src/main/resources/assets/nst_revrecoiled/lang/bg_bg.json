@@ -15,5 +15,7 @@
   "gui.nst_revrecoiled.pickaxe_tier_any": "Нужна е някаква кирка",
   "gui.nst_revrecoiled.pickaxe_tier_stone": "Нужна е каменна кирка+",
   "gui.nst_revrecoiled.pickaxe_tier_iron": "Нужна е железна кирка+",
-  "gui.nst_revrecoiled.pickaxe_durability": "Кирка: %s/%s тр."
+  "gui.nst_revrecoiled.pickaxe_durability": "Кирка: %s/%s тр.",
+  "entity.nst_revrecoiled.revolver_bandit": "Бандит",
+  "item.nst_revrecoiled.revolver_bandit_spawn_egg": "Яйце за призоваване на Бандит"
 }

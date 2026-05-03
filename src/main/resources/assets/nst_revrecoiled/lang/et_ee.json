@@ -15,5 +15,7 @@
   "gui.nst_revrecoiled.pickaxe_tier_any": "Vajab mingit kirvest",
   "gui.nst_revrecoiled.pickaxe_tier_stone": "Vajab kivikirvest+",
   "gui.nst_revrecoiled.pickaxe_tier_iron": "Vajab raudkirvest+",
-  "gui.nst_revrecoiled.pickaxe_durability": "Kirves: %s/%s tv."
+  "gui.nst_revrecoiled.pickaxe_durability": "Kirves: %s/%s tv.",
+  "entity.nst_revrecoiled.revolver_bandit": "Bandiit",
+  "item.nst_revrecoiled.revolver_bandit_spawn_egg": "Bandiidi kudemismuna"
 }

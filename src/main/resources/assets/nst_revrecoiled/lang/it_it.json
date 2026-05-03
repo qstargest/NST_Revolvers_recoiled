@@ -15,5 +15,7 @@
   "gui.nst_revrecoiled.pickaxe_tier_any": "Richiede un qualsiasi piccone",
   "gui.nst_revrecoiled.pickaxe_tier_stone": "Richiede piccone di pietra+",
   "gui.nst_revrecoiled.pickaxe_tier_iron": "Richiede piccone di ferro+",
-  "gui.nst_revrecoiled.pickaxe_durability": "Piccone: %s/%s dur."
+  "gui.nst_revrecoiled.pickaxe_durability": "Piccone: %s/%s dur.",
+  "entity.nst_revrecoiled.revolver_bandit": "Bandito",
+  "item.nst_revrecoiled.revolver_bandit_spawn_egg": "Uovo di Bandito"
 }

@@ -15,5 +15,7 @@
   "gui.nst_revrecoiled.pickaxe_tier_any": "Vyžaduje jakýkoliv krumpáč",
   "gui.nst_revrecoiled.pickaxe_tier_stone": "Vyžaduje kamenný krumpáč+",
   "gui.nst_revrecoiled.pickaxe_tier_iron": "Vyžaduje železný krumpáč+",
-  "gui.nst_revrecoiled.pickaxe_durability": "Krumpáč: %s/%s trv."
+  "gui.nst_revrecoiled.pickaxe_durability": "Krumpáč: %s/%s trv.",
+  "entity.nst_revrecoiled.revolver_bandit": "Bandita",
+  "item.nst_revrecoiled.revolver_bandit_spawn_egg": "Vajíčko Bandita"
 }

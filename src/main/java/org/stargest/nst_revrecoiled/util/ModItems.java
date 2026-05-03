@@ -1,9 +1,8 @@
 package org.stargest.nst_revrecoiled.util;
 
 import net.fabricmc.fabric.api.itemgroup.v1.FabricItemGroup;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemGroup;
-import net.minecraft.item.ItemStack;
+import net.fabricmc.fabric.api.itemgroup.v1.ItemGroupEvents;
+import net.minecraft.item.*;
 import net.minecraft.registry.Registries;
 import net.minecraft.registry.Registry;
 import net.minecraft.registry.RegistryKey;
@@ -90,6 +89,12 @@ public class ModItems {
         return register(baseName + "_item", Item::new, new Item.Settings());
     }
 
+    // Spawn Eggs
+    public static final Item REVOLVER_BANDIT_SPAWN_EGG = register(
+            "revolver_bandit_spawn_egg",
+            settings -> new SpawnEggItem(ModEntities.REVOLVER_BANDIT, 0x2B5A2B, 0x94A89C, settings),
+            new Item.Settings());
+
     // Creative Tab
     public static final RegistryKey<ItemGroup> MOD_GROUP_KEY = RegistryKey.of(
             Registries.ITEM_GROUP.getKey(),
@@ -138,5 +143,8 @@ public class ModItems {
                 })
                 .build()
         );
+
+        // Add to vanilla Spawn Eggs creative tab
+        ItemGroupEvents.modifyEntriesEvent(ItemGroups.SPAWN_EGGS).register(entries -> entries.add(REVOLVER_BANDIT_SPAWN_EGG));
     }
 }

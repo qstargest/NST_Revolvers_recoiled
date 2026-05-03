@@ -15,5 +15,7 @@
   "gui.nst_revrecoiled.pickaxe_tier_any": "Requer qualquer picareta",
   "gui.nst_revrecoiled.pickaxe_tier_stone": "Requer picareta de pedra+",
   "gui.nst_revrecoiled.pickaxe_tier_iron": "Requer picareta de ferro+",
-  "gui.nst_revrecoiled.pickaxe_durability": "Picareta: %s/%s dur."
+  "gui.nst_revrecoiled.pickaxe_durability": "Picareta: %s/%s dur.",
+  "entity.nst_revrecoiled.revolver_bandit": "Bandido",
+  "item.nst_revrecoiled.revolver_bandit_spawn_egg": "Ovo de Bandido"
 }
