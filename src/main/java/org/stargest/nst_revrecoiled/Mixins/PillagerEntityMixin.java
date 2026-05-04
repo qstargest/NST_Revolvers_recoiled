@@ -14,8 +14,7 @@ import org.stargest.nst_revrecoiled.util.ModConfig;
 import org.stargest.nst_revrecoiled.util.ModEntities;
 
 /**
- * Mixin for {@link PillagerEntity} to handle the natural spawning of RevolverBanditEntity.
- * <p>
+ * Mixin for PillagerEntity to handle the natural spawning of RevolverBanditEntity.
  * This mixin intercepts the initialization of Pillagers to occasionally replace them with
  * Revolver Bandits when they spawn as part of patrols or in outposts, based on configuration settings.
  */
