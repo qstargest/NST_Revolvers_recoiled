@@ -41,8 +41,8 @@ public class ConfigLoader {
                     if (sc.worldGen != null) config.worldGen = sc.worldGen;
                     if (sc.bandit != null) config.bandit = sc.bandit;
                 }
-            } catch (IOException e) {
-                Main.LOGGER.error("Failed to load settings.json", e);
+            } catch (Exception e) {
+                Main.LOGGER.error("Failed to load settings.json - using defaults for this file. Error: {}", e.getMessage());
             }
         }
 
@@ -53,8 +53,8 @@ public class ConfigLoader {
                 java.lang.reflect.Type type = new com.google.gson.reflect.TypeToken<java.util.Map<String, java.util.List<ModConfig.IngredientConfig>>>(){}.getType();
                 java.util.Map<String, java.util.List<ModConfig.IngredientConfig>> recipes = GSON.fromJson(reader, type);
                 if (recipes != null) config.recipes = recipes;
-            } catch (IOException e) {
-                Main.LOGGER.error("Failed to load recipes.json", e);
+            } catch (Exception e) {
+                Main.LOGGER.error("Failed to load recipes.json - using defaults for this file. Error: {}", e.getMessage());
             }
         }
 
@@ -64,14 +64,17 @@ public class ConfigLoader {
             try (FileReader reader = new FileReader(vFile)) {
                 ModConfig.VisualsConfig visuals = GSON.fromJson(reader, ModConfig.VisualsConfig.class);
                 if (visuals != null) config.visuals = visuals;
-            } catch (IOException e) {
-                Main.LOGGER.error("Failed to load visuals.json", e);
+            } catch (Exception e) {
+                Main.LOGGER.error("Failed to load visuals.json - using defaults for this file. Error: {}", e.getMessage());
             }
         }
 
+        // Apply validation to ensure all loaded values (or defaults) are sane
+        config.validate();
+
         ModConfig.set(config);
         
-        // Save back to ensure all files exist and are up to date with defaults
+        // Save back to ensure all files exist and are up to date with defaults/clamped values
         save();
     }
 

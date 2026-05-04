@@ -2,10 +2,12 @@ package org.stargest.nst_revrecoiled.util;
 
 import com.mojang.brigadier.context.CommandContext;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
+import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.server.command.CommandManager;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.text.Text;
 import org.stargest.nst_revrecoiled.Structures.ModStructures;
+import org.stargest.nst_revrecoiled.network.SyncConfigS2CPacket;
 
 /**
  * Registers commands for the mod.
@@ -42,9 +44,7 @@ public class ModCommands {
             
             // Broadcast new config to all connected clients
             String json = ConfigLoader.toJson();
-            source.getServer().getPlayerManager().getPlayerList().forEach(player -> {
-                net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.send(player, new org.stargest.nst_revrecoiled.network.SyncConfigS2CPacket(json));
-            });
+            source.getServer().getPlayerManager().getPlayerList().forEach(player -> ServerPlayNetworking.send(player, new SyncConfigS2CPacket(json)));
             
             source.sendFeedback(() -> Text.literal("§a[NST Revolvers recoiled] Configuration reloaded and synced successfully!"), true);
             return 1;

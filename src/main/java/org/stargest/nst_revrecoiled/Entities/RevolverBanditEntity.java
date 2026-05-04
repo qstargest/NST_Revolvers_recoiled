@@ -294,7 +294,7 @@ public class RevolverBanditEntity extends RaiderEntity {
 
     @Override
     public boolean canJoinRaid() {
-        return false; // User requested no raid participation
+        return false;
     }
 
     @Override

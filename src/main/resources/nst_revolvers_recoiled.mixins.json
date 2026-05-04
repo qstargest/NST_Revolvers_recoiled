@@ -4,7 +4,8 @@
   "package": "org.stargest.nst_revrecoiled.Mixins",
   "compatibilityLevel": "JAVA_21",
   "mixins": [
-    "StructurePoolAccessor"
+    "StructurePoolAccessor",
+    "PillagerEntityMixin"
   ],
   "injectors": {
     "defaultRequire": 1
