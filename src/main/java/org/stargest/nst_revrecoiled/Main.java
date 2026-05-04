@@ -45,7 +45,6 @@ public class Main implements ModInitializer {
         ModEntities.init();
         ModItems.init();
         ModSounds.init();
-        ModParticles.init();
         ModBlocks.init();
         ModVillagers.init();
         ModScreenHandlers.register();
