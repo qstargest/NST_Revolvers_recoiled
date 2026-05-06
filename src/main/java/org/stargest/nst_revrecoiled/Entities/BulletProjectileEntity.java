@@ -17,6 +17,7 @@ import net.minecraft.particle.ItemStackParticleEffect;
 import net.minecraft.particle.ParticleTypes;
 import net.minecraft.registry.RegistryWrapper;
 import net.minecraft.server.world.ServerWorld;
+import net.minecraft.sound.BlockSoundGroup;
 import net.minecraft.sound.SoundCategory;
 import net.minecraft.sound.SoundEvents;
 import net.minecraft.util.hit.BlockHitResult;
@@ -170,7 +171,7 @@ public class BulletProjectileEntity extends PersistentProjectileEntity implement
             BlockState blockState = world.getBlockState(blockPos);
 
             // Check if the hit block is any glass pane
-            if (blockState.getBlock() instanceof PaneBlock) {
+            if (blockState.getBlock() instanceof PaneBlock && blockState.getSoundGroup() == BlockSoundGroup.GLASS) {
                 world.playSound(
                         null,
                         blockPos,
