@@ -8,7 +8,7 @@ import software.bernie.geckolib.renderer.GeoItemRenderer;
  * GeckoLib renderer for the Golden Revolver item.
  * Handles 3D model rendering in hand and ground.
  */
-public class GoldenRevolverItemRenderer extends GeoItemRenderer<GoldenRevolverItem> {
+public class GoldenRevolverItemRenderer extends BaseRevolverItemRenderer<GoldenRevolverItem> {
     public GoldenRevolverItemRenderer() {
         super(new RevolverItemModel<>("golden_revolver"));
     }

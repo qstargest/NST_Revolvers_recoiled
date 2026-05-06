@@ -7,6 +7,7 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobCategory;
 import net.neoforged.neoforge.registries.DeferredRegister;
 import org.stargest.nst_revrecoiled.Entities.BulletProjectileEntity;
+import org.stargest.nst_revrecoiled.Entities.RevolverBanditEntity;
 import org.stargest.nst_revrecoiled.NstRevRecoiled;
 
 import java.util.function.Supplier;
@@ -32,5 +33,18 @@ public class ModEntities {
                             .build(ResourceKey.create(
                                     Registries.ENTITY_TYPE,
                                     ResourceLocation.fromNamespaceAndPath(NstRevRecoiled.MOD_ID, "bullet_projectile")))
+            );
+
+    public static final Supplier<EntityType<RevolverBanditEntity>> REVOLVER_BANDIT =
+            ENTITY_TYPES.register("revolver_bandit",
+                    () -> EntityType.Builder.<RevolverBanditEntity>of(
+                                    RevolverBanditEntity::new,
+                                    MobCategory.MONSTER
+                            )
+                            .sized(0.6f, 1.95f)
+                            .clientTrackingRange(8)
+                            .build(ResourceKey.create(
+                                    Registries.ENTITY_TYPE,
+                                    ResourceLocation.fromNamespaceAndPath(NstRevRecoiled.MOD_ID, "revolver_bandit")))
             );
 }

@@ -7,6 +7,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.CreativeModeTabs;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.item.SpawnEggItem;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent;
 import net.neoforged.neoforge.registries.DeferredItem;
@@ -76,6 +77,12 @@ public class ModItems {
             DiamondRevolverItem::new,
             new Item.Properties().stacksTo(1)
     );
+
+    // Spawn Egg
+    public static final DeferredItem REVOLVER_BANDIT_SPAWN_EGG = ITEMS.registerItem(
+            "revolver_bandit_spawn_egg",
+            settings -> new SpawnEggItem(ModEntities.REVOLVER_BANDIT.get(), settings),
+            new Item.Properties());
 
     // --- Creative Tab ---
     public static final ResourceKey<CreativeModeTab> MOD_TAB_KEY = ResourceKey.create(

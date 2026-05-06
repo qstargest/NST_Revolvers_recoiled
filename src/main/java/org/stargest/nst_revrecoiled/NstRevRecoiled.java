@@ -7,11 +7,10 @@ import net.minecraft.core.registries.Registries;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.village.poi.PoiType;
 import net.minecraft.world.entity.npc.VillagerProfession;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.CreativeModeTabs;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -20,7 +19,9 @@ import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.loading.FMLEnvironment;
 import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;
+import net.neoforged.neoforge.client.event.ClientTickEvent;
 import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent;
 import net.neoforged.neoforge.event.RegisterCommandsEvent;
 import net.neoforged.neoforge.event.entity.EntityLeaveLevelEvent;
 import net.neoforged.neoforge.event.server.ServerStartingEvent;
@@ -29,19 +30,19 @@ import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.registries.RegisterEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.stargest.nst_revrecoiled.Items.BaseRevolverItem;
 import org.stargest.nst_revrecoiled.Structures.ModStructures;
 import org.stargest.nst_revrecoiled.Villager.ModVillagers;
 import org.stargest.nst_revrecoiled.client.ClientEvents;
-import org.stargest.nst_revrecoiled.client.handlers.RevolverParticleHandler;
 import org.stargest.nst_revrecoiled.client.managers.CameraRecoilManager;
 import org.stargest.nst_revrecoiled.client.render.entity.player.PlayerArmPose;
 import org.stargest.nst_revrecoiled.network.AssemblyCraftC2SPacket;
-import org.stargest.nst_revrecoiled.network.RevolverFireParticlePacket;
-import org.stargest.nst_revrecoiled.network.RevolverReloadParticlePacket;
 import org.stargest.nst_revrecoiled.network.SyncConfigS2CPacket;
 import org.stargest.nst_revrecoiled.recipe.AssemblyRecipes;
 import org.stargest.nst_revrecoiled.util.*;
 import net.neoforged.neoforge.network.PacketDistributor;
+import net.neoforged.neoforge.event.entity.EntityAttributeCreationEvent;
+import org.stargest.nst_revrecoiled.Entities.RevolverBanditEntity;
 
 /**
  * Main NeoForge mod initialization class.
@@ -66,8 +67,8 @@ public class NstRevRecoiled {
         ModBlocks.BLOCKS.register(modEventBus);
         ModBlocks.ITEMS.register(modEventBus);
         ModEntities.ENTITY_TYPES.register(modEventBus);
-        ModParticles.PARTICLE_TYPES.register(modEventBus);
         ModScreenHandlers.MENU_TYPES.register(modEventBus);
+        ModSounds.SOUND_EVENTS.register(modEventBus);
 
         // Explicitly register POIs and Professions using RegisterEvent to ensure correct binding order
         modEventBus.addListener(this::onRegister);
@@ -75,18 +76,29 @@ public class NstRevRecoiled {
         // Subscribe mod-bus events (RegisterPayloadHandlersEvent, BuildCreativeModeTabContentsEvent, etc.)
         modEventBus.addListener(this::registerPayloads);
         modEventBus.addListener(ModItems::buildCreativeTab);
+        modEventBus.addListener(this::addCreative);
 
         if (FMLEnvironment.dist == Dist.CLIENT) {
             modEventBus.addListener(ClientEvents::registerEntityRenderers);
+            modEventBus.addListener(ClientEvents::registerLayerDefinitions);
             modEventBus.addListener(ClientEvents::registerScreens);
             modEventBus.addListener(ClientEvents::clientSetup);
-            modEventBus.addListener(ClientEvents::registerParticleProviders);
 
             NeoForge.EVENT_BUS.addListener(ClientGameEvents::onLogout);
             NeoForge.EVENT_BUS.addListener(ClientGameEvents::onEntityLeaveLevel);
+            NeoForge.EVENT_BUS.addListener(ClientGameEvents::onEndClientTick);
+        }
 
-            NeoForge.EVENT_BUS.addListener(ClientGameEvents::onLogout);
-            NeoForge.EVENT_BUS.addListener(ClientGameEvents::onEntityLeaveLevel);
+        modEventBus.addListener(NstRevRecoiled::registerEntityAttributes);
+    }
+
+    private static void registerEntityAttributes(EntityAttributeCreationEvent event) {
+        event.put(ModEntities.REVOLVER_BANDIT.get(), RevolverBanditEntity.createAttributes().build());
+    }
+
+    private void addCreative(BuildCreativeModeTabContentsEvent event){
+        if (event.getTabKey() == CreativeModeTabs.SPAWN_EGGS){
+            event.accept(ModItems.REVOLVER_BANDIT_SPAWN_EGG);
         }
     }
 
@@ -110,24 +122,6 @@ public class NstRevRecoiled {
         var registrar = event.registrar("1");
 
         // S2C packets
-        registrar.playToClient(
-                RevolverFireParticlePacket.TYPE,
-                RevolverFireParticlePacket.STREAM_CODEC,
-                (payload, ctx) -> ctx.enqueueWork(() -> { 
-                   Entity e = ctx.player().level().getEntity(payload.entityId());
-                    if (e instanceof LivingEntity l && e != ctx.player())
-                        RevolverParticleHandler.spawnFireImmediate(l);
-                })
-        );
-        registrar.playToClient(
-                RevolverReloadParticlePacket.TYPE,
-                RevolverReloadParticlePacket.STREAM_CODEC,
-                (payload, ctx) -> ctx.enqueueWork(() -> { 
-                    Entity e = ctx.player().level().getEntity(payload.entityId());
-                    if (e instanceof LivingEntity l)
-                        RevolverParticleHandler.spawnReloadImmediate(l);
-                })
-        );
         registrar.playToClient(
                 SyncConfigS2CPacket.TYPE,
                 SyncConfigS2CPacket.STREAM_CODEC,
@@ -180,6 +174,15 @@ public class NstRevRecoiled {
                 PacketDistributor.sendToPlayer(serverPlayer, new SyncConfigS2CPacket(json));
             }
         }
+
+        @SubscribeEvent
+        public static void onPlayerLogout(PlayerEvent.PlayerLoggedOutEvent event){
+            Player player = event.getEntity();
+            if (player != null) {
+                BaseRevolverItem.removePendingShot(player.getUUID());
+                BaseRevolverItem.removePendingBullet(player.getUUID());
+            }
+        }
     }
 
     public static class ClientGameEvents {
@@ -188,10 +191,20 @@ public class NstRevRecoiled {
             PlayerArmPose.clearAllStates();
         }
 
-        public static void onEntityLeaveLevel(EntityLeaveLevelEvent event) {
-            if (event.getLevel().isClientSide() && event.getEntity() instanceof Player) {
-                PlayerArmPose.clearState(event.getEntity().getId());
+        @SubscribeEvent
+        public static void onEntityLeaveLevel (EntityLeaveLevelEvent event){
+            if (event.getLevel().isClientSide()){
+                var entity = event.getEntity();
+
+                if (entity instanceof Player || entity instanceof RevolverBanditEntity){
+                    PlayerArmPose.clearState(entity.getId());
+                }
             }
+        }
+
+        @SubscribeEvent
+        public static void onEndClientTick(ClientTickEvent.Post event){
+            CameraRecoilManager.getInstance().tickPending();
         }
     }
 }
