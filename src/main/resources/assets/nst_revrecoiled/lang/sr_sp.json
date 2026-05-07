@@ -7,14 +7,15 @@
   "item.nst_revrecoiled.iron_revolver": "Гвоздени револвер",
   "item.nst_revrecoiled.golden_revolver": "Златни револвер",
   "item.nst_revrecoiled.diamond_revolver": "Дијамантски револвер",
-  "item.nst_revrecoiled.assembly_table": "Монтажни сто",
   "block.nst_revrecoiled.assembly_table": "Монтажни сто",
-  "entity.minecraft.villager.nst_revrecoiled.revolvermaker": "Револверџија",
+  "entity.minecraft.villager.revolvermaker": "Револверџија",
   "itemGroup.nst_revrecoiled.main": "[NST] Revolvers recoiled",
   "gui.nst_revrecoiled.assemble": "Направи",
   "gui.nst_revrecoiled.damage": "Штета: %s",
   "gui.nst_revrecoiled.pickaxe_tier_any": "Потребна је нека пијука",
   "gui.nst_revrecoiled.pickaxe_tier_stone": "Потребна је камена пијука+",
   "gui.nst_revrecoiled.pickaxe_tier_iron": "Потребна је гвоздена пијука+",
-  "gui.nst_revrecoiled.pickaxe_durability": "Пијука: %s/%s тр."
+  "gui.nst_revrecoiled.pickaxe_durability": "Пијука: %s/%s тр.",
+  "entity.nst_revrecoiled.revolver_bandit": "Бандит",
+  "item.nst_revrecoiled.revolver_bandit_spawn_egg": "Јаје за призивање: Бандит"
 }

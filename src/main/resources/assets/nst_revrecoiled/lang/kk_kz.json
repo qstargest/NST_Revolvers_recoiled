@@ -7,14 +7,15 @@
   "item.nst_revrecoiled.iron_revolver": "Темір револьвер",
   "item.nst_revrecoiled.golden_revolver": "Алтын револьвер",
   "item.nst_revrecoiled.diamond_revolver": "Алмаз револьвер",
-  "item.nst_revrecoiled.assembly_table": "Жинау үстелі",
   "block.nst_revrecoiled.assembly_table": "Жинау үстелі",
-  "entity.minecraft.villager.nst_revrecoiled.revolvermaker": "Револьвер шебері",
+  "entity.minecraft.villager.revolvermaker": "Револьвер шебері",
   "itemGroup.nst_revrecoiled.main": "[NST] Revolvers recoiled",
   "gui.nst_revrecoiled.assemble": "Жасау",
   "gui.nst_revrecoiled.damage": "Зақым: %s",
   "gui.nst_revrecoiled.pickaxe_tier_any": "Кез келген кирка керек",
   "gui.nst_revrecoiled.pickaxe_tier_stone": "Тас кирка+ керек",
   "gui.nst_revrecoiled.pickaxe_tier_iron": "Темір кирка+ керек",
-  "gui.nst_revrecoiled.pickaxe_durability": "Кирка: %s/%s дт."
+  "gui.nst_revrecoiled.pickaxe_durability": "Кирка: %s/%s дт.",
+  "entity.nst_revrecoiled.revolver_bandit": "Бандит",
+  "item.nst_revrecoiled.revolver_bandit_spawn_egg": "Бандит шақыру жұмыртқасы"
 }

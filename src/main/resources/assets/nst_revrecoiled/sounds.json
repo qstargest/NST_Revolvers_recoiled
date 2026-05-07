@@ -1,0 +1,20 @@
+{
+  "revolver_shot": {
+    "category": "player",
+    "sounds": [
+      "nst_revrecoiled:shot"
+    ]
+  },
+  "revolver_reload": {
+    "category": "player",
+    "sounds": [
+      "nst_revrecoiled:reload"
+    ]
+  },
+  "revolver_draw": {
+    "category": "player",
+    "sounds": [
+      "nst_revrecoiled:draw"
+    ]
+  }
+}

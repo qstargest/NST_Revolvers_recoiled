@@ -1,5 +1,6 @@
 package org.stargest.nst_revrecoiled.Entities;
 
+import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.particles.ItemParticleOption;
 import net.minecraft.core.particles.ParticleTypes;
@@ -10,6 +11,7 @@ import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
@@ -17,6 +19,9 @@ import net.minecraft.world.entity.projectile.AbstractArrow;
 import net.minecraft.world.entity.projectile.ItemSupplier;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.IronBarsBlock;
+import net.minecraft.world.level.block.SoundType;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.EntityHitResult;
 import org.jetbrains.annotations.NotNull;
@@ -154,13 +159,30 @@ public class BulletProjectileEntity extends AbstractArrow implements ItemSupplie
      */
     @Override
     protected void onHitBlock(@NotNull BlockHitResult hitResult) {
-        super.onHitBlock(hitResult);
-
         Level level = this.level();
+
         if (level instanceof ServerLevel serverLevel) {
+            BlockPos blockPos = hitResult.getBlockPos();
+            BlockState blockState = level.getBlockState(blockPos);
+
+            if (blockState.getBlock() instanceof IronBarsBlock && blockState.getSoundType() == SoundType.GLASS){
+                level.playSound(null,
+                        blockPos,
+                        SoundEvents.GLASS_BREAK,
+                        SoundSource.BLOCKS,
+                        1.0f,
+                        0.9f + this.random.nextFloat() * 0.2f);
+
+                level.destroyBlock(blockPos, false, this.getOwner());
+                spawnImpactParticles(serverLevel, hitResult.getLocation());
+                this.discard();
+                return;
+            }
+
             spawnImpactParticles(serverLevel, hitResult.getLocation());
         }
 
+        super.onHitBlock(hitResult);
         this.discard();
     }
 

@@ -7,14 +7,15 @@
   "item.nst_revrecoiled.iron_revolver": "鉄のリボルバー",
   "item.nst_revrecoiled.golden_revolver": "金のリボルバー",
   "item.nst_revrecoiled.diamond_revolver": "ダイヤモンドのリボルバー",
-  "item.nst_revrecoiled.assembly_table": "組み立てテーブル",
   "block.nst_revrecoiled.assembly_table": "組み立てテーブル",
-  "entity.minecraft.villager.nst_revrecoiled.revolvermaker": "リボルバー職人",
+  "entity.minecraft.villager.revolvermaker": "リボルバー職人",
   "itemGroup.nst_revrecoiled.main": "[NST] Revolvers recoiled",
   "gui.nst_revrecoiled.assemble": "クラフト",
   "gui.nst_revrecoiled.damage": "ダメージ: %s",
   "gui.nst_revrecoiled.pickaxe_tier_any": "任意のツルハシが必要",
   "gui.nst_revrecoiled.pickaxe_tier_stone": "石のツルハシ以上が必要",
   "gui.nst_revrecoiled.pickaxe_tier_iron": "鉄のツルハシ以上が必要",
-  "gui.nst_revrecoiled.pickaxe_durability": "ツルハシ: %s/%s 耐久"
+  "gui.nst_revrecoiled.pickaxe_durability": "ツルハシ: %s/%s 耐久",
+  "entity.nst_revrecoiled.revolver_bandit": "バンディット",
+  "item.nst_revrecoiled.revolver_bandit_spawn_egg": "バンディットのスポーンエッグ"
 }

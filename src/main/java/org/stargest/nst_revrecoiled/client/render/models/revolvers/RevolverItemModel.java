@@ -20,7 +20,7 @@ public class RevolverItemModel<T extends BaseRevolverItem> extends GeoModel<T> {
 
     @Override
     public ResourceLocation getModelResource(T animatable) {
-        return ResourceLocation.fromNamespaceAndPath(NstRevRecoiled.MOD_ID, "geo/cobblestone_revolver.geo.json");
+        return ResourceLocation.fromNamespaceAndPath(NstRevRecoiled.MOD_ID, "geo/revolver.geo.json");
     }
 
     @Override
@@ -30,7 +30,7 @@ public class RevolverItemModel<T extends BaseRevolverItem> extends GeoModel<T> {
 
     @Override
     public ResourceLocation getModelResource(T animatable, GeoRenderer<T> renderer) {
-        return ResourceLocation.fromNamespaceAndPath(NstRevRecoiled.MOD_ID, "geo/cobblestone_revolver.geo.json");
+        return ResourceLocation.fromNamespaceAndPath(NstRevRecoiled.MOD_ID, "geo/revolver.geo.json");
     }
 
     @Override
@@ -40,6 +40,6 @@ public class RevolverItemModel<T extends BaseRevolverItem> extends GeoModel<T> {
 
     @Override
     public ResourceLocation getAnimationResource(T animatable) {
-        return ResourceLocation.fromNamespaceAndPath(NstRevRecoiled.MOD_ID, "animations/cobblestone_revolver.animation.json");
+        return ResourceLocation.fromNamespaceAndPath(NstRevRecoiled.MOD_ID, "animations/revolver.animation.json");
     }
 }

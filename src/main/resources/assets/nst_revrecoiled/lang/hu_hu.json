@@ -7,14 +7,15 @@
   "item.nst_revrecoiled.iron_revolver": "Vasrevolver",
   "item.nst_revrecoiled.golden_revolver": "Aranyrevolver",
   "item.nst_revrecoiled.diamond_revolver": "Gyémántrevolver",
-  "item.nst_revrecoiled.assembly_table": "Szerelőasztal",
   "block.nst_revrecoiled.assembly_table": "Szerelőasztal",
-  "entity.minecraft.villager.nst_revrecoiled.revolvermaker": "Revolverkészítő",
+  "entity.minecraft.villager.revolvermaker": "Revolverkészítő",
   "itemGroup.nst_revrecoiled.main": "[NST] Revolvers recoiled",
   "gui.nst_revrecoiled.assemble": "Készítés",
   "gui.nst_revrecoiled.damage": "Sebzés: %s",
   "gui.nst_revrecoiled.pickaxe_tier_any": "Bármilyen csákány szükséges",
   "gui.nst_revrecoiled.pickaxe_tier_stone": "Kő csákány+ szükséges",
   "gui.nst_revrecoiled.pickaxe_tier_iron": "Vas csákány+ szükséges",
-  "gui.nst_revrecoiled.pickaxe_durability": "Csákány: %s/%s tar."
+  "gui.nst_revrecoiled.pickaxe_durability": "Csákány: %s/%s tar.",
+  "entity.nst_revrecoiled.revolver_bandit": "Bandita",
+  "item.nst_revrecoiled.revolver_bandit_spawn_egg": "Bandita Idézőtojás"
 }
