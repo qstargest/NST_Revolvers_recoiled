@@ -7,14 +7,15 @@
   "item.nst_revrecoiled.iron_revolver": "鐵左輪手槍",
   "item.nst_revrecoiled.golden_revolver": "金左輪手槍",
   "item.nst_revrecoiled.diamond_revolver": "鑽石左輪手槍",
-  "item.nst_revrecoiled.assembly_table": "組裝台",
   "block.nst_revrecoiled.assembly_table": "組裝台",
-  "entity.minecraft.villager.nst_revrecoiled.revolvermaker": "左輪槍匠",
+  "entity.minecraft.villager.revolvermaker": "左輪槍匠",
   "itemGroup.nst_revrecoiled.main": "[NST] Revolvers recoiled",
   "gui.nst_revrecoiled.assemble": "合成",
   "gui.nst_revrecoiled.damage": "傷害: %s",
   "gui.nst_revrecoiled.pickaxe_tier_any": "需要任意鎬",
   "gui.nst_revrecoiled.pickaxe_tier_stone": "需要石鎬或更高",
   "gui.nst_revrecoiled.pickaxe_tier_iron": "需要鐵鎬或更高",
-  "gui.nst_revrecoiled.pickaxe_durability": "鎬: %s/%s 耐久"
+  "gui.nst_revrecoiled.pickaxe_durability": "鎬: %s/%s 耐久",
+  "entity.nst_revrecoiled.revolver_bandit": "強盜",
+  "item.nst_revrecoiled.revolver_bandit_spawn_egg": "強盜生怪蛋"
 }

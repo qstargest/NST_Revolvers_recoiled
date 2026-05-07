@@ -7,14 +7,15 @@
   "item.nst_revrecoiled.iron_revolver": "אײַזן רעוואָלווער",
   "item.nst_revrecoiled.golden_revolver": "גאָלד רעוואָלווער",
   "item.nst_revrecoiled.diamond_revolver": "דיאַמאַנט רעוואָלווער",
-  "item.nst_revrecoiled.assembly_table": "אַסעמבלי טיש",
   "block.nst_revrecoiled.assembly_table": "אַסעמבלי טיש",
-  "entity.minecraft.villager.nst_revrecoiled.revolvermaker": "רעוואָלווער-מאַכער",
+  "entity.minecraft.villager.revolvermaker": "רעוואָלווער-מאַכער",
   "itemGroup.nst_revrecoiled.main": "[NST] Revolvers recoiled",
   "gui.nst_revrecoiled.assemble": "מאַכן",
   "gui.nst_revrecoiled.damage": "שאַדן: %s",
   "gui.nst_revrecoiled.pickaxe_tier_any": "דאַרף אַ האַק",
   "gui.nst_revrecoiled.pickaxe_tier_stone": "דאַרף שטיין האַק+",
   "gui.nst_revrecoiled.pickaxe_tier_iron": "דאַרף אײַזן האַק+",
-  "gui.nst_revrecoiled.pickaxe_durability": "האַק: %s/%s הלט."
+  "gui.nst_revrecoiled.pickaxe_durability": "האַק: %s/%s הלט.",
+  "entity.nst_revrecoiled.revolver_bandit": "באַנדיט",
+  "item.nst_revrecoiled.revolver_bandit_spawn_egg": "באַנדיט ספּאַוון יי"
 }

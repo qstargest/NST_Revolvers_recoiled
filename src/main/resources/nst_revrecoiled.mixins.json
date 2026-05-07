@@ -4,6 +4,7 @@
   "package": "org.stargest.nst_revrecoiled.mixins",
   "compatibilityLevel": "JAVA_21",
   "mixins": [
+    "PillagerEntityMixin",
     "StructurePoolAccessor"
   ],
   "client": [

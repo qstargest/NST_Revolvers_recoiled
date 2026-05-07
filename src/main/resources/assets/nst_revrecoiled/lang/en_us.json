@@ -8,13 +8,14 @@
   "item.nst_revrecoiled.golden_revolver": "Golden Revolver",
   "item.nst_revrecoiled.diamond_revolver": "Diamond Revolver",
   "itemGroup.nst_revrecoiled.main": "[NST] Revolvers recoiled",
-  "item.nst_revrecoiled.assembly_table": "Assembly Table",
   "block.nst_revrecoiled.assembly_table": "Assembly Table",
-  "entity.minecraft.villager.nst_revrecoiled.revolvermaker": "Revolvermaker",
+  "entity.minecraft.villager.revolvermaker": "Revolvermaker",
+  "entity.nst_revrecoiled.revolver_bandit": "Bandit",
+  "item.nst_revrecoiled.revolver_bandit_spawn_egg": "Revolver Bandit Spawn Egg",
   "gui.nst_revrecoiled.assemble": "Craft",
   "gui.nst_revrecoiled.damage": "Damage: %s",
-  "gui.nst_revrecoiled.pickaxe_tier_any":   "Requires any pickaxe",
+  "gui.nst_revrecoiled.pickaxe_tier_any": "Requires any pickaxe",
   "gui.nst_revrecoiled.pickaxe_tier_stone": "Requires stone pickaxe+",
-  "gui.nst_revrecoiled.pickaxe_tier_iron":  "Requires iron pickaxe+",
+  "gui.nst_revrecoiled.pickaxe_tier_iron": "Requires iron pickaxe+",
   "gui.nst_revrecoiled.pickaxe_durability": "Pickaxe: %s/%s dur."
 }
