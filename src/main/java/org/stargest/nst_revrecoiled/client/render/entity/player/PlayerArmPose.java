@@ -121,16 +121,15 @@ public class PlayerArmPose {
 
         ItemStack stack = player.getItemInHand(InteractionHand.MAIN_HAND);
         if (!(stack.getItem() instanceof RevolverArmPoseItem)) {
-            stack = player.getItemInHand(InteractionHand.OFF_HAND);
-            if (!(stack.getItem() instanceof RevolverArmPoseItem)) {
-                playerStates.remove(renderState.getId());
-                return;
-            }
+            playerStates.remove(renderState.getId());
+            return;
         }
+
+        boolean inOffHand = false; // Always false now as we only process main hand
 
         boolean isCharging    = player.isUsingItem();
         float   chargeProgress = getPlayerProgress(player, stack);
-        boolean isLeftHanded  = renderState.getMainArm() == HumanoidArm.LEFT;
+        boolean isLeftHanded = (renderState.getMainArm() == HumanoidArm.LEFT) != inOffHand;
 
         applyCore(model, player, renderState.getId(), stack, renderTime,
                 isCharging, chargeProgress, isLeftHanded, renderState.isCrouching());
