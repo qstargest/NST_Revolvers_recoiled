@@ -119,16 +119,13 @@ public class PlayerArmPose {
         if (!(entity instanceof Player player)) return;
 
         ItemStack stack = player.getItemInHand(InteractionHand.MAIN_HAND);
-        boolean inOffHand = false;
         
         if (!(stack.getItem() instanceof RevolverArmPoseItem)) {
-            stack = player.getItemInHand(InteractionHand.OFF_HAND);
-            if (!(stack.getItem() instanceof RevolverArmPoseItem)) {
-                playerStates.remove(renderState.id);
-                return;
-            }
-            inOffHand = true;
+            playerStates.remove(renderState.id);
+            return;
         }
+
+        boolean inOffHand = false; // Always false now as we only process main hand
 
         boolean isCharging    = player.isUsingItem();
         float   chargeProgress = getPlayerProgress(player, stack);
