@@ -58,12 +58,10 @@ import java.util.List;
  * Imitates Pillager-like behavior but with specialized revolver mechanics.
  * Inherits from Raider to support hostile AI patterns.
  *
- * <p>Key features:
- * <ul>
- *   <li>Server-side weapon state machine (idle, charging, pending fire, cooldown)</li>
- *   <li>Synced charge progress for client-side arm animations</li>
- *   <li>Configurable attributes (health, speed, movement) via ModConfig</li>
- * </ul>
+ * Key features:
+ * - Server-side weapon state machine (idle, charging, pending fire, cooldown)
+ * - Synced charge progress for client-side arm animations
+ * - Configurable attributes (health, speed, movement) via ModConfig
  */
 public class RevolverBanditEntity extends Raider {
 
@@ -333,7 +331,7 @@ public class RevolverBanditEntity extends Raider {
 
     /**
      * Resets all weapon state.
-     * Called from the shoot goal's {@code stop()} so state is clean when
+     * Called from the shoot goal's stop() so state is clean when
      * the goal is interrupted (e.g. target dies or walks out of range).
      */
     public void stopCharging() {

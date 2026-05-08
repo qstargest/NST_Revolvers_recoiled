@@ -130,3 +130,4 @@ runs/
 *.png
 *.geo.json
 *animation.json
+*.ogg

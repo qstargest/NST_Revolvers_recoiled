@@ -16,12 +16,10 @@ import software.bernie.geckolib.renderer.GeoItemRenderer;
  * Handles specialized transformations for different render perspectives,
  * ensuring accurate model alignment and correct left-hand mirroring.
  *
- * <p>Key features:
- * <ul>
- *   <li>Vertical offset correction for third-person perspectives.</li>
- *   <li>Horizontal mirroring (negative X scaling) for left-hand rendering.</li>
- *   <li>Dynamic backface culling management to prevent visual artifacts during mirroring.</li>
- * </ul>
+ * Key features:
+ * - Vertical offset correction for third-person perspectives.
+ * - Horizontal mirroring (negative X scaling) for left-hand rendering.
+ * - Dynamic backface culling management to prevent visual artifacts during mirroring.
  *
  * @param <T> The revolver item type this renderer handles
  */
@@ -34,15 +32,13 @@ public class BaseRevolverItemRenderer<T extends BaseRevolverItem> extends GeoIte
     /**
      * Called before rendering the model to apply custom transformations and render states.
      *
-     * <p>Transformations applied:
-     * <ul>
-     *   <li>Adjusts the vertical position slightly downwards for third-person views
-     *       to accurately align the revolver model with the player's hand.</li>
-     *   <li>Applies horizontal mirroring (negative X scale) for left-hand rendering
-     *       to ensure the model faces the correct direction.</li>
-     *   <li>Disables backface culling when mirroring to prevent the model from appearing
-     *       inside-out due to inverted surface normals.</li>
-     * </ul>
+     * Transformations applied:
+     * - Adjusts the vertical position slightly downwards for third-person views
+     * - to accurately align the revolver model with the player's hand.
+     * - Applies horizontal mirroring (negative X scale) for left-hand rendering
+     * - to ensure the model faces the correct direction.
+     * - Disables backface culling when mirroring to prevent the model from appearing
+     * inside-out due to inverted surface normals.
      */
     @Override
     public void preRender(PoseStack poseStack, T animatable, BakedGeoModel model,
@@ -69,7 +65,7 @@ public class BaseRevolverItemRenderer<T extends BaseRevolverItem> extends GeoIte
 
     /**
      * Called after rendering the model to restore global render states.
-     * Re-enables backface culling if it was disabled during {@link #preRender} for left-hand mirroring.
+     * Re-enables backface culling if it was disabled during preRender for left-hand mirroring.
      */
     @Override
     public void postRender(PoseStack poseStack, T animatable, BakedGeoModel model,

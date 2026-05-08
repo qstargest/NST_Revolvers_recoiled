@@ -34,7 +34,7 @@ import java.util.function.Consumer;
 /**
  * Contains all client-side event subscribers and initializers for the mod.
  * Registers model layers, entity renderers, particle providers, and screen handlers.
- * Kept entirely separate from server logic via @EventBusSubscriber(value = Dist.CLIENT).
+ * Kept entirely separate from server logic via EventBusSubscriber(value = Dist.CLIENT).
  */
 public class ClientEvents {
 

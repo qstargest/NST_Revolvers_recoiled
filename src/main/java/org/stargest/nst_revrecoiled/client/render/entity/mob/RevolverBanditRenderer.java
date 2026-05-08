@@ -1,10 +1,9 @@
 package org.stargest.nst_revrecoiled.client.render.entity.mob;
 
-import com.mojang.blaze3d.vertex.PoseStack;
-import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.MobRenderer;
 import net.minecraft.resources.ResourceLocation;
+import org.jetbrains.annotations.NotNull;
 import org.stargest.nst_revrecoiled.Entities.RevolverBanditEntity;
 import org.stargest.nst_revrecoiled.NstRevRecoiled;
 import org.stargest.nst_revrecoiled.client.util.ModEntityModelLayers;
@@ -33,7 +32,7 @@ public class RevolverBanditRenderer extends MobRenderer<
     }
 
     @Override
-    public void extractRenderState(RevolverBanditEntity entity, RevolverBanditRenderState state,
+    public void extractRenderState(@NotNull RevolverBanditEntity entity, @NotNull RevolverBanditRenderState state,
                                    float partialTick) {
         super.extractRenderState(entity, state, partialTick);
         state.heldItem = entity.getMainHandItem();
@@ -41,12 +40,12 @@ public class RevolverBanditRenderer extends MobRenderer<
     }
 
     @Override
-    public ResourceLocation getTextureLocation(RevolverBanditRenderState state) {
+    public @NotNull ResourceLocation getTextureLocation(@NotNull RevolverBanditRenderState state) {
         return TEXTURE;
     }
 
     @Override
-    public RevolverBanditRenderState createRenderState() {
+    public @NotNull RevolverBanditRenderState createRenderState() {
         return new RevolverBanditRenderState();
     }
 }
