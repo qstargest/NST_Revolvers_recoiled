@@ -7,14 +7,15 @@
   "item.nst_revrecoiled.iron_revolver": "Железен револвер",
   "item.nst_revrecoiled.golden_revolver": "Златен револвер",
   "item.nst_revrecoiled.diamond_revolver": "Диамантен револвер",
-  "item.nst_revrecoiled.assembly_table": "Монтажна маса",
   "block.nst_revrecoiled.assembly_table": "Монтажна маса",
-  "entity.minecraft.villager.nst_revrecoiled.revolvermaker": "Револверджия",
+  "entity.minecraft.villager.revolvermaker": "Револверджия",
   "itemGroup.nst_revrecoiled.main": "[NST] Revolvers recoiled",
   "gui.nst_revrecoiled.assemble": "Направи",
   "gui.nst_revrecoiled.damage": "Щети: %s",
   "gui.nst_revrecoiled.pickaxe_tier_any": "Нужна е някаква кирка",
   "gui.nst_revrecoiled.pickaxe_tier_stone": "Нужна е каменна кирка+",
   "gui.nst_revrecoiled.pickaxe_tier_iron": "Нужна е железна кирка+",
-  "gui.nst_revrecoiled.pickaxe_durability": "Кирка: %s/%s тр."
+  "gui.nst_revrecoiled.pickaxe_durability": "Кирка: %s/%s тр.",
+  "entity.nst_revrecoiled.revolver_bandit": "Бандит",
+  "item.nst_revrecoiled.revolver_bandit_spawn_egg": "Яйце за призоваване на Бандит"
 }

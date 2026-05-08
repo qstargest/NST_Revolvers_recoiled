@@ -7,14 +7,15 @@
   "item.nst_revrecoiled.iron_revolver": "Eisenrevolver",
   "item.nst_revrecoiled.golden_revolver": "Goldrevolver",
   "item.nst_revrecoiled.diamond_revolver": "Diamantrevolver",
-  "item.nst_revrecoiled.assembly_table": "Montagetisch",
   "block.nst_revrecoiled.assembly_table": "Montagetisch",
-  "entity.minecraft.villager.nst_revrecoiled.revolvermaker": "Revolvermacher",
+  "entity.minecraft.villager.revolvermaker": "Revolvermacher",
   "itemGroup.nst_revrecoiled.main": "[NST] Revolvers recoiled",
   "gui.nst_revrecoiled.assemble": "Herstellen",
   "gui.nst_revrecoiled.damage": "Schaden: %s",
   "gui.nst_revrecoiled.pickaxe_tier_any": "Benötigt eine beliebige Spitzhacke",
   "gui.nst_revrecoiled.pickaxe_tier_stone": "Benötigt Steinspitzhacke+",
   "gui.nst_revrecoiled.pickaxe_tier_iron": "Benötigt Eisenspitzhacke+",
-  "gui.nst_revrecoiled.pickaxe_durability": "Spitzhacke: %s/%s Htk."
+  "gui.nst_revrecoiled.pickaxe_durability": "Spitzhacke: %s/%s Htk.",
+  "entity.nst_revrecoiled.revolver_bandit": "Bandit",
+  "item.nst_revrecoiled.revolver_bandit_spawn_egg": "Bandit-Spawnei"
 }

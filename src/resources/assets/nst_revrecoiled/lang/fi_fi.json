@@ -7,14 +7,15 @@
   "item.nst_revrecoiled.iron_revolver": "Rautarevolveri",
   "item.nst_revrecoiled.golden_revolver": "Kultainen revolveri",
   "item.nst_revrecoiled.diamond_revolver": "Timanttinen revolveri",
-  "item.nst_revrecoiled.assembly_table": "Kokoonpanopöytä",
   "block.nst_revrecoiled.assembly_table": "Kokoonpanopöytä",
-  "entity.minecraft.villager.nst_revrecoiled.revolvermaker": "Revolverintekijä",
+  "entity.minecraft.villager.revolvermaker": "Revolverintekijä",
   "itemGroup.nst_revrecoiled.main": "[NST] Revolvers recoiled",
   "gui.nst_revrecoiled.assemble": "Valmista",
   "gui.nst_revrecoiled.damage": "Vahinko: %s",
   "gui.nst_revrecoiled.pickaxe_tier_any": "Vaatii jonkin hakun",
   "gui.nst_revrecoiled.pickaxe_tier_stone": "Vaatii kivihakun+",
   "gui.nst_revrecoiled.pickaxe_tier_iron": "Vaatii rautahakun+",
-  "gui.nst_revrecoiled.pickaxe_durability": "Hakku: %s/%s kes."
+  "gui.nst_revrecoiled.pickaxe_durability": "Hakku: %s/%s kes.",
+  "entity.nst_revrecoiled.revolver_bandit": "Bandiitti",
+  "item.nst_revrecoiled.revolver_bandit_spawn_egg": "Bandiitin kutumuna"
 }
