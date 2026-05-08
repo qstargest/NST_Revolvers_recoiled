@@ -7,7 +7,7 @@ import org.stargest.nst_revrecoiled.NstRevRecoiled;
 /**
  * Defines custom entity model layer identifiers.
  * Registration of layer definitions is done via
- * {@code EntityRenderersEvent.RegisterLayerDefinitions} in {@link org.stargest.nst_revrecoiled.client.ClientEvents}.
+ * EntityRenderersEvent.RegisterLayerDefinitions in org.stargest.nst_revrecoiled.client.ClientEvents.
  */
 public final class ModEntityModelLayers {
 

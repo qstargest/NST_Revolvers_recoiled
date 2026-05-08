@@ -30,19 +30,18 @@ import java.util.Map;
  * Handles custom arm positioning and animations for revolver weapons.
  * Shared between player entities and mob entities to ensure consistent visual behaviour.
  * Manages first-person and third-person arm poses including:
- * <ul>
- *   <li>Aim tracking (following entity's look direction)</li>
- *   <li>Reload animations with adaptive hand positioning</li>
- *   <li>Recoil effects</li>
- *   <li>Movement shake</li>
- *   <li>Smooth interpolation between states</li>
- * </ul>
  *
- * <p>Uses a consolidated state management approach with a single
- * {@code Int2ObjectMap<PlayerRevolverState>} instead of multiple parallel HashMaps,
+ * - Aim tracking (following entity's look direction)
+ * - Reload animations with adaptive hand positioning
+ * - Recoil effects
+ * - Movement shake
+ * - Smooth interpolation between states
+ *
+ * Uses a consolidated state management approach with a single
+ * Int2ObjectMap PlayerRevolverState instead of multiple parallel HashMaps,
  * improving code organisation and cache locality.
  *
- * <p>Provides cleanup methods to prevent memory leaks when players disconnect or
+ * Provides cleanup methods to prevent memory leaks when players disconnect or
  * entities unload.
  */
 public class PlayerArmPose {
@@ -82,7 +81,7 @@ public class PlayerArmPose {
 
     /**
      * Registers a custom arm pose config for a specific revolver item.
-     * Falls back to {@link RevolverArmConfig#DEFAULT} if no config is registered.
+     * Falls back to RevolverArmConfig if no config is registered.
      * Must be called during client initialisation.
      *
      * @param item   the revolver item to bind the config to
@@ -104,7 +103,7 @@ public class PlayerArmPose {
 
     /**
      * Entry point for player entities.
-     * Called from {@code PlayerModelMixin} injecting into {@code setupAnim()}.
+     * Called from PlayerModelMixin injecting into setupAnim().
      *
      * @param model       the humanoid model to modify
      * @param renderState the player's current render state
@@ -138,10 +137,10 @@ public class PlayerArmPose {
     }
 
     /**
-     * Entry point for {@link RevolverBanditEntity} mob entities.
-     * Called from {@code RevolverBanditModel.setupAnim()} after vanilla angle setup.
+     * Entry point for RevolverBanditEntity mob entities.
+     * Called from RevolverBanditModel.setupAnim() after vanilla angle setup.
      *
-     * <p>Reads charge state from the mob's synced data so it is always
+     * Reads charge state from the mob's synced data so it is always
      * consistent with server-side weapon logic.
      *
      * @param model    the biped entity model to modify
