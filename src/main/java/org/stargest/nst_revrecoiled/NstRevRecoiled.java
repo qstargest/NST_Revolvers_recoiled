@@ -86,9 +86,11 @@ public class NstRevRecoiled {
 
             NeoForge.EVENT_BUS.addListener(ClientGameEvents::onLogout);
             NeoForge.EVENT_BUS.addListener(ClientGameEvents::onEntityLeaveLevel);
+            NeoForge.EVENT_BUS.addListener(ClientGameEvents::onEndClientTick);
 
             NeoForge.EVENT_BUS.addListener(ClientGameEvents::onLogout);
             NeoForge.EVENT_BUS.addListener(ClientGameEvents::onEntityLeaveLevel);
+            NeoForge.EVENT_BUS.addListener(ClientGameEvents::onEndClientTick);
         }
 
         modEventBus.addListener(NstRevRecoiled::registerEntityAttributes);
