@@ -41,18 +41,6 @@ public class PacketHandler {
                 .consumerMainThread(SyncConfigS2CPacket::handle)
                 .add();
 
-        INSTANCE.messageBuilder(RevolverFireParticlePacket.class, id(), NetworkDirection.PLAY_TO_CLIENT)
-                .decoder(RevolverFireParticlePacket::new)
-                .encoder(RevolverFireParticlePacket::toBytes)
-                .consumerMainThread(RevolverFireParticlePacket::handle)
-                .add();
-
-        INSTANCE.messageBuilder(RevolverReloadParticlePacket.class, id(), NetworkDirection.PLAY_TO_CLIENT)
-                .decoder(RevolverReloadParticlePacket::new)
-                .encoder(RevolverReloadParticlePacket::toBytes)
-                .consumerMainThread(RevolverReloadParticlePacket::handle)
-                .add();
-
         INSTANCE.messageBuilder(AssemblyCraftC2SPacket.class, id(), NetworkDirection.PLAY_TO_SERVER)
                 .decoder(AssemblyCraftC2SPacket::new)
                 .encoder(AssemblyCraftC2SPacket::toBytes)

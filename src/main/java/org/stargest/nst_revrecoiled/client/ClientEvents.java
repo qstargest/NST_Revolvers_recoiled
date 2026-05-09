@@ -7,16 +7,15 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.Item;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.EntityRenderersEvent;
-import net.minecraftforge.client.event.RegisterParticleProvidersEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import org.stargest.nst_revrecoiled.Items.BaseRevolverItem;
 import org.stargest.nst_revrecoiled.Main;
 import org.stargest.nst_revrecoiled.client.gui.AssemblyTableScreen;
-import org.stargest.nst_revrecoiled.client.handlers.RevolverParticleHandler;
 import org.stargest.nst_revrecoiled.client.managers.CameraRecoilManager;
-import org.stargest.nst_revrecoiled.client.particles.RevolverParticle;
+import org.stargest.nst_revrecoiled.client.render.entity.mob.RevolverBanditModel;
+import org.stargest.nst_revrecoiled.client.render.entity.mob.RevolverBanditRenderer;
 import org.stargest.nst_revrecoiled.client.render.entity.player.PlayerArmPose;
 import org.stargest.nst_revrecoiled.client.render.entity.player.RevolverArmConfig;
 import org.stargest.nst_revrecoiled.client.render.entity.villager.ModVillagerRenderer;
@@ -25,9 +24,9 @@ import org.stargest.nst_revrecoiled.client.render.revolvers.CobblestoneRevolverI
 import org.stargest.nst_revrecoiled.client.render.revolvers.DiamondRevolverItemRenderer;
 import org.stargest.nst_revrecoiled.client.render.revolvers.GoldenRevolverItemRenderer;
 import org.stargest.nst_revrecoiled.client.render.revolvers.IronRevolverItemRenderer;
+import org.stargest.nst_revrecoiled.client.util.ModEntityModelLayers;
 import org.stargest.nst_revrecoiled.util.ModEntities;
 import org.stargest.nst_revrecoiled.util.ModItems;
-import org.stargest.nst_revrecoiled.util.ModParticles;
 import org.stargest.nst_revrecoiled.util.ModScreenHandlers;
 import software.bernie.geckolib.renderer.GeoItemRenderer;
 
@@ -80,23 +79,19 @@ public class ClientEvents {
              * The manager applies a procedurally generated kick-up to the
              * player's pitch when a revolver is fired on the client.
              */
-            Consumer<LivingEntity> defaultRecoil = shooter -> CameraRecoilManager.getInstance().applyRecoil();
-            BaseRevolverItem.registerRecoilCallback(ModItems.COBBLESTONE_REVOLVER.get(), defaultRecoil);
+            Consumer<LivingEntity> defaultRecoil =
+                    shooter -> CameraRecoilManager.getInstance().scheduleRecoil(
+                            BaseRevolverItem.SHOOT_DELAY_TICKS
+                    );            BaseRevolverItem.registerRecoilCallback(ModItems.COBBLESTONE_REVOLVER.get(), defaultRecoil);
             BaseRevolverItem.registerRecoilCallback(ModItems.IRON_REVOLVER.get(),        defaultRecoil);
             BaseRevolverItem.registerRecoilCallback(ModItems.GOLDEN_REVOLVER.get(),      defaultRecoil);
             BaseRevolverItem.registerRecoilCallback(ModItems.DIAMOND_REVOLVER.get(),     defaultRecoil);
-
-            /**
-             * Binds the particle handler to revolver firing events.
-             * Triggers immediate muzzle flash and smoke particles on the
-             * client, bypassing GeckoLib animation delays for instant feedback.
-             */
-            Consumer<LivingEntity> defaultParticle = RevolverParticleHandler::spawnFireImmediate;
-            BaseRevolverItem.registerParticleCallback(ModItems.COBBLESTONE_REVOLVER.get(), defaultParticle);
-            BaseRevolverItem.registerParticleCallback(ModItems.IRON_REVOLVER.get(),        defaultParticle);
-            BaseRevolverItem.registerParticleCallback(ModItems.GOLDEN_REVOLVER.get(),      defaultParticle);
-            BaseRevolverItem.registerParticleCallback(ModItems.DIAMOND_REVOLVER.get(),     defaultParticle);
         });
+    }
+
+    @SubscribeEvent
+    public static void registerLayerDefinitions(EntityRenderersEvent.RegisterLayerDefinitions event) {
+        event.registerLayerDefinition(ModEntityModelLayers.REVOLVER_BANDIT, RevolverBanditModel::createBodyLayer);
     }
 
     /**
@@ -104,18 +99,10 @@ public class ClientEvents {
      */
     @SubscribeEvent
     public static void registerEntityRenderers(EntityRenderersEvent.RegisterRenderers event) {
+        event.registerEntityRenderer(ModEntities.REVOLVER_BANDIT.get(), RevolverBanditRenderer::new);
         event.registerEntityRenderer(ModEntities.BULLET_PROJECTILE.get(), ThrownItemRenderer::new);
         event.registerEntityRenderer(EntityType.VILLAGER, ModVillagerRenderer::new);
         event.registerEntityRenderer(EntityType.ZOMBIE_VILLAGER, ModZombieVillagerRenderer::new);
-    }
-
-    /**
-     * Registers particle providers for muzzle flash and smoke.
-     */
-    @SubscribeEvent
-    public static void registerParticleProviders(RegisterParticleProvidersEvent event) {
-        event.registerSpriteSet(ModParticles.REVOLVER_FIRE.get(), RevolverParticle.FireFactory::new);
-        event.registerSpriteSet(ModParticles.REVOLVER_RELOAD.get(), RevolverParticle.ReloadFactory::new);
     }
 
     protected static void registerItemRenderer(Item item, GeoItemRenderer<?> renderer) {

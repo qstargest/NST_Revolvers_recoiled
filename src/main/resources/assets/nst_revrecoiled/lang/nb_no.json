@@ -7,14 +7,15 @@
   "item.nst_revrecoiled.iron_revolver": "Jernrevolver",
   "item.nst_revrecoiled.golden_revolver": "Gullrevolver",
   "item.nst_revrecoiled.diamond_revolver": "Diamantrevolver",
-  "item.nst_revrecoiled.assembly_table": "Monteringsbord",
   "block.nst_revrecoiled.assembly_table": "Monteringsbord",
-  "entity.minecraft.villager.nst_revrecoiled.revolvermaker": "Revolvermaker",
+  "entity.minecraft.villager.revolvermaker": "Revolvermaker",
   "itemGroup.nst_revrecoiled.main": "[NST] Revolvers recoiled",
   "gui.nst_revrecoiled.assemble": "Lag",
   "gui.nst_revrecoiled.damage": "Skade: %s",
   "gui.nst_revrecoiled.pickaxe_tier_any": "Krever en hvilken som helst hakke",
   "gui.nst_revrecoiled.pickaxe_tier_stone": "Krever steinhakke+",
   "gui.nst_revrecoiled.pickaxe_tier_iron": "Krever jernhakke+",
-  "gui.nst_revrecoiled.pickaxe_durability": "Hakke: %s/%s hvb."
+  "gui.nst_revrecoiled.pickaxe_durability": "Hakke: %s/%s hvb.",
+  "entity.nst_revrecoiled.revolver_bandit": "Banditt",
+  "item.nst_revrecoiled.revolver_bandit_spawn_egg": "Banditt-spawnegg"
 }

@@ -46,6 +46,7 @@ public class ConfigLoader {
                     if (sc.revolvers != null) config.revolvers = sc.revolvers;
                     if (sc.bullets   != null) config.bullets   = sc.bullets;
                     if (sc.worldGen  != null) config.worldGen  = sc.worldGen;
+                    if (sc.bandit != null) config.bandit = sc.bandit;
                 }
             } catch (IOException e) {
                 LOGGER.error("Failed to load settings.json", e);
@@ -96,6 +97,7 @@ public class ConfigLoader {
             sc.revolvers = config.revolvers;
             sc.bullets   = config.bullets;
             sc.worldGen  = config.worldGen;
+            sc.bandit = config.bandit;
             GSON.toJson(sc, w);
         } catch (IOException e) { LOGGER.error("Failed to save settings.json", e); }
 
@@ -112,6 +114,7 @@ public class ConfigLoader {
         public ModConfig.RevolverConfig  revolvers;
         public ModConfig.BulletConfig    bullets;
         public ModConfig.WorldGenConfig  worldGen;
+        public ModConfig.BanditConfig bandit;
     }
 
     private static Path getConfigDir() {

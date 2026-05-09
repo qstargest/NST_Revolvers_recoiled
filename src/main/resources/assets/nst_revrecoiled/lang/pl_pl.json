@@ -7,14 +7,15 @@
   "item.nst_revrecoiled.iron_revolver": "Żelazny rewolwer",
   "item.nst_revrecoiled.golden_revolver": "Złoty rewolwer",
   "item.nst_revrecoiled.diamond_revolver": "Diamentowy rewolwer",
-  "item.nst_revrecoiled.assembly_table": "Stół montażowy",
   "block.nst_revrecoiled.assembly_table": "Stół montażowy",
-  "entity.minecraft.villager.nst_revrecoiled.revolvermaker": "Rewolwerownik",
+  "entity.minecraft.villager.revolvermaker": "Rewolwerownik",
   "itemGroup.nst_revrecoiled.main": "[NST] Revolvers recoiled",
   "gui.nst_revrecoiled.assemble": "Wytworz",
   "gui.nst_revrecoiled.damage": "Obrażenia: %s",
   "gui.nst_revrecoiled.pickaxe_tier_any": "Wymaga dowolnego kilofa",
   "gui.nst_revrecoiled.pickaxe_tier_stone": "Wymaga kamiennego kilofa+",
   "gui.nst_revrecoiled.pickaxe_tier_iron": "Wymaga żelaznego kilofa+",
-  "gui.nst_revrecoiled.pickaxe_durability": "Kilof: %s/%s trw."
+  "gui.nst_revrecoiled.pickaxe_durability": "Kilof: %s/%s trw.",
+  "entity.nst_revrecoiled.revolver_bandit": "Bandyta",
+  "item.nst_revrecoiled.revolver_bandit_spawn_egg": "Jajo przyzywające: Bandyta"
 }

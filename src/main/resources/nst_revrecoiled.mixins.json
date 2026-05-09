@@ -5,6 +5,7 @@
   "compatibilityLevel": "JAVA_17",
   "refmap": "nst_revrecoiled.refmap.json",
   "mixins": [
+    "PillagerEntityMixin",
     "StructurePoolAccessor"
   ],
   "client": [

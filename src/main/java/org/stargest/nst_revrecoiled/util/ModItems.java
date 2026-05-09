@@ -7,6 +7,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.CreativeModeTabs;
 import net.minecraft.world.item.Item;
+import net.minecraftforge.common.ForgeSpawnEggItem;
 import net.minecraftforge.event.BuildCreativeModeTabContentsEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.registries.DeferredRegister;
@@ -82,6 +83,16 @@ public class ModItems {
     private static RegistryObject<Item> registerIcon(String baseName) {
         return ITEMS.register(baseName + "_item", () -> new Item(new Item.Properties()));
     }
+
+    // Spawn Eggs
+    public static final RegistryObject<Item> REVOLVER_BANDIT_SPAWN_EGG = ITEMS.register(
+            "revolver_bandit_spawn_egg",
+            () -> new ForgeSpawnEggItem(
+                    ModEntities.REVOLVER_BANDIT,
+                    0x2B5C6B,
+                    0x949C9C,
+                    new Item.Properties()
+            ));
 
     // --- Creative Tab ---
     public static final ResourceKey<CreativeModeTab> MOD_TAB_KEY = ResourceKey.create(

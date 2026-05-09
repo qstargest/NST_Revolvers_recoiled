@@ -17,7 +17,7 @@ public class RevolverItemModel<T extends BaseRevolverItem> extends GeoModel<T> {
 
     @Override
     public ResourceLocation getModelResource(T animatable) {
-        return new ResourceLocation(Main.MODID, "geo/cobblestone_revolver.geo.json");
+        return new ResourceLocation(Main.MODID, "geo/revolver.geo.json");
     }
 
     @Override
@@ -27,6 +27,6 @@ public class RevolverItemModel<T extends BaseRevolverItem> extends GeoModel<T> {
 
     @Override
     public ResourceLocation getAnimationResource(T animatable) {
-        return new ResourceLocation(Main.MODID, "animations/cobblestone_revolver.animation.json");
+        return new ResourceLocation(Main.MODID, "animations/revolver.animation.json");
     }
 }

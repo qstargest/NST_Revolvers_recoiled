@@ -9,10 +9,14 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.entity.ai.village.poi.PoiType;
 import net.minecraft.world.entity.npc.VillagerProfession;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.CreativeModeTabs;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.ClientPlayerNetworkEvent;
 import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.event.BuildCreativeModeTabContentsEvent;
 import net.minecraftforge.event.RegisterCommandsEvent;
+import net.minecraftforge.event.TickEvent;
+import net.minecraftforge.event.entity.EntityAttributeCreationEvent;
 import net.minecraftforge.event.entity.EntityLeaveLevelEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.event.server.ServerStartingEvent;
@@ -23,6 +27,8 @@ import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.minecraftforge.registries.RegisterEvent;
 import org.slf4j.Logger;
+import org.stargest.nst_revrecoiled.Entities.RevolverBanditEntity;
+import org.stargest.nst_revrecoiled.Items.BaseRevolverItem;
 import org.stargest.nst_revrecoiled.Structures.ModStructures;
 import org.stargest.nst_revrecoiled.Villager.ModVillagers;
 import org.stargest.nst_revrecoiled.client.managers.CameraRecoilManager;
@@ -57,19 +63,32 @@ public class Main {
         ModBlocks.BLOCKS.register(modEventBus);
         ModBlocks.ITEMS.register(modEventBus);
         ModEntities.ENTITY_TYPES.register(modEventBus);
-        ModParticles.PARTICLE_TYPES.register(modEventBus);
         ModScreenHandlers.MENU_TYPES.register(modEventBus);
+        ModSounds.SOUND_EVENTS.register(modEventBus);
 
         modEventBus.addListener(this::commonSetup);
         modEventBus.addListener(this::onRegister);
         modEventBus.addListener(ModItems::buildCreativeTab);
+        modEventBus.addListener(this::addCreative);
 
         MinecraftForge.EVENT_BUS.register(this);
         MinecraftForge.EVENT_BUS.register(new GameEvents());
+
+        modEventBus.addListener(Main::registerEntityAttributes);
     }
 
     private void commonSetup(final FMLCommonSetupEvent event) {
         event.enqueueWork(PacketHandler::register);
+    }
+
+    private static void registerEntityAttributes(EntityAttributeCreationEvent event) {
+        event.put(ModEntities.REVOLVER_BANDIT.get(), RevolverBanditEntity.createAttributes().build());
+    }
+
+    private void addCreative(BuildCreativeModeTabContentsEvent event){
+        if (event.getTabKey() == CreativeModeTabs.SPAWN_EGGS){
+            event.accept(ModItems.REVOLVER_BANDIT_SPAWN_EGG);
+        }
     }
 
     /**
@@ -116,6 +135,15 @@ public class Main {
                 PacketHandler.sendToPlayer(new SyncConfigS2CPacket(json), serverPlayer);
             }
         }
+
+        @SubscribeEvent
+        public static void onPlayerLogout(PlayerEvent.PlayerLoggedOutEvent event){
+            Player player = event.getEntity();
+            if (player != null) {
+                BaseRevolverItem.removePendingShot(player.getUUID());
+                BaseRevolverItem.removePendingBullet(player.getUUID());
+            }
+        }
     }
 
     @Mod.EventBusSubscriber(modid = MODID, bus = Mod.EventBusSubscriber.Bus.FORGE, value = Dist.CLIENT)
@@ -130,10 +158,19 @@ public class Main {
         }
 
         @SubscribeEvent
-        public static void onEntityLeaveLevel(EntityLeaveLevelEvent event) {
-            if (event.getLevel().isClientSide() && event.getEntity() instanceof Player) {
-                PlayerArmPose.clearState(event.getEntity().getId());
+        public static void onEntityLeaveLevel (EntityLeaveLevelEvent event){
+            if (event.getLevel().isClientSide()){
+                var entity = event.getEntity();
+
+                if (entity instanceof Player || entity instanceof RevolverBanditEntity){
+                    PlayerArmPose.clearState(entity.getId());
+                }
             }
+        }
+
+        @SubscribeEvent
+        public static void onEndClientTick(TickEvent.ClientTickEvent event){
+            CameraRecoilManager.getInstance().tickPending();
         }
     }
 }

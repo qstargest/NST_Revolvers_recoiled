@@ -1,11 +1,7 @@
 package org.stargest.nst_revrecoiled.client;
 
-import net.minecraft.client.Minecraft;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.LivingEntity;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
-import org.stargest.nst_revrecoiled.client.handlers.RevolverParticleHandler;
 import org.stargest.nst_revrecoiled.util.ModConfig;
 
 /**
@@ -23,33 +19,6 @@ import org.stargest.nst_revrecoiled.util.ModConfig;
  */
 @OnlyIn(Dist.CLIENT)
 public class ClientPacketHandlers {
-
-    /**
-     * Triggers the fire (muzzle flash) particle effect for a specific entity.
-     * Skipped if the entity is the local player (they trigger it locally for instant feedback).
-     */
-    public static void handleFire(int entityId) {
-        Minecraft mc = Minecraft.getInstance();
-        if (mc.level == null) return;
-        
-        Entity e = mc.level.getEntity(entityId);
-        if (e instanceof LivingEntity shooter && e != mc.player) {
-            RevolverParticleHandler.spawnFireImmediate(shooter);
-        }
-    }
-
-    /**
-     * Triggers the reload (smoke) particle effect for a specific entity.
-     */
-    public static void handleReload(int entityId) {
-        Minecraft mc = Minecraft.getInstance();
-        if (mc.level == null) return;
-
-        Entity e = mc.level.getEntity(entityId);
-        if (e instanceof LivingEntity reloader) {
-            RevolverParticleHandler.spawnReloadImmediate(reloader);
-        }
-    }
 
     /**
      * Synchronizes the server's configuration to the client.

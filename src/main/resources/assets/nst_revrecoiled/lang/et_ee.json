@@ -7,14 +7,15 @@
   "item.nst_revrecoiled.iron_revolver": "Raudrevolver",
   "item.nst_revrecoiled.golden_revolver": "Kullarevolver",
   "item.nst_revrecoiled.diamond_revolver": "Teemandrevolver",
-  "item.nst_revrecoiled.assembly_table": "Kokkupaneku laud",
   "block.nst_revrecoiled.assembly_table": "Kokkupaneku laud",
-  "entity.minecraft.villager.nst_revrecoiled.revolvermaker": "Revolvritegija",
+  "entity.minecraft.villager.revolvermaker": "Revolvritegija",
   "itemGroup.nst_revrecoiled.main": "[NST] Revolvers recoiled",
   "gui.nst_revrecoiled.assemble": "Valmista",
   "gui.nst_revrecoiled.damage": "Kahju: %s",
   "gui.nst_revrecoiled.pickaxe_tier_any": "Vajab mingit kirvest",
   "gui.nst_revrecoiled.pickaxe_tier_stone": "Vajab kivikirvest+",
   "gui.nst_revrecoiled.pickaxe_tier_iron": "Vajab raudkirvest+",
-  "gui.nst_revrecoiled.pickaxe_durability": "Kirves: %s/%s tv."
+  "gui.nst_revrecoiled.pickaxe_durability": "Kirves: %s/%s tv.",
+  "entity.nst_revrecoiled.revolver_bandit": "Bandiit",
+  "item.nst_revrecoiled.revolver_bandit_spawn_egg": "Bandiidi kudemismuna"
 }

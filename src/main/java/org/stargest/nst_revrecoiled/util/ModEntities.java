@@ -6,7 +6,10 @@ import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.RegistryObject;
 import org.stargest.nst_revrecoiled.Entities.BulletProjectileEntity;
+import org.stargest.nst_revrecoiled.Entities.RevolverBanditEntity;
 import org.stargest.nst_revrecoiled.Main;
+
+import java.util.function.Supplier;
 
 /**
  * Registry for all custom entities in the mod.
@@ -29,5 +32,15 @@ public class ModEntities {
                             .updateInterval(1)
                             .setShouldReceiveVelocityUpdates(true)
                             .build("bullet_projectile")
+            );
+    public static final Supplier<EntityType<RevolverBanditEntity>> REVOLVER_BANDIT =
+            ENTITY_TYPES.register("revolver_bandit",
+                    () -> EntityType.Builder.of(
+                                    RevolverBanditEntity::new,
+                                    MobCategory.MONSTER
+                            )
+                            .sized(0.6f, 1.95f)
+                            .clientTrackingRange(8)
+                            .build("revolver_bandit")
             );
 }
