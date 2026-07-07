@@ -1,27 +1,21 @@
-<div align=center> 
-  <h1>Revolvers recoiled</h1> 
-</div> 
-<div align=center>
-<img src="https://cdn.modrinth.com/data/ov9mAitg/a8a0218e2f7d4443595fdb17c80d6685588b77b4_96.webp">
-</div>
-<div align=center>
-<b> <i> requires <a href="https://modrinth.com/mod/geckolib"> geckolib </a> </i> </b>
-</div>
+![Revolvers recoiled cool banner](https://cdn.modrinth.com/data/cached_images/35d5e86ba77ab80429c3d2d781dfdc3516ccfc69.png)
 
-<h2>Mod Description</h2>
+# Revolvers recoiled 
+_**requires [geckolib](https://modrinth.com/mod/geckolib)**_
+
 
 A little mod by a newgen team that introduces new type of weapon into the game -- **Revolvers!**
 
 Explore the world and find new villager in taiga forest, **thats where your adventure begins**
 
-### **_Dependecy:_**
-
-- [geckolib](https://modrinth.com/mod/geckolib)
+### **_Dependencies:_**
+![fabiicon](https://cdn.modrinth.com/data/cached_images/c5602163c9782b6f64ca0fc224643245ffff63df.png)![gekoicon](https://cdn.modrinth.com/data/cached_images/eae77aaad38eb36ceee318b31e80139adffca7f8.png)
+- [geckolib](https://modrinth.com/mod/geckolib) 
 - [fabric api](https://modrinth.com/mod/fabric-api)
 
 ### **_Feedback:_**
 
-write us on github issues
+write us on [github issues](https://github.com/qstargest/NST_Revolvers_recoiled/issues)
 
 ### **_Features!:_**
 
@@ -38,8 +32,6 @@ All code in under GNU GPLv3
 
 Models, textures, animations doesn't include on GitHub and are the intellectual property of Elixx.
 
-***
-
 <h4>For Developers</h4>
 
 Our mod is friendly for addons, but if there some problems with addon creation, please also write us on GitHub Issues
@@ -48,4 +40,4 @@ Our mod is friendly for addons, but if there some problems with addon creation, 
 <h5>Future plans</h5>
 
 - <del>NeoForge version</del> ... done✅
-- small content update
+- <del>small content update</del> ... done✅
